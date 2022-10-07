@@ -10,22 +10,22 @@ import ch.dfx.common.PayoutManagerUtils;
 /**
  * 
  */
-public class CacheBlockData {
+public class BlockDTO {
   private final Integer number;
   private final String hash;
 
-  private final List<CacheTransactionData> transactionDataList;
+  private final List<TransactionDTO> transactionDTOList;
 
   /**
    * 
    */
-  public CacheBlockData(
+  public BlockDTO(
       @Nonnull Integer number,
       @Nonnull String hash) {
     this.number = number;
     this.hash = hash;
 
-    this.transactionDataList = new ArrayList<>();
+    this.transactionDTOList = new ArrayList<>();
   }
 
   public Integer getNumber() {
@@ -36,15 +36,15 @@ public class CacheBlockData {
     return hash;
   }
 
-  public List<CacheTransactionData> getTransactionDataList() {
-    return transactionDataList;
+  public List<TransactionDTO> getTransactionDTOList() {
+    return transactionDTOList;
   }
 
   /**
    * 
    */
-  public void addTransaction(@Nonnull CacheTransactionData transactionData) {
-    this.transactionDataList.add(transactionData);
+  public void addTransactionDTO(@Nonnull TransactionDTO transactionDTO) {
+    this.transactionDTOList.add(transactionDTO);
   }
 
   @Override

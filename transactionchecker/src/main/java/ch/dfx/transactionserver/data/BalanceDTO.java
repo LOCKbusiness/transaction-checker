@@ -1,4 +1,4 @@
-package ch.dfx.transactionserver.balance.data;
+package ch.dfx.transactionserver.data;
 
 import java.math.BigDecimal;
 
@@ -9,11 +9,10 @@ import ch.dfx.common.PayoutManagerUtils;
 /**
  * 
  */
-public class BalanceData {
+public class BalanceDTO {
   private final int addressNumber;
-
   private int blockNumber = -1;
-  private int transactionCount = 0;
+  private int transactionCount = -1;
 
   private BigDecimal vout = BigDecimal.ZERO;
   private BigDecimal vin = BigDecimal.ZERO;
@@ -21,7 +20,7 @@ public class BalanceData {
   /**
    * 
    */
-  public BalanceData(int addressNumber) {
+  public BalanceDTO(int addressNumber) {
     this.addressNumber = addressNumber;
   }
 
@@ -53,7 +52,7 @@ public class BalanceData {
     return vout;
   }
 
-  public void setVout(@Nonnull BigDecimal vout) {
+  public void setVout(BigDecimal vout) {
     this.vout = vout;
   }
 
@@ -65,7 +64,7 @@ public class BalanceData {
     return vin;
   }
 
-  public void setVin(@Nonnull BigDecimal vin) {
+  public void setVin(BigDecimal vin) {
     this.vin = vin;
   }
 

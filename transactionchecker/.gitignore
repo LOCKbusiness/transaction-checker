@@ -15,3 +15,5 @@
 
 # Secrets
 config.secret.properties
+config.secret.enc
+

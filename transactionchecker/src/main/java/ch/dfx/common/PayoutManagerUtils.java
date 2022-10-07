@@ -7,7 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.text.DecimalFormat;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,6 +35,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.defichain.provider.DefiDataProviderImpl;
+import ch.dfx.security.EncryptionForSecrets;
 
 /**
  * 
@@ -101,20 +104,21 @@ public class PayoutManagerUtils {
    */
   public static void loadConfigProperties(
       @Nonnull String network,
-      @Nonnull String environment) throws DfxException {
+      @Nonnull String environment,
+      @Nonnull String[] args) throws DfxException {
     LOGGER.trace("loadConfigProperties() ...");
 
     // ...
     File configDirectory = Paths.get("config", "properties", network).toFile();
 
     File configFile = new File(configDirectory, "config.properties");
-    File configSecretFile = new File(configDirectory, "config.secret.properties");
+    File configSecretEncFile = new File(configDirectory, "config.secret.enc");
 
     // ...
     File configEnvDirectory = new File(configDirectory, environment);
 
     File configEnvFile = new File(configEnvDirectory, "config.properties");
-    File configEnvSecretFile = new File(configEnvDirectory, "config.secret.properties");
+    File configEnvSecretEncFile = new File(configEnvDirectory, "config.secret.enc");
 
     // ...
     Properties properties = new Properties();
@@ -138,24 +142,42 @@ public class PayoutManagerUtils {
     }
 
     // Secret Properties ...
-    LOGGER.trace("configFileName: '" + configEnvSecretFile.getAbsolutePath() + "'...");
+    EncryptionForSecrets encryptionForSecrets = new EncryptionForSecrets();
+    String secretEncodingPassword = getPassword(args);
 
-    try (FileInputStream inputStream = new FileInputStream(configEnvSecretFile)) {
-      properties.load(inputStream);
-    } catch (Exception e) {
-      // Intentionally left blank ...
-    }
+    if (null != secretEncodingPassword) {
+      LOGGER.trace("configFileName: '" + configEnvSecretEncFile.getAbsolutePath() + "'...");
 
-    // Global Secret Properties ...
-    LOGGER.trace("configFileName: '" + configSecretFile + "'...");
+      Properties configEnvSecretProperties = encryptionForSecrets.decrypt(configEnvSecretEncFile, secretEncodingPassword);
+      properties.putAll(configEnvSecretProperties);
 
-    try (FileInputStream inputStream = new FileInputStream(configSecretFile)) {
-      properties.load(inputStream);
-    } catch (Exception e) {
-      // Intentionally left blank ...
+      // Global Secret Properties ...
+      LOGGER.trace("configFileName: '" + configSecretEncFile + "'...");
+
+      Properties configSecretProperties = encryptionForSecrets.decrypt(configSecretEncFile, secretEncodingPassword);
+      properties.putAll(configSecretProperties);
     }
 
     ConfigPropertyProvider.setup(properties);
+  }
+
+  /**
+   * 
+   */
+  private static @Nullable String getPassword(@Nonnull String[] args) {
+    String password = null;
+
+    Optional<String> optionalPasswordArgument = Stream.of(args).filter(a -> a.startsWith("--password=")).findFirst();
+
+    if (optionalPasswordArgument.isPresent()) {
+      String[] argumentSplitArray = optionalPasswordArgument.get().split("=");
+
+      if (2 == argumentSplitArray.length) {
+        password = argumentSplitArray[1];
+      }
+    }
+
+    return password;
   }
 
   /**

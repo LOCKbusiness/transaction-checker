@@ -30,7 +30,7 @@ public class ApiAccessManagerMain {
       PayoutManagerUtils.initLog4j("log4j2-payoutmanager.xml");
 
       // ...
-      PayoutManagerUtils.loadConfigProperties(network, environment);
+      PayoutManagerUtils.loadConfigProperties(network, environment, args);
 
       // ...
       ApiAccessManager accessManager = new ApiAccessManager();

@@ -9,6 +9,8 @@ public enum PropertyEnum {
   DFI_RPC_PASSWORD,
 
   DFI_WALLET_NAME,
+  DFI_WALLET_SIGN_ADDRESS,
+  DFI_VERIFY_ADDRESS,
 
   DFI_URL,
 

@@ -47,6 +47,14 @@ import ch.dfx.defichain.data.block.DefiBlockResultData;
 import ch.dfx.defichain.data.transaction.DefiRawTransactionResultData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionResultData;
+import ch.dfx.defichain.data.wallet.DefiListWalletsResultData;
+import ch.dfx.defichain.data.wallet.DefiLoadWalletData;
+import ch.dfx.defichain.data.wallet.DefiLoadWalletResultData;
+import ch.dfx.defichain.data.wallet.DefiLockWalletResultData;
+import ch.dfx.defichain.data.wallet.DefiPassphraseWalletResultData;
+import ch.dfx.defichain.data.wallet.DefiSignMessageResultData;
+import ch.dfx.defichain.data.wallet.DefiUnloadWalletResultData;
+import ch.dfx.defichain.data.wallet.DefiVerifyMessageResultData;
 
 /**
  * 
@@ -75,6 +83,90 @@ public class DefiDataProviderImpl implements DefiDataProvider {
             return new DefiAmountData(json.getAsString());
           }
         }).create();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public DefiLoadWalletData loadWallet(@Nonnull String wallet) throws DfxException {
+    LOGGER.trace("loadWallet(): wallet=" + wallet + " ...");
+
+    List<Object> paramList = Arrays.asList(wallet);
+
+    return getData("loadwallet", paramList, DefiLoadWalletResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public String unloadWallet(@Nonnull String wallet) throws DfxException {
+    LOGGER.trace("unloadWallet(): wallet=" + wallet + " ...");
+
+    List<Object> paramList = Arrays.asList(wallet);
+
+    return getData("unloadwallet", paramList, DefiUnloadWalletResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public List<String> listWallets() throws DfxException {
+    LOGGER.trace("listWallets() ...");
+    return getData("listwallets", DefiListWalletsResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public String walletPassphrase(
+      @Nonnull String wallet,
+      @Nonnull String passphrase,
+      int timeInSeconds) throws DfxException {
+    LOGGER.trace("walletPassphrase(): wallet=" + wallet + " ...");
+
+    List<Object> paramList = Arrays.asList(passphrase, timeInSeconds);
+
+    return getData(wallet, "walletpassphrase", paramList, DefiPassphraseWalletResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public String walletLock(@Nonnull String wallet) throws DfxException {
+    LOGGER.trace("walletLock(): wallet=" + wallet + " ...");
+
+    return getData(wallet, "walletlock", DefiLockWalletResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public String signMessage(
+      @Nonnull String wallet,
+      @Nonnull String address,
+      @Nonnull String message) throws DfxException {
+    LOGGER.trace("signMessage(): wallet=" + wallet + " ...");
+
+    return getData(wallet, "signMessage", DefiSignMessageResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public Boolean verifyMessage(
+      @Nonnull String address,
+      @Nonnull String signature,
+      @Nonnull String message) throws DfxException {
+    LOGGER.trace("verifyMessage() ...");
+
+    return getData("verifymessage", DefiVerifyMessageResultData.class).getResult();
   }
 
   /**

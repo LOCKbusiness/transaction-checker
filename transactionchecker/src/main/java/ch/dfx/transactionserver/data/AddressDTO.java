@@ -7,7 +7,7 @@ import ch.dfx.common.PayoutManagerUtils;
 /**
  * 
  */
-public class CacheAddressData {
+public class AddressDTO {
   private final Integer number;
   private final String address;
   private final String hex;
@@ -15,7 +15,7 @@ public class CacheAddressData {
   /**
    * 
    */
-  public CacheAddressData(
+  public AddressDTO(
       @Nonnull Integer number,
       @Nonnull String address,
       @Nonnull String hex) {

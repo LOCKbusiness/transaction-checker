@@ -9,27 +9,33 @@ import ch.dfx.common.PayoutManagerUtils;
 /**
  * 
  */
-public class CacheAddressTransactionOutData {
+public class AddressTransactionInDTO {
   private final Integer blockNumber;
   private final Integer transactionNumber;
-  private final Integer voutNumber;
+  private final Integer vinNumber;
   private final Integer addressNumber;
 
-  private BigDecimal vout = null;
-  private String type = null;
+  private final Integer inBlockNumber;
+  private final Integer inTransactionNumber;
+
+  private BigDecimal vin = null;
 
   /**
    * 
    */
-  public CacheAddressTransactionOutData(
+  public AddressTransactionInDTO(
       @Nonnull Integer blockNumber,
       @Nonnull Integer transactionNumber,
-      @Nonnull Integer voutNumber,
-      @Nonnull Integer addressNumber) {
+      @Nonnull Integer vinNumber,
+      @Nonnull Integer addressNumber,
+      @Nonnull Integer inBlockNumber,
+      @Nonnull Integer inTransactionNumber) {
     this.blockNumber = blockNumber;
     this.transactionNumber = transactionNumber;
-    this.voutNumber = voutNumber;
+    this.vinNumber = vinNumber;
     this.addressNumber = addressNumber;
+    this.inBlockNumber = inBlockNumber;
+    this.inTransactionNumber = inTransactionNumber;
   }
 
   public Integer getBlockNumber() {
@@ -40,28 +46,28 @@ public class CacheAddressTransactionOutData {
     return transactionNumber;
   }
 
-  public Integer getVoutNumber() {
-    return voutNumber;
+  public Integer getVinNumber() {
+    return vinNumber;
   }
 
   public Integer getAddressNumber() {
     return addressNumber;
   }
 
-  public BigDecimal getVout() {
-    return vout;
+  public Integer getInBlockNumber() {
+    return inBlockNumber;
   }
 
-  public void setVout(BigDecimal vout) {
-    this.vout = vout;
+  public Integer getInTransactionNumber() {
+    return inTransactionNumber;
   }
 
-  public String getType() {
-    return type;
+  public BigDecimal getVin() {
+    return vin;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public void setVin(BigDecimal vin) {
+    this.vin = vin;
   }
 
   @Override

@@ -58,7 +58,7 @@ public class TransactionServerMain {
       PayoutManagerUtils.initLog4j("log4j2-transactionserver.xml");
 
       // ...
-      PayoutManagerUtils.loadConfigProperties(network, environment);
+      PayoutManagerUtils.loadConfigProperties(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));

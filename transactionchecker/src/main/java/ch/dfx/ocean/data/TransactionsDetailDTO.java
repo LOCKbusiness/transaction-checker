@@ -1,4 +1,4 @@
-package ch.dfx.lockbusiness.stakingbalances.ocean.data;
+package ch.dfx.ocean.data;
 
 import java.math.BigDecimal;
 
@@ -7,18 +7,18 @@ import ch.dfx.common.TransactionCheckerUtils;
 /**
  * 
  */
-public class TransactionsDetailData {
+public class TransactionsDetailDTO {
   private String id = null;
   private String hid = null;
   private String type = null;
   private String typeHex = null;
   private String txid = null;
 
-  private TransactionDetailBlockData block = null;
-  private TransactionDetailScriptData script = null;
+  private TransactionDetailBlockDTO block = null;
+  private TransactionDetailScriptDTO script = null;
 
-  private TransactionDetailVinData vin = null;
-  private TransactionDetailVoutData vout = null;
+  private TransactionDetailVinDTO vin = null;
+  private TransactionDetailVoutDTO vout = null;
 
   private BigDecimal value = null;
   private Long tokenId = null;
@@ -26,7 +26,7 @@ public class TransactionsDetailData {
   /**
    * 
    */
-  public TransactionsDetailData() {
+  public TransactionsDetailDTO() {
   }
 
   public String getId() {
@@ -69,35 +69,35 @@ public class TransactionsDetailData {
     this.txid = txid;
   }
 
-  public TransactionDetailBlockData getBlock() {
+  public TransactionDetailBlockDTO getBlock() {
     return block;
   }
 
-  public void setBlock(TransactionDetailBlockData block) {
+  public void setBlock(TransactionDetailBlockDTO block) {
     this.block = block;
   }
 
-  public TransactionDetailScriptData getScript() {
+  public TransactionDetailScriptDTO getScript() {
     return script;
   }
 
-  public void setScript(TransactionDetailScriptData script) {
+  public void setScript(TransactionDetailScriptDTO script) {
     this.script = script;
   }
 
-  public TransactionDetailVinData getVin() {
+  public TransactionDetailVinDTO getVin() {
     return vin;
   }
 
-  public void setVin(TransactionDetailVinData vin) {
+  public void setVin(TransactionDetailVinDTO vin) {
     this.vin = vin;
   }
 
-  public TransactionDetailVoutData getVout() {
+  public TransactionDetailVoutDTO getVout() {
     return vout;
   }
 
-  public void setVout(TransactionDetailVoutData vout) {
+  public void setVout(TransactionDetailVoutDTO vout) {
     this.vout = vout;
   }
 

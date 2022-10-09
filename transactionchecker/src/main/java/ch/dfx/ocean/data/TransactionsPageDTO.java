@@ -1,17 +1,17 @@
-package ch.dfx.lockbusiness.stakingbalances.ocean.data;
+package ch.dfx.ocean.data;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
  */
-public class TransactionsPageData {
+public class TransactionsPageDTO {
   private String next = null;
 
   /**
    * 
    */
-  public TransactionsPageData() {
+  public TransactionsPageDTO() {
   }
 
   public String getNext() {

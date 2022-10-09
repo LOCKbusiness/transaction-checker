@@ -1,18 +1,18 @@
-package ch.dfx.lockbusiness.stakingbalances.ocean.data;
+package ch.dfx.ocean.data;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
  */
-public class TransactionDetailVinData {
+public class TransactionDetailVinDTO {
   private String txid = null;
   private Long n = null;
 
   /**
    * 
    */
-  public TransactionDetailVinData() {
+  public TransactionDetailVinDTO() {
   }
 
   public String getTxid() {

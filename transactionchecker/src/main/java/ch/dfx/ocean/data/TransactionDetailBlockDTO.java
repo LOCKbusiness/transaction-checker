@@ -1,18 +1,18 @@
-package ch.dfx.lockbusiness.stakingbalances.ocean.data;
+package ch.dfx.ocean.data;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
  */
-public class TransactionDetailBlockData {
+public class TransactionDetailBlockDTO {
   private String hash = null;
   private Long height = null;
 
   /**
    * 
    */
-  public TransactionDetailBlockData() {
+  public TransactionDetailBlockDTO() {
   }
 
   public String getHash() {

@@ -1,4 +1,4 @@
-package ch.dfx.lockbusiness.stakingbalances.ocean;
+package ch.dfx.ocean;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -7,6 +7,9 @@ import java.io.FileWriter;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -21,12 +24,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.lockbusiness.stakingbalances.ocean.data.ListTransactionsData;
-import ch.dfx.lockbusiness.stakingbalances.ocean.data.TransactionDetailVinData;
-import ch.dfx.lockbusiness.stakingbalances.ocean.data.TransactionDetailVoutData;
-import ch.dfx.lockbusiness.stakingbalances.ocean.data.TransactionsData;
-import ch.dfx.lockbusiness.stakingbalances.ocean.data.TransactionsDetailData;
-import ch.dfx.lockbusiness.stakingbalances.ocean.data.TransactionsPageData;
+import ch.dfx.ocean.data.ListTransactionsDTO;
+import ch.dfx.ocean.data.TransactionDetailVinDTO;
+import ch.dfx.ocean.data.TransactionDetailVoutDTO;
+import ch.dfx.ocean.data.TransactionsDTO;
+import ch.dfx.ocean.data.TransactionsDetailDTO;
+import ch.dfx.ocean.data.TransactionsPageDTO;
 
 /**
  * 
@@ -35,7 +38,7 @@ public class OceanHandler {
   private static final Logger LOGGER = LogManager.getLogger(OceanHandler.class);
 
   // ...
-  private static final String OCEAN_URI = "https://ocean.defichain.com/v0/mainnet/address/";
+  private static final String OCEAN_MAIN_URI = "https://ocean.defichain.com/v0/";
   private static final int OCEAN_FETCH_SIZE = 200;
 
   // ...
@@ -47,7 +50,9 @@ public class OceanHandler {
   private final HttpClient httpClient;
   private final HttpGet httpGet;
 
+  private String network = null;
   private String address = null;
+
   private BigDecimal vinBalance = null;
   private BigDecimal voutBalance = null;
 
@@ -64,8 +69,14 @@ public class OceanHandler {
   /**
    * 
    */
-  public void setup(String address) {
+  public void setup(
+      @Nonnull String network,
+      @Nonnull String address) {
+    LOGGER.trace("setup() ...");
+
+    this.network = network;
     this.address = address;
+
     this.vinBalance = BigDecimal.ZERO;
     this.voutBalance = BigDecimal.ZERO;
   }
@@ -81,7 +92,9 @@ public class OceanHandler {
   /**
    * 
    */
-  public void openWriter(File outputFile) throws DfxException {
+  public void openWriter(@Nonnull File outputFile) throws DfxException {
+    LOGGER.trace("openWriter() ...");
+
     try {
       if (null == writer) {
         writer = new BufferedWriter(new FileWriter(outputFile));
@@ -96,6 +109,8 @@ public class OceanHandler {
    * 
    */
   public void closeWriter() {
+    LOGGER.trace("closeWriter() ...");
+
     try {
       if (null != writer) {
         writer.append("]}");
@@ -111,11 +126,13 @@ public class OceanHandler {
   /**
    * 
    */
-  public String webcall(String next) throws DfxException {
+  public String webcall(@Nullable String next) throws DfxException {
+    LOGGER.trace("webcall() ...");
+
     try {
       StringBuilder oceanURIBuilder = new StringBuilder()
-          .append(OCEAN_URI)
-          .append(address)
+          .append(OCEAN_MAIN_URI).append(network)
+          .append("/address/").append(address)
           .append("/transactions?size=").append(OCEAN_FETCH_SIZE);
 
       if (null != next) {
@@ -132,20 +149,20 @@ public class OceanHandler {
 
       String jsonResponse = EntityUtils.toString(httpEntity);
 
-      TransactionsData transactionsData = gson.fromJson(jsonResponse, TransactionsData.class);
+      TransactionsDTO transactionsDTO = gson.fromJson(jsonResponse, TransactionsDTO.class);
 
       // ...
       if (null != writer) {
-        writer.append(transactionsData.toString());
+        writer.append(transactionsDTO.toString());
 
-        if (null != transactionsData.getPage()) {
+        if (null != transactionsDTO.getPage()) {
           writer.append(",");
         }
 
         writer.append("\n");
       }
 
-      return analyzeTransactions(transactionsData);
+      return analyzeTransactions(transactionsDTO);
     } catch (Exception e) {
       throw new DfxException("error", e);
     }
@@ -154,15 +171,17 @@ public class OceanHandler {
   /**
    * 
    */
-  public ListTransactionsData readFromFile(File jsonFile) throws DfxException {
-    try {
-      ListTransactionsData transactionsDataList = gson.fromJson(new FileReader(jsonFile), ListTransactionsData.class);
+  public ListTransactionsDTO readFromFile(@Nonnull File jsonFile) throws DfxException {
+    LOGGER.trace("readFromFile() ...");
 
-      for (TransactionsData transactionsData : transactionsDataList.getDatalist()) {
-        analyzeTransactions(transactionsData);
+    try {
+      ListTransactionsDTO transactionsDTOList = gson.fromJson(new FileReader(jsonFile), ListTransactionsDTO.class);
+
+      for (TransactionsDTO transactionsDTO : transactionsDTOList.getDatalist()) {
+        analyzeTransactions(transactionsDTO);
       }
 
-      return transactionsDataList;
+      return transactionsDTOList;
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
@@ -173,18 +192,20 @@ public class OceanHandler {
   /**
    * 
    */
-  private String analyzeTransactions(TransactionsData transactionsData) throws DfxException {
-    List<TransactionsDetailData> transactionsDetailDataList = transactionsData.getData();
+  private String analyzeTransactions(@Nonnull TransactionsDTO transactionsDTO) throws DfxException {
+    LOGGER.trace("analyzeTransactions() ...");
 
-    for (TransactionsDetailData transactionsDetailData : transactionsDetailDataList) {
-      if (0 == transactionsDetailData.getTokenId()) {
-        TransactionDetailVinData transactionDetailVinData = transactionsDetailData.getVin();
-        TransactionDetailVoutData transactionDetailVoutData = transactionsDetailData.getVout();
+    List<TransactionsDetailDTO> transactionsDetailDTOList = transactionsDTO.getData();
 
-        if (null != transactionDetailVinData) {
-          vinBalance = vinBalance.add(transactionsDetailData.getValue());
-        } else if (null != transactionDetailVoutData) {
-          voutBalance = voutBalance.add(transactionsDetailData.getValue());
+    for (TransactionsDetailDTO transactionsDetailDTO : transactionsDetailDTOList) {
+      if (0 == transactionsDetailDTO.getTokenId()) {
+        TransactionDetailVinDTO transactionDetailVinDTO = transactionsDetailDTO.getVin();
+        TransactionDetailVoutDTO transactionDetailVoutDTO = transactionsDetailDTO.getVout();
+
+        if (null != transactionDetailVinDTO) {
+          vinBalance = vinBalance.add(transactionsDetailDTO.getValue());
+        } else if (null != transactionDetailVoutDTO) {
+          voutBalance = voutBalance.add(transactionsDetailDTO.getValue());
         } else {
           throw new DfxException("no vin and vout found...");
         }
@@ -195,10 +216,10 @@ public class OceanHandler {
 
     String next = null;
 
-    TransactionsPageData transactionPageData = transactionsData.getPage();
+    TransactionsPageDTO transactionPageDTO = transactionsDTO.getPage();
 
-    if (null != transactionPageData) {
-      next = transactionPageData.getNext();
+    if (null != transactionPageDTO) {
+      next = transactionPageDTO.getNext();
     }
 
     return next;

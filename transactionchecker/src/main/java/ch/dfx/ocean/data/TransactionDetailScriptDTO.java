@@ -1,18 +1,18 @@
-package ch.dfx.lockbusiness.stakingbalances.ocean.data;
+package ch.dfx.ocean.data;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
  */
-public class TransactionDetailScriptData {
+public class TransactionDetailScriptDTO {
   private String type = null;
   private String hex = null;
 
   /**
    * 
    */
-  public TransactionDetailScriptData() {
+  public TransactionDetailScriptDTO() {
   }
 
   public String getType() {

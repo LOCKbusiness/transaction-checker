@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -12,7 +12,7 @@ import ch.dfx.common.PayoutManagerUtils;
 public class BalanceDTO {
   private final int addressNumber;
   private int blockNumber = -1;
-  private int transactionCount = -1;
+  private int transactionCount = 0;
 
   private BigDecimal vout = BigDecimal.ZERO;
   private BigDecimal vin = BigDecimal.ZERO;
@@ -74,6 +74,6 @@ public class BalanceDTO {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

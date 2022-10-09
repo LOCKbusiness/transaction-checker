@@ -2,7 +2,7 @@ package ch.dfx.defichain.data.transaction;
 
 import java.math.BigDecimal;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -63,6 +63,6 @@ public class DefiTransactionVoutData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

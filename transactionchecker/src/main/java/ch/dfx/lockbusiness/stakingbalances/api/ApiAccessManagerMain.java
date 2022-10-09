@@ -5,7 +5,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -23,14 +23,14 @@ public class ApiAccessManagerMain {
 
       // ...
       String network = (isMainnet ? "mainnet" : "testnet");
-      String environment = PayoutManagerUtils.getEnvironment().name().toLowerCase();
+      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
       System.setProperty("logFilename", "apiaccessmanager-" + network + "-" + environment);
-      PayoutManagerUtils.initLog4j("log4j2-payoutmanager.xml");
+      TransactionCheckerUtils.initLog4j("log4j2-transactionchecker.xml");
 
       // ...
-      PayoutManagerUtils.loadConfigProperties(network, environment, args);
+      TransactionCheckerUtils.loadConfigProperties(network, environment, args);
 
       // ...
       ApiAccessManager accessManager = new ApiAccessManager();

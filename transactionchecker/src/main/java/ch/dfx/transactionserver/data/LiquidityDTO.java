@@ -1,6 +1,6 @@
 package ch.dfx.transactionserver.data;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -42,6 +42,6 @@ public class LiquidityDTO {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -61,7 +61,7 @@ public class DatabaseBuilder {
    * 
    */
   public DatabaseBuilder() {
-    this.dataProvider = PayoutManagerUtils.createDefiDataProvider();
+    this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
     this.newAddressMap = new LinkedHashMap<>();
   }

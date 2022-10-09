@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="warn" name="balance" packages="ch.dfx.transactionserver">
+<Configuration status="warn" name="balance" packages="ch.dfx.balance">
   <Appenders>
     <Console name="MyConsole" target="SYSTEM_OUT">
       <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p [%t] %c{1}: %m%n" />

@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -38,17 +38,17 @@ public class DefichainBalanceHandlerMain {
 
       // ...
       String network = (isMainnet ? "mainnet" : "testnet");
-      String environment = PayoutManagerUtils.getEnvironment().name().toLowerCase();
+      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
       System.setProperty("logFilename", "defichainbalancehandler-" + network + "-" + environment);
-      PayoutManagerUtils.initLog4j("log4j2-payoutmanager.xml");
+      TransactionCheckerUtils.initLog4j("log4j2-transactionchecker.xml");
 
       // ...
-      PayoutManagerUtils.loadConfigProperties(network, environment, args);
+      TransactionCheckerUtils.loadConfigProperties(network, environment, args);
 
       // ...
-      DefiDataProvider dataProvider = PayoutManagerUtils.createDefiDataProvider();
+      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
       Long blockCount = dataProvider.getBlockCount();
       LOGGER.debug("Block Count: " + blockCount);

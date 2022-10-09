@@ -3,7 +3,7 @@ package ch.dfx.balance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -23,14 +23,14 @@ public class TransactionAnalyzerMain {
 
       // ...
       String network = (isMainnet ? "mainnet" : "testnet");
-      String environment = PayoutManagerUtils.getEnvironment().name().toLowerCase();
+      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
       System.setProperty("logFilename", "balance-" + network + "-" + environment);
-      PayoutManagerUtils.initLog4j("log4j2-balance.xml");
+      TransactionCheckerUtils.initLog4j("log4j2-balance.xml");
 
       // ...
-      PayoutManagerUtils.loadConfigProperties(network, environment, args);
+      TransactionCheckerUtils.loadConfigProperties(network, environment, args);
 
       // ...
       TransactionAnalyzer transactionAnalyzer = new TransactionAnalyzer();

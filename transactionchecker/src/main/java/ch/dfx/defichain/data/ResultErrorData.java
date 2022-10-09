@@ -1,6 +1,6 @@
 package ch.dfx.defichain.data;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -34,6 +34,6 @@ public class ResultErrorData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

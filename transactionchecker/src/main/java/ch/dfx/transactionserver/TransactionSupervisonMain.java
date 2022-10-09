@@ -13,7 +13,7 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.block.DefiBlockData;
 import ch.dfx.defichain.provider.DefiDataProvider;
@@ -43,14 +43,14 @@ public class TransactionSupervisonMain {
 
       // ...
       String network = (isMainnet ? "mainnet" : "testnet");
-      String environment = PayoutManagerUtils.getEnvironment().name().toLowerCase();
+      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
       System.setProperty("logFilename", "transactionsupervision-" + network + "-" + environment);
-      PayoutManagerUtils.initLog4j("log4j2-transactionsupervision.xml");
+      TransactionCheckerUtils.initLog4j("log4j2-transactionsupervision.xml");
 
       // ...
-      PayoutManagerUtils.loadConfigProperties(network, environment, args);
+      TransactionCheckerUtils.loadConfigProperties(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));
@@ -71,7 +71,7 @@ public class TransactionSupervisonMain {
 
       if (-1 != startblock
           && -1 == endblock) {
-        DefiDataProvider dataProvider = PayoutManagerUtils.createDefiDataProvider();
+        DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
         endblock = dataProvider.getBlockCount();
       }
 
@@ -104,7 +104,7 @@ public class TransactionSupervisonMain {
       connection = H2DBManager.getInstance().openConnection();
       openStatements(connection);
 
-      DefiDataProvider dataProvider = PayoutManagerUtils.createDefiDataProvider();
+      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
       long blockNumber = startblock;
 

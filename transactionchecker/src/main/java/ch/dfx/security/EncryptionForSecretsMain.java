@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.errorhandling.DfxException;
 
 /**
@@ -28,7 +28,7 @@ public class EncryptionForSecretsMain {
     try {
       // ...
       System.setProperty("logFilename", "security");
-      PayoutManagerUtils.initLog4j("log4j2-security.xml");
+      TransactionCheckerUtils.initLog4j("log4j2-security.xml");
 
       // just for convienience ...
 //      encryptAllSecretProperties(args);

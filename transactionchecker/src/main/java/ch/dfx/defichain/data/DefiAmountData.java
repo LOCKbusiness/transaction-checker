@@ -7,7 +7,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.defichain.enumeration.DefiTokenEnum;
 
 /**
@@ -114,6 +114,6 @@ public class DefiAmountData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

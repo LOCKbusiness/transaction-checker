@@ -2,7 +2,7 @@ package ch.dfx.transactionserver.data;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -38,6 +38,6 @@ public class AddressDTO {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

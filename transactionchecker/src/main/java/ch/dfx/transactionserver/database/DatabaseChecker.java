@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.block.DefiBlockData;
 import ch.dfx.defichain.provider.DefiDataProvider;
@@ -31,7 +31,7 @@ public class DatabaseChecker {
    * 
    */
   public DatabaseChecker() {
-    this.dataProvider = PayoutManagerUtils.createDefiDataProvider();
+    this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
 
   /**

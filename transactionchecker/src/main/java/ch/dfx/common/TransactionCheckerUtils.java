@@ -40,8 +40,8 @@ import ch.dfx.security.EncryptionForSecrets;
 /**
  * 
  */
-public class PayoutManagerUtils {
-  private static final Logger LOGGER = LogManager.getLogger(PayoutManagerUtils.class);
+public class TransactionCheckerUtils {
+  private static final Logger LOGGER = LogManager.getLogger(TransactionCheckerUtils.class);
 
   private static final boolean DEBUG_SECRET = false;
 

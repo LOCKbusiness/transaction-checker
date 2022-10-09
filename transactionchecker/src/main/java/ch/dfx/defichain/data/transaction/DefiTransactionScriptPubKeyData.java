@@ -2,7 +2,7 @@ package ch.dfx.defichain.data.transaction;
 
 import java.util.List;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -45,6 +45,6 @@ public class DefiTransactionScriptPubKeyData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

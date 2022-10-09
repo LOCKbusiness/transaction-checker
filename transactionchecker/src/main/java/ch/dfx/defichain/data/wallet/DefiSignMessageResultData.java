@@ -1,6 +1,6 @@
 package ch.dfx.defichain.data.wallet;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.defichain.data.ResultDataA;
 
 /**
@@ -25,6 +25,6 @@ public class DefiSignMessageResultData extends ResultDataA {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

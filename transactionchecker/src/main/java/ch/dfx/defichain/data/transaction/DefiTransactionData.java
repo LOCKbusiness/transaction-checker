@@ -2,7 +2,7 @@ package ch.dfx.defichain.data.transaction;
 
 import java.util.List;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.defichain.data.ResultDataA;
 
 /**
@@ -55,6 +55,6 @@ public class DefiTransactionData extends ResultDataA {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

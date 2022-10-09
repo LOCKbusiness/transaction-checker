@@ -2,7 +2,7 @@ package ch.dfx.lockbusiness.stakingbalances.ocean.data;
 
 import java.util.List;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -26,6 +26,6 @@ public class ListTransactionsData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

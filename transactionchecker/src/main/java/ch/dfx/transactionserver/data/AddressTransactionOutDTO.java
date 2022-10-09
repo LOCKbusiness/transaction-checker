@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -66,6 +66,6 @@ public class AddressTransactionOutDTO {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

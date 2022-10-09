@@ -1,6 +1,6 @@
 package ch.dfx.lockbusiness.stakingbalances.api;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -44,6 +44,6 @@ public class ApiLoginData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

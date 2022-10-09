@@ -1,6 +1,6 @@
 package ch.dfx.defichain.data.transaction;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -33,6 +33,6 @@ public class DefiTransactionVinScriptSigData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

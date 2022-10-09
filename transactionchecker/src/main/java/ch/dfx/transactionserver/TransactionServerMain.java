@@ -10,7 +10,7 @@ import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 import org.h2.tools.Server;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -44,21 +44,21 @@ public class TransactionServerMain {
 
       // ...
       String network = (isMainnet ? "mainnet" : "testnet");
-      String environment = PayoutManagerUtils.getEnvironment().name().toLowerCase();
+      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
       LOCK_FILE = new File(
           "transactionserver"
               + "." + network
-              + "." + PayoutManagerUtils.getEnvironment().name().toLowerCase()
+              + "." + TransactionCheckerUtils.getEnvironment().name().toLowerCase()
               + ".lock");
 
       // ...
       System.setProperty("logFilename", "transactionserver-" + network + "-" + environment);
-      PayoutManagerUtils.initLog4j("log4j2-transactionserver.xml");
+      TransactionCheckerUtils.initLog4j("log4j2-transactionserver.xml");
 
       // ...
-      PayoutManagerUtils.loadConfigProperties(network, environment, args);
+      TransactionCheckerUtils.loadConfigProperties(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));

@@ -12,7 +12,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * ============================================================================
@@ -29,11 +29,11 @@ public class CompareTransactionsMain {
    * 
    */
   public static void main(String[] args) throws Exception {
-    String environment = PayoutManagerUtils.getEnvironment().name().toLowerCase();
+    String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
     // ...
     System.setProperty("logFilename", "comparetransaction-" + environment);
-    PayoutManagerUtils.initLog4j("log4j2-payoutmanager.xml");
+    TransactionCheckerUtils.initLog4j("log4j2-transactionchecker.xml");
 
     // ...
     String checkPath = "logs";

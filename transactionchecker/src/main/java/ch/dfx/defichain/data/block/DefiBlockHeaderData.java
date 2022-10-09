@@ -1,6 +1,6 @@
 package ch.dfx.defichain.data.block;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -60,6 +60,6 @@ public class DefiBlockHeaderData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

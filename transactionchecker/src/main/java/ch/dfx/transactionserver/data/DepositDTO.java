@@ -2,7 +2,7 @@ package ch.dfx.transactionserver.data;
 
 import javax.annotation.Nullable;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -72,6 +72,6 @@ public class DepositDTO {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

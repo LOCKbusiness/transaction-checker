@@ -1,6 +1,6 @@
 package ch.dfx.defichain.data.wallet;
 
-import ch.dfx.common.PayoutManagerUtils;
+import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
@@ -33,6 +33,6 @@ public class DefiLoadWalletData {
 
   @Override
   public String toString() {
-    return PayoutManagerUtils.toJson(this);
+    return TransactionCheckerUtils.toJson(this);
   }
 }

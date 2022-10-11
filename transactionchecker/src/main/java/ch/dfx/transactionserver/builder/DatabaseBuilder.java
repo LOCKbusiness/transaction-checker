@@ -1,4 +1,4 @@
-package ch.dfx.transactionserver.database;
+package ch.dfx.transactionserver.builder;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -32,6 +32,8 @@ import ch.dfx.transactionserver.data.AddressTransactionInDTO;
 import ch.dfx.transactionserver.data.AddressTransactionOutDTO;
 import ch.dfx.transactionserver.data.BlockDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
+import ch.dfx.transactionserver.database.DatabaseUtils;
+import ch.dfx.transactionserver.database.H2DBManager;
 
 /**
  * 
@@ -69,8 +71,8 @@ public class DatabaseBuilder {
   /**
    * 
    */
-  public void execute() throws DfxException {
-    LOGGER.trace("execute() ...");
+  public void build() throws DfxException {
+    LOGGER.trace("build() ...");
 
     Long blockCount = dataProvider.getBlockCount();
     LOGGER.debug("Block Count: " + blockCount);
@@ -115,7 +117,7 @@ public class DatabaseBuilder {
       throw e;
     } catch (Exception e) {
       DatabaseUtils.rollback(connection);
-      throw new DfxException("execute", e);
+      throw new DfxException("build", e);
     } finally {
       H2DBManager.getInstance().closeConnection(connection);
     }

@@ -1,4 +1,4 @@
-package ch.dfx.balance;
+package ch.dfx.transactionserver.builder;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -13,10 +13,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.BalanceDTO;
-import ch.dfx.transactionserver.data.DepositBalanceDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
+import ch.dfx.transactionserver.data.LiquidityDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -24,10 +23,8 @@ import ch.dfx.transactionserver.database.H2DBManager;
 /**
  * 
  */
-public class Balance {
-  private static final Logger LOGGER = LogManager.getLogger(Balance.class);
-
-  private PreparedStatement depositSelectStatement = null;
+public class BalanceBuilder {
+  private static final Logger LOGGER = LogManager.getLogger(BalanceBuilder.class);
 
   private PreparedStatement balanceSelectStatement = null;
 
@@ -42,47 +39,29 @@ public class Balance {
   /**
    * 
    */
-  public Balance() {
+  public BalanceBuilder() {
     this.databaseHelper = new DatabaseHelper();
   }
 
   /**
    * 
    */
-  public List<DepositBalanceDTO> run() throws DfxException {
-    LOGGER.trace("run() ...");
+  public List<BalanceDTO> build() throws DfxException {
+    LOGGER.trace("build() ...");
 
     Connection connection = null;
 
     try {
-      List<DepositBalanceDTO> balanceDTOList = new ArrayList<>();
-
       connection = H2DBManager.getInstance().openConnection();
 
-      openStatements(connection);
       databaseHelper.openStatements(connection);
+      openStatements(connection);
 
-      List<DepositDTO> depositDTOList = getDepositDTOList();
+      List<BalanceDTO> balanceDTOList = calcLiquidityBalance(connection);
+      balanceDTOList.addAll(calcDepositBalance(connection));
 
-      for (DepositDTO depositDTO : depositDTOList) {
-        AddressDTO customerAddressDTO = databaseHelper.getAddressDTO(depositDTO.getCustomerAddressNumber());
-        AddressDTO depositAddressDTO = databaseHelper.getAddressDTO(depositDTO.getDepositAddressNumber());
-
-        if (null != customerAddressDTO) {
-          depositDTO.setCustomerAddress(customerAddressDTO.getAddress());
-        }
-
-        if (null != depositAddressDTO) {
-          depositDTO.setDepositAddress(depositAddressDTO.getAddress());
-        }
-
-        BalanceDTO balanceDTO = calcBalance(connection, depositDTO.getDepositAddressNumber());
-
-        balanceDTOList.add(new DepositBalanceDTO(depositDTO, balanceDTO));
-      }
-
-      databaseHelper.closeStatements();
       closeStatements();
+      databaseHelper.closeStatements();
 
       connection.commit();
 
@@ -92,10 +71,50 @@ public class Balance {
       throw e;
     } catch (Exception e) {
       DatabaseUtils.rollback(connection);
-      throw new DfxException("run", e);
+      throw new DfxException("build", e);
     } finally {
       H2DBManager.getInstance().closeConnection(connection);
     }
+  }
+
+  /**
+   * 
+   */
+  private List<BalanceDTO> calcLiquidityBalance(@Nonnull Connection connection) throws DfxException {
+    LOGGER.debug("calcLiquidityBalance() ...");
+
+    List<BalanceDTO> balanceDTOList = new ArrayList<>();
+
+    List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
+
+    for (LiquidityDTO liquidityDTO : liquidityDTOList) {
+      BalanceDTO balanceDTO = calcBalance(connection, liquidityDTO.getAddressNumber());
+      balanceDTO.setLiquidityDTO(liquidityDTO);
+
+      balanceDTOList.add(balanceDTO);
+    }
+
+    return balanceDTOList;
+  }
+
+  /**
+   * 
+   */
+  private List<BalanceDTO> calcDepositBalance(@Nonnull Connection connection) throws DfxException {
+    LOGGER.debug("calcDepositBalance() ...");
+
+    List<BalanceDTO> balanceDTOList = new ArrayList<>();
+
+    List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
+
+    for (DepositDTO depositDTO : depositDTOList) {
+      BalanceDTO balanceDTO = calcBalance(connection, depositDTO.getDepositAddressNumber());
+      balanceDTO.setDepositDTO(depositDTO);
+
+      balanceDTOList.add(balanceDTO);
+    }
+
+    return balanceDTOList;
   }
 
   /**
@@ -148,12 +167,8 @@ public class Balance {
     LOGGER.trace("openStatements() ...");
 
     try {
-      // Deposit ...
-      String depositSelectSql = "SELECT * FROM public.deposit";
-      depositSelectStatement = connection.prepareStatement(depositSelectSql);
-
       // Balance ...
-      String balanceSelectSql = "SELECT * FROM public.balance WHERE address_number =?";
+      String balanceSelectSql = "SELECT * FROM public.balance WHERE address_number=?";
       balanceSelectStatement = connection.prepareStatement(balanceSelectSql);
 
       String balanceInsertSql = "INSERT INTO public.balance (address_number, block_number, transaction_count, vout, vin) VALUES(?, ?, ?, ?, ?)";
@@ -181,8 +196,6 @@ public class Balance {
     LOGGER.trace("closeStatements() ...");
 
     try {
-      depositSelectStatement.close();
-
       balanceSelectStatement.close();
 
       balanceInsertStatement.close();
@@ -192,36 +205,6 @@ public class Balance {
       vinSelectStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private List<DepositDTO> getDepositDTOList() throws DfxException {
-    LOGGER.trace("getDepositAddressNumberList() ...");
-
-    try {
-      List<DepositDTO> depositDTOList = new ArrayList<>();
-
-      ResultSet resultSet = depositSelectStatement.executeQuery();
-
-      while (resultSet.next()) {
-        DepositDTO depositDTO = new DepositDTO();
-
-        depositDTO.setCustomerAddressNumber(resultSet.getInt("customer_address_number"));
-        depositDTO.setDepositAddressNumber(resultSet.getInt("deposit_address_number"));
-        depositDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
-        depositDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
-
-        depositDTOList.add(depositDTO);
-      }
-
-      resultSet.close();
-
-      return depositDTOList;
-    } catch (Exception e) {
-      throw new DfxException("getDepositDTOList", e);
     }
   }
 
@@ -320,6 +303,10 @@ public class Balance {
     LOGGER.trace("insertBalance() ...");
 
     try {
+      LOGGER.debug(
+          "INSERT: Address / Block: "
+              + balanceDTO.getAddressNumber() + " / " + balanceDTO.getBlockNumber());
+
       balanceInsertStatement.setInt(1, balanceDTO.getAddressNumber());
       balanceInsertStatement.setInt(2, balanceDTO.getBlockNumber());
       balanceInsertStatement.setInt(3, balanceDTO.getTransactionCount());
@@ -338,6 +325,10 @@ public class Balance {
     LOGGER.trace("updateBalance() ...");
 
     try {
+      LOGGER.debug(
+          "UPDATE: Address / Block: "
+              + balanceDTO.getAddressNumber() + " / " + balanceDTO.getBlockNumber());
+
       balanceUpdateStatement.setInt(1, balanceDTO.getBlockNumber());
       balanceUpdateStatement.setInt(2, balanceDTO.getTransactionCount());
       balanceUpdateStatement.setBigDecimal(3, balanceDTO.getVout());

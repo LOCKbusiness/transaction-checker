@@ -10,6 +10,8 @@ public class LiquidityDTO {
   private int startBlockNumber = -1;
   private int startTransactionNumber = -1;
 
+  private String address = null;
+
   /**
    * 
    */
@@ -38,6 +40,14 @@ public class LiquidityDTO {
 
   public void setStartTransactionNumber(int startTransactionNumber) {
     this.startTransactionNumber = startTransactionNumber;
+  }
+
+  public String getAddress() {
+    return address;
+  }
+
+  public void setAddress(String address) {
+    this.address = address;
   }
 
   @Override

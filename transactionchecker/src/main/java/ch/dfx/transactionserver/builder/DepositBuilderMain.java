@@ -1,4 +1,4 @@
-package ch.dfx.balance;
+package ch.dfx.transactionserver.builder;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,8 +8,8 @@ import ch.dfx.common.TransactionCheckerUtils;
 /**
  * 
  */
-public class TransactionAnalyzerMain {
-  private static final Logger LOGGER = LogManager.getLogger(TransactionAnalyzerMain.class);
+public class DepositBuilderMain {
+  private static final Logger LOGGER = LogManager.getLogger(DepositBuilderMain.class);
 
   /**
    * 
@@ -33,8 +33,8 @@ public class TransactionAnalyzerMain {
       TransactionCheckerUtils.loadConfigProperties(network, environment, args);
 
       // ...
-      TransactionAnalyzer transactionAnalyzer = new TransactionAnalyzer();
-      transactionAnalyzer.run();
+      DepositBuilder depositBuilder = new DepositBuilder();
+      depositBuilder.build();
     } catch (Exception e) {
       LOGGER.error("Fatal Error" + e);
       System.exit(-1);

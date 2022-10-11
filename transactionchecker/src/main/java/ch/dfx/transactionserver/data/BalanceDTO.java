@@ -3,6 +3,7 @@ package ch.dfx.transactionserver.data;
 import java.math.BigDecimal;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
@@ -16,6 +17,9 @@ public class BalanceDTO {
 
   private BigDecimal vout = BigDecimal.ZERO;
   private BigDecimal vin = BigDecimal.ZERO;
+
+  private LiquidityDTO liquidityDTO = null;
+  private DepositDTO depositDTO = null;
 
   /**
    * 
@@ -70,6 +74,22 @@ public class BalanceDTO {
 
   public void addVin(@Nonnull BigDecimal vin) {
     this.vin = this.vin.add(vin);
+  }
+
+  public @Nullable LiquidityDTO getLiquidityDTO() {
+    return liquidityDTO;
+  }
+
+  public void setLiquidityDTO(@Nullable LiquidityDTO liquidityDTO) {
+    this.liquidityDTO = liquidityDTO;
+  }
+
+  public @Nullable DepositDTO getDepositDTO() {
+    return depositDTO;
+  }
+
+  public void setDepositDTO(@Nullable DepositDTO depositDTO) {
+    this.depositDTO = depositDTO;
   }
 
   @Override

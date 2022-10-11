@@ -1,4 +1,4 @@
-package ch.dfx.balance;
+package ch.dfx.message;
 
 import javax.annotation.Nonnull;
 
@@ -13,15 +13,15 @@ import ch.dfx.defichain.provider.DefiDataProvider;
 /**
  * 
  */
-public class MessageChecker {
-  private static final Logger LOGGER = LogManager.getLogger(MessageChecker.class);
+public class MessageHandler {
+  private static final Logger LOGGER = LogManager.getLogger(MessageHandler.class);
 
   private final DefiDataProvider dataProvider;
 
   /**
    * 
    */
-  public MessageChecker(@Nonnull DefiDataProvider dataProvider) {
+  public MessageHandler(@Nonnull DefiDataProvider dataProvider) {
     this.dataProvider = dataProvider;
   }
 

@@ -14,8 +14,8 @@ import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
-import ch.dfx.transactionserver.database.DatabaseBuilder;
-import ch.dfx.transactionserver.database.DatabaseBuilderRunnable;
+import ch.dfx.transactionserver.builder.DatabaseBuilder;
+import ch.dfx.transactionserver.builder.DatabaseBuilderRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 
@@ -104,7 +104,7 @@ public class TransactionServerMain {
       startServer();
 
       DatabaseBuilder databaseBuilder = new DatabaseBuilder();
-      databaseBuilder.execute();
+      databaseBuilder.build();
 
       shutdown();
     }

@@ -7,9 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.text.DecimalFormat;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -104,8 +102,7 @@ public class TransactionCheckerUtils {
    */
   public static void loadConfigProperties(
       @Nonnull String network,
-      @Nonnull String environment,
-      @Nonnull String[] args) throws DfxException {
+      @Nonnull String environment) throws DfxException {
     LOGGER.trace("loadConfigProperties() ...");
 
     // ...
@@ -143,7 +140,7 @@ public class TransactionCheckerUtils {
 
     // Secret Properties ...
     EncryptionForSecrets encryptionForSecrets = new EncryptionForSecrets();
-    String secretEncodingPassword = getPassword(args);
+    String secretEncodingPassword = System.getenv("DFX_SEP");
 
     if (null != secretEncodingPassword) {
       LOGGER.trace("configFileName: '" + configEnvSecretEncFile.getAbsolutePath() + "'...");
@@ -159,25 +156,6 @@ public class TransactionCheckerUtils {
     }
 
     ConfigPropertyProvider.setup(properties);
-  }
-
-  /**
-   * 
-   */
-  private static @Nullable String getPassword(@Nonnull String[] args) {
-    String password = null;
-
-    Optional<String> optionalPasswordArgument = Stream.of(args).filter(a -> a.startsWith("--password=")).findFirst();
-
-    if (optionalPasswordArgument.isPresent()) {
-      String[] argumentSplitArray = optionalPasswordArgument.get().split("=");
-
-      if (2 == argumentSplitArray.length) {
-        password = argumentSplitArray[1];
-      }
-    }
-
-    return password;
   }
 
   /**

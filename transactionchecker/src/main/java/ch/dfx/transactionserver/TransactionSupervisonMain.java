@@ -50,7 +50,7 @@ public class TransactionSupervisonMain {
       TransactionCheckerUtils.initLog4j("log4j2-transactionsupervision.xml");
 
       // ...
-      TransactionCheckerUtils.loadConfigProperties(network, environment, args);
+      TransactionCheckerUtils.loadConfigProperties(network, environment);
 
       // ...
       LOGGER.debug("=".repeat(80));

@@ -29,6 +29,7 @@ public class SchedulerProvider {
   private final ScheduledExecutorService executorService;
 
   private final Map<UUID, ScheduledFuture<?>> scheduledFutureMap;
+  private final Map<UUID, SchedulerProviderRunnable> schedulerProviderRunnableMap;
 
   /**
    *
@@ -39,6 +40,23 @@ public class SchedulerProvider {
     }
 
     return instance;
+  }
+
+  /**
+   * 
+   */
+  public synchronized void exit(int exitCode) {
+    LOGGER.trace("exit() ...");
+
+    try {
+      Set<UUID> executorUuidSet = new HashSet<>(scheduledFutureMap.keySet());
+
+      for (UUID uuid : executorUuidSet) {
+        remove(uuid);
+      }
+    } finally {
+      System.exit(exitCode);
+    }
   }
 
   /**
@@ -60,7 +78,7 @@ public class SchedulerProvider {
    *
    */
   public @Nullable UUID add(
-      @Nonnull Runnable runnable,
+      @Nonnull SchedulerProviderRunnable runnable,
       int initialDelay,
       long period,
       @Nonnull TimeUnit timeUnit) {
@@ -74,10 +92,11 @@ public class SchedulerProvider {
           executorService.scheduleAtFixedRate(runnable, initialDelay, period, timeUnit);
 
       scheduledFutureMap.put(uuid, scheduledFuture);
+      schedulerProviderRunnableMap.put(uuid, runnable);
     }
 
-    LOGGER.debug("Runnable: " + runnable.getClass().getSimpleName());
-    LOGGER.debug("UUID:     " + uuid);
+    LOGGER.debug("Add Runnable: " + runnable.getClass().getSimpleName());
+    LOGGER.debug("Add UUID:     " + uuid);
 
     return uuid;
   }
@@ -89,9 +108,25 @@ public class SchedulerProvider {
     LOGGER.trace("remove(): UUID = '" + uuid + "' ...");
 
     ScheduledFuture<?> scheduledFuture = scheduledFutureMap.remove(uuid);
+    SchedulerProviderRunnable runnable = schedulerProviderRunnableMap.remove(uuid);
 
-    if (null != scheduledFuture) {
+    if (null != scheduledFuture
+        && null != runnable) {
       scheduledFuture.cancel(false);
+
+      int timeout = 0;
+
+      while (runnable.isProcesing()
+          && 5 > timeout++) {
+        try {
+          Thread.sleep(timeout * 1000);
+        } catch (Exception e) {
+          // Intentionally left blank ...
+        }
+      }
+
+      LOGGER.debug("Remove Runnable: " + runnable.getClass().getSimpleName());
+      LOGGER.debug("Remove UUID:     " + uuid);
     }
   }
 
@@ -101,5 +136,6 @@ public class SchedulerProvider {
   private SchedulerProvider() {
     this.executorService = Executors.newScheduledThreadPool(MAX_EXECUTOR);
     this.scheduledFutureMap = new HashMap<>();
+    this.schedulerProviderRunnableMap = new HashMap<>();
   }
 }

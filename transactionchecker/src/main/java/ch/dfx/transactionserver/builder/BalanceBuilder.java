@@ -303,12 +303,15 @@ public class BalanceBuilder {
     LOGGER.trace("insertBalance() ...");
 
     try {
-      LOGGER.debug(
-          "INSERT: Address / Block: "
-              + balanceDTO.getAddressNumber() + " / " + balanceDTO.getBlockNumber());
+      int addressNumber = balanceDTO.getAddressNumber();
+      int blockNumber = balanceDTO.getBlockNumber();
 
-      balanceInsertStatement.setInt(1, balanceDTO.getAddressNumber());
-      balanceInsertStatement.setInt(2, balanceDTO.getBlockNumber());
+      LOGGER.debug(
+          "[INSERT] Address / Block: "
+              + addressNumber + " / " + blockNumber);
+
+      balanceInsertStatement.setInt(1, addressNumber);
+      balanceInsertStatement.setInt(2, blockNumber);
       balanceInsertStatement.setInt(3, balanceDTO.getTransactionCount());
       balanceInsertStatement.setBigDecimal(4, balanceDTO.getVout());
       balanceInsertStatement.setBigDecimal(5, balanceDTO.getVin());
@@ -325,15 +328,18 @@ public class BalanceBuilder {
     LOGGER.trace("updateBalance() ...");
 
     try {
-      LOGGER.debug(
-          "UPDATE: Address / Block: "
-              + balanceDTO.getAddressNumber() + " / " + balanceDTO.getBlockNumber());
+      int addressNumber = balanceDTO.getAddressNumber();
+      int blockNumber = balanceDTO.getBlockNumber();
 
-      balanceUpdateStatement.setInt(1, balanceDTO.getBlockNumber());
+      LOGGER.debug(
+          "[UPDATE] Address / Block: "
+              + addressNumber + " / " + blockNumber);
+
+      balanceUpdateStatement.setInt(1, blockNumber);
       balanceUpdateStatement.setInt(2, balanceDTO.getTransactionCount());
       balanceUpdateStatement.setBigDecimal(3, balanceDTO.getVout());
       balanceUpdateStatement.setBigDecimal(4, balanceDTO.getVin());
-      balanceUpdateStatement.setInt(5, balanceDTO.getAddressNumber());
+      balanceUpdateStatement.setInt(5, addressNumber);
       balanceUpdateStatement.execute();
     } catch (Exception e) {
       throw new DfxException("updateBalance", e);

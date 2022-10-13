@@ -1,14 +1,14 @@
 package ch.dfx.defichain.provider;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.defichain.data.DefiAmountData;
-import ch.dfx.defichain.data.DefiListAccountHistoryData;
 import ch.dfx.defichain.data.block.DefiBlockData;
-import ch.dfx.defichain.data.block.DefiBlockHeaderData;
+import ch.dfx.defichain.data.custom.DefiCustomData;
+import ch.dfx.defichain.data.masternode.DefiMasternodeData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletData;
 
@@ -44,23 +44,23 @@ public interface DefiDataProvider {
 
   String getBlockHash(@Nonnull Long blockCount) throws DfxException;
 
-  DefiBlockHeaderData getBlockHeader(@Nonnull String blockHash) throws DfxException;
-
   DefiBlockData getBlock(@Nonnull String blockHash) throws DfxException;
 
-  List<DefiAmountData> getAccount(@Nonnull String address) throws DfxException;
-
-  List<DefiListAccountHistoryData> listAccountHistory(
-      @Nonnull String wallet,
-      @Nonnull String address,
-      @Nonnull Long blockHeight,
-      @Nonnull Long limit) throws DfxException;
+  DefiTransactionData getTransaction(@Nonnull String transactionId) throws DfxException;
 
   DefiTransactionData getTransaction(
       @Nonnull String transactionId,
       @Nonnull String blockHash) throws DfxException;
 
-  DefiTransactionData getTransaction(@Nonnull String transactionId) throws DfxException;
-
   DefiTransactionData decodeRawTransaction(@Nonnull String hexString) throws DfxException;
+
+  Boolean isAppliedCustomTransaction(
+      @Nonnull String transactionId,
+      @Nonnull Long blockCount) throws DfxException;
+
+  DefiCustomData decodeCustomTransaction(@Nonnull String hexString) throws DfxException;
+
+  Map<String, DefiMasternodeData> getMasternode(
+      @Nonnull String wallet,
+      @Nonnull String transactionId) throws DfxException;
 }

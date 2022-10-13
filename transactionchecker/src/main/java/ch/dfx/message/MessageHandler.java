@@ -32,9 +32,14 @@ public class MessageHandler {
     LOGGER.trace("signMessage() ...");
 
     String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+    String password = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_PASSWORD);
     String signAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_SIGN_ADDRESS);
 
-    return dataProvider.signMessage(wallet, signAddress, message);
+    dataProvider.walletPassphrase(wallet, password, 10);
+    String signedMessage = dataProvider.signMessage(wallet, signAddress, message);
+    dataProvider.walletLock(wallet);
+
+    return signedMessage;
   }
 
   /**

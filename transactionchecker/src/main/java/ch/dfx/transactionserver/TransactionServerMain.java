@@ -15,7 +15,7 @@ import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
-import ch.dfx.transactionserver.builder.DatabaseBuilderRunnable;
+import ch.dfx.transactionserver.database.DatabaseRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 
@@ -58,7 +58,7 @@ public class TransactionServerMain {
       TransactionCheckerUtils.initLog4j("log4j2-transactionserver.xml");
 
       // ...
-      TransactionCheckerUtils.loadConfigProperties(network, environment, args);
+      TransactionCheckerUtils.loadConfigProperties(network, environment);
 
       // ...
       LOGGER.debug("=".repeat(80));
@@ -128,8 +128,11 @@ public class TransactionServerMain {
       startServer();
 
       // ...
-      DatabaseBuilderRunnable databaseBuilderRunnable = new DatabaseBuilderRunnable(LOCK_FILE, isServerOnly);
-      SchedulerProvider.getInstance().add(databaseBuilderRunnable, 5, 30, TimeUnit.SECONDS);
+      DatabaseRunnable databaseRunnable = new DatabaseRunnable(LOCK_FILE, isServerOnly);
+      SchedulerProvider.getInstance().add(databaseRunnable, 5, 30, TimeUnit.SECONDS);
+
+//      ManagerRunnable managerRunnable = new ManagerRunnable(isServerOnly);
+//      SchedulerProvider.getInstance().add(managerRunnable, 15, 60, TimeUnit.SECONDS);
     }
   }
 

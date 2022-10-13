@@ -67,10 +67,10 @@ public class OceanHandlerMain {
 
     // ...
     System.setProperty("logFilename", "ocean-" + network + "-" + environment);
-    TransactionCheckerUtils.initLog4j("log4j2-ocean.xml");
+    TransactionCheckerUtils.initLog4j("log4j2.xml");
 
     // ...
-    TransactionCheckerUtils.loadConfigProperties(network, environment, args);
+    TransactionCheckerUtils.loadConfigProperties(network, environment);
 
     // ...
     List<DepositDTO> depositDTOList = getDepositDTOList();

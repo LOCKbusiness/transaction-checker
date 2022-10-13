@@ -335,13 +335,17 @@ public class DepositBuilder {
     LOGGER.trace("insertDeposit() ...");
 
     try {
-      LOGGER.debug(
-          "INSERT: Liquidity Address / Deposit Address / Customer Address: "
-              + depositDTO.getLiquidityAddressNumber() + " / " + depositDTO.getDepositAddressNumber() + " / " + depositDTO.getCustomerAddressNumber());
+      int liquidityAddressNumber = depositDTO.getLiquidityAddressNumber();
+      int depositAddressNumber = depositDTO.getDepositAddressNumber();
+      int customerAddressNumber = depositDTO.getCustomerAddressNumber();
 
-      depositInsertStatement.setInt(1, depositDTO.getLiquidityAddressNumber());
-      depositInsertStatement.setInt(2, depositDTO.getDepositAddressNumber());
-      depositInsertStatement.setInt(3, depositDTO.getCustomerAddressNumber());
+      LOGGER.debug(
+          "[INSERT] Liquidity Address / Deposit Address / Customer Address: "
+              + liquidityAddressNumber + " / " + depositAddressNumber + " / " + customerAddressNumber);
+
+      depositInsertStatement.setInt(1, liquidityAddressNumber);
+      depositInsertStatement.setInt(2, depositAddressNumber);
+      depositInsertStatement.setInt(3, customerAddressNumber);
       depositInsertStatement.setInt(4, depositDTO.getStartBlockNumber());
       depositInsertStatement.setInt(5, depositDTO.getStartTransactionNumber());
       depositInsertStatement.execute();

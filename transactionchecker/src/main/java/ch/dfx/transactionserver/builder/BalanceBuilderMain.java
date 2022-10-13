@@ -46,11 +46,11 @@ public class BalanceBuilderMain {
       String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
-      System.setProperty("logFilename", "balance-" + network + "-" + environment);
-      TransactionCheckerUtils.initLog4j("log4j2-balance.xml");
+      System.setProperty("logFilename", "balancebuilder-" + network + "-" + environment);
+      TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
-      TransactionCheckerUtils.loadConfigProperties(network, environment, args);
+      TransactionCheckerUtils.loadConfigProperties(network, environment);
 
       // ...
       LOGGER.debug("=".repeat(80));

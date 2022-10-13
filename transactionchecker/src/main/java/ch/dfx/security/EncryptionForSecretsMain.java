@@ -1,6 +1,7 @@
 package ch.dfx.security;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,10 +29,10 @@ public class EncryptionForSecretsMain {
     try {
       // ...
       System.setProperty("logFilename", "security");
-      TransactionCheckerUtils.initLog4j("log4j2-security.xml");
+      TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // just for convienience ...
-//      encryptAllSecretProperties(args);
+      encryptAllSecretProperties(args);
 
       // ...
       boolean isEncryption = Stream.of(args).anyMatch(a -> "--encrypt".equals(a));
@@ -73,17 +74,18 @@ public class EncryptionForSecretsMain {
       LOGGER.error("usage: --password=[PASSWORD]");
     } else {
       // ...
-      String rootDirectory = "M:\\Development\\workspace\\lockbusiness\\transaction-checker\\transactionchecker\\config\\properties";
+      File testnetRootDirectory = Paths.get("", "config", "properties", "testnet").toFile();
+      File mainnetRootDirectory = Paths.get("", "config", "properties", "mainnet").toFile();
 
       List<File> fileList = new ArrayList<>();
 
-      fileList.add(new File(rootDirectory, "testnet\\config.secret.properties"));
-      fileList.add(new File(rootDirectory, "testnet\\macos\\config.secret.properties"));
-      fileList.add(new File(rootDirectory, "testnet\\windows\\config.secret.properties"));
+      fileList.add(new File(testnetRootDirectory, "config.secret.properties"));
+      fileList.add(new File(testnetRootDirectory, "macos\\config.secret.properties"));
+      fileList.add(new File(testnetRootDirectory, "windows\\config.secret.properties"));
 
-      fileList.add(new File(rootDirectory, "mainnet\\config.secret.properties"));
-      fileList.add(new File(rootDirectory, "mainnet\\macos\\config.secret.properties"));
-      fileList.add(new File(rootDirectory, "mainnet\\windows\\config.secret.properties"));
+      fileList.add(new File(mainnetRootDirectory, "config.secret.properties"));
+      fileList.add(new File(mainnetRootDirectory, "macos\\config.secret.properties"));
+      fileList.add(new File(mainnetRootDirectory, "windows\\config.secret.properties"));
 
       String password = optionalPasswordArgument.get().split("=")[1];
 

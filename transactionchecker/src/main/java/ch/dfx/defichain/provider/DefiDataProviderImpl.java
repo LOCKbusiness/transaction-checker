@@ -24,37 +24,30 @@ import org.apache.logging.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
-import ch.dfx.defichain.data.DefiAccountResultData;
 import ch.dfx.defichain.data.DefiAmountData;
-import ch.dfx.defichain.data.DefiListAccountHistoryData;
-import ch.dfx.defichain.data.DefiListAccountHistoryResultData;
 import ch.dfx.defichain.data.ResultDataA;
 import ch.dfx.defichain.data.ResultErrorData;
-import ch.dfx.defichain.data.block.DefiBlockCountResultData;
+import ch.dfx.defichain.data.basic.DefiBooleanResultData;
+import ch.dfx.defichain.data.basic.DefiLongResultData;
+import ch.dfx.defichain.data.basic.DefiStringListResultData;
+import ch.dfx.defichain.data.basic.DefiStringResultData;
 import ch.dfx.defichain.data.block.DefiBlockData;
-import ch.dfx.defichain.data.block.DefiBlockHashResultData;
-import ch.dfx.defichain.data.block.DefiBlockHeaderData;
-import ch.dfx.defichain.data.block.DefiBlockHeaderResultData;
 import ch.dfx.defichain.data.block.DefiBlockResultData;
-import ch.dfx.defichain.data.transaction.DefiRawTransactionResultData;
+import ch.dfx.defichain.data.custom.DefiCustomData;
+import ch.dfx.defichain.data.custom.DefiCustomResultData;
+import ch.dfx.defichain.data.custom.DefiCustomResultWrapperData;
+import ch.dfx.defichain.data.masternode.DefiMasternodeData;
+import ch.dfx.defichain.data.masternode.DefiMasternodeResultData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionResultData;
-import ch.dfx.defichain.data.wallet.DefiListWalletsResultData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletResultData;
-import ch.dfx.defichain.data.wallet.DefiLockWalletResultData;
-import ch.dfx.defichain.data.wallet.DefiPassphraseWalletResultData;
-import ch.dfx.defichain.data.wallet.DefiSignMessageResultData;
-import ch.dfx.defichain.data.wallet.DefiUnloadWalletResultData;
-import ch.dfx.defichain.data.wallet.DefiVerifyMessageResultData;
+import ch.dfx.defichain.provider.typeadapter.AmountTypeAdapter;
+import ch.dfx.defichain.provider.typeadapter.CustomTypeAdapter;
 
 /**
  * 
@@ -77,12 +70,9 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     this.httpPost = httpPost;
 
     this.gson = new GsonBuilder()
-        .registerTypeAdapter(DefiAmountData.class, new JsonDeserializer<DefiAmountData>() {
-          @Override
-          public DefiAmountData deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            return new DefiAmountData(json.getAsString());
-          }
-        }).create();
+        .registerTypeAdapter(DefiAmountData.class, new AmountTypeAdapter())
+        .registerTypeAdapter(DefiCustomResultWrapperData.class, new CustomTypeAdapter())
+        .create();
   }
 
   /**
@@ -106,7 +96,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
 
     List<Object> paramList = Arrays.asList(wallet);
 
-    return getData("unloadwallet", paramList, DefiUnloadWalletResultData.class).getResult();
+    return getData("unloadwallet", paramList, DefiStringResultData.class).getResult();
   }
 
   /**
@@ -115,7 +105,10 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   @Override
   public List<String> listWallets() throws DfxException {
     LOGGER.trace("listWallets() ...");
-    return getData("listwallets", DefiListWalletsResultData.class).getResult();
+
+    List<Object> paramList = new ArrayList<>();
+
+    return getData("listwallets", paramList, DefiStringListResultData.class).getResult();
   }
 
   /**
@@ -130,7 +123,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
 
     List<Object> paramList = Arrays.asList(passphrase, timeInSeconds);
 
-    return getData(wallet, "walletpassphrase", paramList, DefiPassphraseWalletResultData.class).getResult();
+    return getData(wallet, "walletpassphrase", paramList, DefiStringResultData.class).getResult();
   }
 
   /**
@@ -140,7 +133,9 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   public String walletLock(@Nonnull String wallet) throws DfxException {
     LOGGER.trace("walletLock(): wallet=" + wallet + " ...");
 
-    return getData(wallet, "walletlock", DefiLockWalletResultData.class).getResult();
+    List<Object> paramList = new ArrayList<>();
+
+    return getData(wallet, "walletlock", paramList, DefiStringResultData.class).getResult();
   }
 
   /**
@@ -153,7 +148,9 @@ public class DefiDataProviderImpl implements DefiDataProvider {
       @Nonnull String message) throws DfxException {
     LOGGER.trace("signMessage(): wallet=" + wallet + " ...");
 
-    return getData(wallet, "signMessage", DefiSignMessageResultData.class).getResult();
+    List<Object> paramList = Arrays.asList(address, message);
+
+    return getData(wallet, "signmessage", paramList, DefiStringResultData.class).getResult();
   }
 
   /**
@@ -166,7 +163,9 @@ public class DefiDataProviderImpl implements DefiDataProvider {
       @Nonnull String message) throws DfxException {
     LOGGER.trace("verifyMessage() ...");
 
-    return getData("verifymessage", DefiVerifyMessageResultData.class).getResult();
+    List<Object> paramList = Arrays.asList(address, signature, message);
+
+    return getData("verifymessage", paramList, DefiBooleanResultData.class).getResult();
   }
 
   /**
@@ -175,7 +174,10 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   @Override
   public Long getBlockCount() throws DfxException {
     LOGGER.trace("getBlockCount() ...");
-    return getData("getblockcount", DefiBlockCountResultData.class).getResult();
+
+    List<Object> paramList = new ArrayList<>();
+
+    return getData("getblockcount", paramList, DefiLongResultData.class).getResult();
   }
 
   /**
@@ -187,19 +189,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
 
     List<Object> paramList = Arrays.asList(blockCount);
 
-    return getData("getblockhash", paramList, DefiBlockHashResultData.class).getResult();
-  }
-
-  /**
-   * 
-   */
-  @Override
-  public DefiBlockHeaderData getBlockHeader(@Nonnull String blockHash) throws DfxException {
-    LOGGER.trace("getBlockHeader(): blockHash=" + blockHash + " ...");
-
-    List<Object> paramList = Arrays.asList(blockHash);
-
-    return getData("getblockheader", paramList, DefiBlockHeaderResultData.class).getResult();
+    return getData("getblockhash", paramList, DefiStringResultData.class).getResult();
   }
 
   /**
@@ -218,33 +208,12 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    * 
    */
   @Override
-  public List<DefiAmountData> getAccount(@Nonnull String address) throws DfxException {
-    LOGGER.trace("getAccount(): address=" + address + " ...");
+  public DefiTransactionData getTransaction(@Nonnull String transactionId) throws DfxException {
+    LOGGER.trace("getTransaction(): transactionId=" + transactionId + " ...");
 
-    List<Object> paramList = Arrays.asList(address);
+    List<Object> paramList = Arrays.asList(transactionId, true);
 
-    return getData("getaccount", paramList, DefiAccountResultData.class).getResult();
-  }
-
-  /**
-   * 
-   */
-  @Override
-  public List<DefiListAccountHistoryData> listAccountHistory(
-      @Nonnull String wallet,
-      @Nonnull String address,
-      @Nonnull Long blockHeight,
-      @Nonnull Long limit) throws DfxException {
-    LOGGER.trace("getAccount(): address=" + address + " ...");
-
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("maxBlockHeight", blockHeight);
-    paramMap.put("no_rewards", true);
-    paramMap.put("limit", limit);
-
-    List<Object> paramList = Arrays.asList(address, paramMap);
-
-    return getData(wallet, "listaccounthistory", paramList, DefiListAccountHistoryResultData.class).getResult();
+    return getData("getrawtransaction", paramList, DefiTransactionResultData.class).getResult();
   }
 
   /**
@@ -265,21 +234,6 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    * 
    */
   @Override
-  public DefiTransactionData getTransaction(@Nonnull String transactionId) throws DfxException {
-    LOGGER.trace("getTransaction(): transactionId=" + transactionId + " ...");
-
-    List<Object> paramList = Arrays.asList(transactionId);
-
-    String hexString =
-        getData("getrawtransaction", paramList, DefiRawTransactionResultData.class).getResult();
-
-    return decodeRawTransaction(hexString);
-  }
-
-  /**
-   * 
-   */
-  @Override
   public DefiTransactionData decodeRawTransaction(@Nonnull String hexString) throws DfxException {
     LOGGER.trace("decodeRawTransaction() ...");
 
@@ -291,20 +245,69 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   /**
    * 
    */
-  private <T extends ResultDataA> T getData(
-      @Nonnull String methodName,
-      @Nonnull Class<T> returnType) throws DfxException {
-    return getData(methodName, new ArrayList<>(), returnType);
+  @Override
+  public Boolean isAppliedCustomTransaction(
+      @Nonnull String transactionId,
+      @Nonnull Long blockCount) throws DfxException {
+    LOGGER.trace("getTransaction(): transactionId=" + transactionId + " / blockCount=" + blockCount + " ...");
+
+    List<Object> paramList = Arrays.asList(transactionId, blockCount);
+
+    return getData("isappliedcustomtx", paramList, DefiBooleanResultData.class).getResult();
   }
 
   /**
    * 
    */
-  private <T extends ResultDataA> T getData(
+  @Override
+  public DefiCustomData decodeCustomTransaction(@Nonnull String hexString) throws DfxException {
+    LOGGER.trace("decodeCustomTransaction() ...");
+
+    DefiCustomData customData = null;
+
+    List<Object> paramList = Arrays.asList(hexString);
+
+    Object wrapperObject = getData("decodecustomtx", paramList, DefiCustomResultWrapperData.class);
+
+    if (wrapperObject instanceof DefiCustomResultData) {
+      customData = ((DefiCustomResultData) wrapperObject).getResult();
+    } else {
+      customData = new DefiCustomData();
+      customData.setMessage(((DefiStringResultData) wrapperObject).getResult());
+    }
+
+    return customData;
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public Map<String, DefiMasternodeData> getMasternode(
       @Nonnull String wallet,
-      @Nonnull String methodName,
-      @Nonnull Class<T> returnType) throws DfxException {
-    return getData(wallet, methodName, new ArrayList<>(), returnType);
+      @Nonnull String transactionId) throws DfxException {
+    LOGGER.trace("getMasternode(): transactionId=" + transactionId + " ...");
+
+    Map<String, DefiMasternodeData> masternodeMap = null;
+
+    List<Object> paramList = Arrays.asList(transactionId);
+
+    DefiMasternodeResultData masternodeResultData =
+        getDataWithErrorExpected(wallet, "getmasternode", paramList, DefiMasternodeResultData.class);
+
+    ResultErrorData errorData = masternodeResultData.getError();
+
+    if (null != errorData) {
+      masternodeMap = new HashMap<>();
+      DefiMasternodeData masternodeData = new DefiMasternodeData();
+      masternodeData.setMessage(errorData.getMessage());
+
+      masternodeMap.put("message", masternodeData);
+    } else {
+      masternodeMap = masternodeResultData.getResult();
+    }
+
+    return masternodeMap;
   }
 
   /**
@@ -320,12 +323,33 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   /**
    * 
    */
+  private <T extends ResultDataA> T getDataWithErrorExpected(
+      @Nonnull String methodName,
+      @Nonnull List<Object> paramList,
+      @Nonnull Class<T> returnType) throws DfxException {
+    return getData(null, methodName, paramList, Type.class.cast(returnType), true);
+  }
+
+  /**
+   * 
+   */
   private <T extends ResultDataA> T getData(
       @Nonnull String wallet,
       @Nonnull String methodName,
       @Nonnull List<Object> paramList,
       @Nonnull Class<T> returnType) throws DfxException {
     return getData(wallet, methodName, paramList, Type.class.cast(returnType));
+  }
+
+  /**
+   * 
+   */
+  private <T extends ResultDataA> T getDataWithErrorExpected(
+      @Nonnull String wallet,
+      @Nonnull String methodName,
+      @Nonnull List<Object> paramList,
+      @Nonnull Class<T> returnType) throws DfxException {
+    return getData(wallet, methodName, paramList, Type.class.cast(returnType), true);
   }
 
   /**
@@ -346,6 +370,18 @@ public class DefiDataProviderImpl implements DefiDataProvider {
       @Nonnull String methodName,
       @Nonnull List<Object> paramList,
       @Nonnull Type returnType) throws DfxException {
+    return getData(wallet, methodName, paramList, returnType, null);
+  }
+
+  /**
+   * 
+   */
+  private synchronized <T extends ResultDataA> T getData(
+      @Nullable String wallet,
+      @Nonnull String methodName,
+      @Nonnull List<Object> paramList,
+      @Nonnull Type returnType,
+      @Nullable Boolean errorExpected) throws DfxException {
     try {
       // ...
       setHttpURI(wallet);
@@ -376,7 +412,11 @@ public class DefiDataProviderImpl implements DefiDataProvider {
       LOGGER.trace(trim(jsonResponse));
 
       T resultData = gson.fromJson(jsonResponse, returnType);
-      handleError(resultData);
+
+      if (null == errorExpected
+          || !errorExpected.booleanValue()) {
+        handleError(resultData);
+      }
 
       return resultData;
     } catch (DfxException e) {

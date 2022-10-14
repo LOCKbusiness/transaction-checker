@@ -10,10 +10,10 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.api.data.OpenTransactionDTO;
 import ch.dfx.api.data.OpenTransactionDTOList;
+import ch.dfx.api.data.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.OpenTransactionMasternodeDTO;
-import ch.dfx.api.enumeration.OpenTransactionStateEnum;
+import ch.dfx.api.data.OpenTransactionVerifiedDTO;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
@@ -51,8 +51,8 @@ public class ApiOpenTransactionHandler {
   /**
    * 
    */
-  public OpenTransactionDTOList selectOpenTransactions() throws DfxException {
-    LOGGER.debug("execute() ...");
+  public OpenTransactionDTOList getOpenTransactionList() throws DfxException {
+    LOGGER.debug("getOpenTransactionList() ...");
 
     // ...
     transactionMasternodeDTOList.clear();
@@ -60,19 +60,19 @@ public class ApiOpenTransactionHandler {
     // ...
     OpenTransactionDTOList openTransactionDTOList = apiAccessHandler.getOpenTransactionDTOList();
 
-    for (OpenTransactionDTO openTransactionDTO : openTransactionDTOList) {
-      String rawTransaction = openTransactionDTO.getRawTransaction();
-
-      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(rawTransaction);
-      DefiCustomData customData = dataProvider.decodeCustomTransaction(rawTransaction);
-
-      if ("CreateMasternode".equals(customData.getType())) {
-        handleMasternodeTransactions(transactionData, customData);
-        openTransactionDTO.setState(OpenTransactionStateEnum.WORK);
-      } else {
-        openTransactionDTO.setState(OpenTransactionStateEnum.INVALID);
-      }
-    }
+//    for (OpenTransactionDTO openTransactionDTO : openTransactionDTOList) {
+//      String rawTransaction = openTransactionDTO.getRawTransaction();
+//
+//      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(rawTransaction);
+//      DefiCustomData customData = dataProvider.decodeCustomTransaction(rawTransaction);
+//
+//      if ("CreateMasternode".equals(customData.getType())) {
+//        handleMasternodeTransactions(transactionData, customData);
+//        openTransactionDTO.setState(OpenTransactionStateEnum.WORK);
+//      } else {
+//        openTransactionDTO.setState(OpenTransactionStateEnum.INVALID);
+//      }
+//    }
 
     return openTransactionDTOList;
   }
@@ -80,9 +80,30 @@ public class ApiOpenTransactionHandler {
   /**
    * 
    */
-  public void writeOpenTransactionDTOList(@Nonnull OpenTransactionDTOList openTransactionDTOList) throws DfxException {
-    apiAccessHandler.postOpenTransactionDTOList(openTransactionDTOList);
+  public void sendOpenTransactionVerified(
+      @Nonnull String openTransactionId,
+      @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) throws DfxException {
+    LOGGER.trace("sendOpenTransactionVerified() ...");
+    apiAccessHandler.sendOpenTransactionVerified(openTransactionId, openTransactionVerifiedDTO);
   }
+
+  /**
+   * 
+   */
+  public void sendOpenTransactionInvalidated(
+      @Nonnull String openTransactionId,
+      @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) throws DfxException {
+    LOGGER.trace("sendOpenTransactionVerified() ...");
+    apiAccessHandler.sendOpenTransactionInvalidated(openTransactionId, openTransactionInvalidatedDTO);
+  }
+
+//  /**
+//   * 
+//   */
+//  public void writeOpenTransactionDTOList(@Nonnull OpenTransactionDTOList openTransactionDTOList) throws DfxException {
+//    LOGGER.trace("writeOpenTransactionDTOList() ...");
+//    apiAccessHandler.postOpenTransactionDTOList(openTransactionDTOList);
+//  }
 
   /**
    * 

@@ -130,7 +130,7 @@ public class TransactionCheckerUtils {
     }
 
     // Global Properties ...
-    LOGGER.trace("configFileName: '" + configFile + "'...");
+    LOGGER.trace("configFileName: '" + configFile.getAbsolutePath() + "'...");
 
     try (FileInputStream inputStream = new FileInputStream(configFile)) {
       properties.load(inputStream);
@@ -149,7 +149,7 @@ public class TransactionCheckerUtils {
       properties.putAll(configEnvSecretProperties);
 
       // Global Secret Properties ...
-      LOGGER.trace("configFileName: '" + configSecretEncFile + "'...");
+      LOGGER.trace("configFileName: '" + configSecretEncFile.getAbsolutePath() + "'...");
 
       Properties configSecretProperties = encryptionForSecrets.decrypt(configSecretEncFile, secretEncodingPassword);
       properties.putAll(configSecretProperties);

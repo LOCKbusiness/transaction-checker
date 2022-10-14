@@ -69,7 +69,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeMasternode() ...");
 
     try {
-      MasternodeManager masternodeManager = new MasternodeManager();
+      OpenTransactionManager masternodeManager = new OpenTransactionManager();
       masternodeManager.execute();
     } catch (DfxException e) {
       masterNodeErrorCounter++;

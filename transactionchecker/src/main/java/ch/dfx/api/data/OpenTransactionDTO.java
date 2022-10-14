@@ -7,11 +7,13 @@ import ch.dfx.common.TransactionCheckerUtils;
  * 
  */
 public class OpenTransactionDTO {
+  private String id = null;
+
+  private OpenTransactionRawTxDTO rawTx = null;
+  private String issuerSignature = null;
+
+  // ...
   private String fileName = null;
-
-  private String rawTransaction = null;
-  private String signature = null;
-
   private OpenTransactionStateEnum state = null;
 
   /**
@@ -20,28 +22,36 @@ public class OpenTransactionDTO {
   public OpenTransactionDTO() {
   }
 
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public OpenTransactionRawTxDTO getRawTx() {
+    return rawTx;
+  }
+
+  public void setRawTx(OpenTransactionRawTxDTO rawTx) {
+    this.rawTx = rawTx;
+  }
+
+  public String getIssuerSignature() {
+    return issuerSignature;
+  }
+
+  public void setIssuerSignature(String issuerSignature) {
+    this.issuerSignature = issuerSignature;
+  }
+
   public String getFileName() {
     return fileName;
   }
 
   public void setFileName(String fileName) {
     this.fileName = fileName;
-  }
-
-  public String getRawTransaction() {
-    return rawTransaction;
-  }
-
-  public void setRawTransaction(String rawTransaction) {
-    this.rawTransaction = rawTransaction;
-  }
-
-  public String getSignature() {
-    return signature;
-  }
-
-  public void setSignature(String signature) {
-    this.signature = signature;
   }
 
   public OpenTransactionStateEnum getState() {

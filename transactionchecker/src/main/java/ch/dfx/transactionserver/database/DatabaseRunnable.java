@@ -58,7 +58,6 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
 
     if (!isServerOnly) {
       doRun();
-      databaseErrorCounter++;
 
       checkErrorCounter();
     }

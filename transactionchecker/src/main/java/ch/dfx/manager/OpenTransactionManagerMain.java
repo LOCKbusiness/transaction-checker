@@ -6,12 +6,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.defichain.handler.DefiWalletHandler;
+import ch.dfx.defichain.provider.DefiDataProvider;
 
 /**
  * 
  */
-public class MasternodeManagerMain {
-  private static final Logger LOGGER = LogManager.getLogger(MasternodeManagerMain.class);
+public class OpenTransactionManagerMain {
+  private static final Logger LOGGER = LogManager.getLogger(OpenTransactionManagerMain.class);
 
   /**
    * 
@@ -33,7 +37,14 @@ public class MasternodeManagerMain {
       TransactionCheckerUtils.loadConfigProperties(network, environment);
 
       // ...
-      MasternodeManager masternodeManager = new MasternodeManager();
+      String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+
+      DefiWalletHandler walletHandler = new DefiWalletHandler(dataProvider);
+      walletHandler.loadWallet(wallet);
+
+      // ...
+      OpenTransactionManager masternodeManager = new OpenTransactionManager();
       masternodeManager.execute();
     } catch (Exception e) {
       LOGGER.error("Fatal Error ...", e);

@@ -45,7 +45,7 @@ public class HttpServerMain {
               .setListenerPort(PORT)
               .setServerInfo("My HTTP Testserver")
               .registerHandler("/v1/auth/sign-in", new SignInHandler())
-              .registerHandler("/v1/transactions/open", new TransactionHandler())
+              .registerHandler("/v1/transaction/open", new TransactionHandler())
               .create();
 
       httpServer.start();

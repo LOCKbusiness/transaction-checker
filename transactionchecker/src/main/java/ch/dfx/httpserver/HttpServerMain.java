@@ -8,8 +8,9 @@ import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 
 import ch.dfx.common.TransactionCheckerUtils;
-import ch.dfx.httpserver.handler.SignInHandler;
-import ch.dfx.httpserver.handler.TransactionHandler;
+import ch.dfx.httpserver.handler.APISignInHandler;
+import ch.dfx.httpserver.handler.APITransactionRequestHandler;
+import ch.dfx.httpserver.handler.APIWithdrawalRequestHandler;
 
 /**
  * Only for testing purposes, simulate API Calls ...
@@ -44,8 +45,9 @@ public class HttpServerMain {
           ServerBootstrap.bootstrap()
               .setListenerPort(PORT)
               .setServerInfo("My HTTP Testserver")
-              .registerHandler("/v1/auth/sign-in", new SignInHandler())
-              .registerHandler("/v1/transaction/open", new TransactionHandler())
+              .registerHandler("/v1/auth/sign-in", new APISignInHandler())
+              .registerHandler("/v1/withdrawal/*", new APIWithdrawalRequestHandler())
+              .registerHandler("/v1/transaction/*", new APITransactionRequestHandler())
               .create();
 
       httpServer.start();

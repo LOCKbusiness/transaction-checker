@@ -1,0 +1,316 @@
+package ch.dfx.manager;
+
+import java.io.File;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import ch.dfx.api.data.join.WithdrawalTransactionDTO;
+import ch.dfx.api.data.join.WithdrawalTransactionStateEnum;
+import ch.dfx.api.data.transaction.OpenTransactionDTO;
+import ch.dfx.api.data.transaction.OpenTransactionRawTxDTO;
+import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
+import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.errorhandling.DfxException;
+import ch.dfx.defichain.data.transaction.DefiTransactionData;
+import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
+import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
+import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.manager.data.SignedMessageCheckDTOList;
+
+/**
+ * 
+ */
+public class SignedMessageChecker {
+  private static final Logger LOGGER = LogManager.getLogger(SignedMessageChecker.class);
+
+  // ...
+  private static final String SIGN_MESSAGE_FORMAT = "Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}";
+
+  private static final Pattern SIGN_MESSAGE_PATTERN =
+      Pattern.compile("^Withdraw_(\\d+\\.?\\d*)_(.+)_from_(.+)_staking_id_(\\d+)_withdrawal_id_(\\d+)$", Pattern.DOTALL);
+  private static final Matcher SIGN_MESSAGE_MATCHER = SIGN_MESSAGE_PATTERN.matcher("");
+
+  // ...
+  private static final String FILE_NAME = "message-verification.json";
+  private static final Path JSON_SIGNATURE_CHECK_FILE = Path.of("", "data", "javascript", FILE_NAME);
+
+  // ...
+  private final DefiDataProvider dataProvider;
+
+  // ...
+  private String checkSignatureMessage = null;
+
+  /**
+   * 
+   */
+  public SignedMessageChecker() {
+    this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+  }
+
+  public @Nullable String getCheckSignatureMessage() {
+    return checkSignatureMessage;
+  }
+
+  /**
+   * 
+   */
+  public boolean checkSignMessageFormat(@Nonnull WithdrawalTransactionDTO withdrawalTransactionDTO) {
+    LOGGER.trace("checkSignMessageFormat() ...");
+
+    checkSignatureMessage = null;
+
+    // ...
+    try {
+      OpenTransactionDTO openTransactionDTO = withdrawalTransactionDTO.getOpenTransactionDTO();
+
+      OpenTransactionRawTxDTO openTransactionRawTxDTO = openTransactionDTO.getRawTx();
+
+      if (null == openTransactionRawTxDTO) {
+        setCheckSignatureMessage(withdrawalTransactionDTO, "no raw transaction found");
+        return false;
+      }
+
+      // ...
+      String hex = openTransactionRawTxDTO.getHex();
+
+      if (StringUtils.isEmpty(hex)) {
+        setCheckSignatureMessage(withdrawalTransactionDTO, "no raw transaction found");
+        return false;
+      }
+
+      // ...
+      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
+//    DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+
+      // ...
+      String openTransactionId = openTransactionDTO.getId();
+      String rawTransactionId = transactionData.getTxid();
+
+      if (!Objects.equals(openTransactionId, rawTransactionId)) {
+        setCheckSignatureMessage(withdrawalTransactionDTO, "transaction id not matches");
+        return false;
+      }
+
+      // ...
+      PendingWithdrawalDTO pendingWithdrawalDTO = withdrawalTransactionDTO.getPendingWithdrawalDTO();
+
+      String signMessage = pendingWithdrawalDTO.getSignMessage();
+
+      SIGN_MESSAGE_MATCHER.reset(signMessage);
+
+      if (!SIGN_MESSAGE_MATCHER.matches()) {
+        setCheckSignatureMessage(withdrawalTransactionDTO, "unknown sign message format");
+        return false;
+      }
+
+      String signMessageAmount = SIGN_MESSAGE_MATCHER.group(1);
+      String signMessageAsset = SIGN_MESSAGE_MATCHER.group(2);
+      String signMessageAddress = SIGN_MESSAGE_MATCHER.group(3);
+      String signMessageStakingId = SIGN_MESSAGE_MATCHER.group(4);
+
+      // ...
+      BigDecimal transactionOutAmount = getTransactionOutAmount(transactionData, signMessageAddress);
+
+      boolean isSignMessageAmountValid =
+          checkSignMessageAmount(new BigDecimal(signMessageAmount), pendingWithdrawalDTO.getAmount(), transactionOutAmount);
+
+      if (!isSignMessageAmountValid) {
+        setCheckSignatureMessage(withdrawalTransactionDTO, "invalid amount");
+        return false;
+      }
+
+      // ...
+      String checkSignMessage = SIGN_MESSAGE_FORMAT;
+
+      checkSignMessage = checkSignMessage.replace("${amount}", signMessageAmount);
+      checkSignMessage = checkSignMessage.replace("${asset}", signMessageAsset);
+      checkSignMessage = checkSignMessage.replace("${address}", signMessageAddress);
+      checkSignMessage = checkSignMessage.replace("${stakingId}", signMessageStakingId);
+      checkSignMessage = checkSignMessage.replace("${withdrawalId}", withdrawalTransactionDTO.getId().toString());
+
+      LOGGER.debug(signMessage);
+      LOGGER.debug(checkSignMessage);
+
+      if (!signMessage.equals(checkSignMessage)) {
+        setCheckSignatureMessage(withdrawalTransactionDTO, "sign message mismatch");
+        return false;
+      }
+
+      withdrawalTransactionDTO.setAddress(signMessageAddress);
+      withdrawalTransactionDTO.setState(WithdrawalTransactionStateEnum.SIGN_MESSAGE_FORMAT_CHECKED);
+
+      return true;
+    } catch (Exception e) {
+      LOGGER.error("checkSignMessageFormat", e);
+      setCheckSignatureMessage(withdrawalTransactionDTO, e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * 
+   */
+  private void setCheckSignatureMessage(
+      @Nonnull WithdrawalTransactionDTO withdrawalTransactionDTO,
+      @Nonnull String messageInfo) {
+    LOGGER.trace("setCheckSignatureMessage() ...");
+
+    String message = "[checkSignature] ID: " + withdrawalTransactionDTO.getId() + " - " + messageInfo;
+
+    withdrawalTransactionDTO.setCheckMessage(message);
+    withdrawalTransactionDTO.setState(WithdrawalTransactionStateEnum.INVALID);
+  }
+
+  /**
+   * 
+   */
+  private boolean checkSignMessageAmount(
+      @Nonnull BigDecimal signMessageAmount,
+      @Nonnull BigDecimal pendingWithdrawalAmount,
+      @Nonnull BigDecimal transactionOutAmount) {
+    LOGGER.trace("checkSignMessageAmount() ...");
+
+    boolean isValid = false;
+
+    if (signMessageAmount.equals(pendingWithdrawalAmount)) {
+      if (signMessageAmount.setScale(8, RoundingMode.DOWN).equals(transactionOutAmount.setScale(8, RoundingMode.DOWN))) {
+        isValid = true;
+      }
+    }
+
+    return isValid;
+  }
+
+  /**
+   * 
+   */
+  private BigDecimal getTransactionOutAmount(
+      @Nonnull DefiTransactionData transactionData,
+      @Nonnull String address) {
+    LOGGER.trace("getTransactionOutAmount() ...");
+
+    BigDecimal outAmount = BigDecimal.ZERO;
+
+    List<DefiTransactionVoutData> transactionVoutDataList = transactionData.getVout();
+
+    for (DefiTransactionVoutData transactionVoutData : transactionVoutDataList) {
+      DefiTransactionScriptPubKeyData transactionScriptPubKeyData = transactionVoutData.getScriptPubKey();
+
+      if (null != transactionScriptPubKeyData) {
+        List<String> addressList = transactionScriptPubKeyData.getAddresses();
+
+        if (addressList.contains(address)) {
+          outAmount = outAmount.add(transactionVoutData.getValue());
+        }
+      }
+    }
+
+    return outAmount;
+  }
+
+  /**
+   * 
+   */
+  public SignedMessageCheckDTOList checkSignature(@Nonnull SignedMessageCheckDTOList uncheckedSignedMessageCheckDTOList) {
+    LOGGER.trace("checkSignature() ...");
+
+    try {
+      writeSignatureCheckFile(uncheckedSignedMessageCheckDTOList);
+
+      int exitCode = executeSignatureCheck();
+
+      if (0 == exitCode) {
+        return readSignatureCheckFile();
+      }
+    } catch (Exception e) {
+      LOGGER.error("checkSignature", e);
+    }
+
+    return new SignedMessageCheckDTOList();
+  }
+
+  /**
+   * 
+   */
+  private SignedMessageCheckDTOList readSignatureCheckFile() throws DfxException {
+    LOGGER.trace("readSignatureCheckFile() ...");
+    return TransactionCheckerUtils.fromJson(JSON_SIGNATURE_CHECK_FILE.toFile(), SignedMessageCheckDTOList.class);
+  }
+
+  /**
+   * 
+   */
+  private void writeSignatureCheckFile(@Nonnull SignedMessageCheckDTOList signedMessageCheckDTOList) throws DfxException {
+    LOGGER.trace("writeCheckFile() ...");
+
+    try {
+      if (!signedMessageCheckDTOList.isEmpty()) {
+        Files.createDirectories(JSON_SIGNATURE_CHECK_FILE.getParent());
+        Files.writeString(JSON_SIGNATURE_CHECK_FILE, signedMessageCheckDTOList.toString());
+      }
+    } catch (Exception e) {
+      throw new DfxException("writeCheckFile", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private int executeSignatureCheck() throws DfxException {
+    LOGGER.trace("executeSignatureCheck() ...");
+
+    try {
+      ProcessBuilder processBuilder = new ProcessBuilder();
+
+      File javascriptExecutable;
+
+      if (TransactionCheckerUtils.isWindows()) {
+        javascriptExecutable = new File("javascript", "app-win.exe");
+      } else {
+        javascriptExecutable = new File("javascript", "app-macos");
+      }
+
+      File jsonSignatureCheckFilePath = JSON_SIGNATURE_CHECK_FILE.getParent().toFile();
+
+      LOGGER.debug("JavaScript Executable: " + javascriptExecutable.getAbsolutePath());
+      LOGGER.debug("JSON Check File Path: " + jsonSignatureCheckFilePath.getAbsolutePath());
+
+      processBuilder.command(javascriptExecutable.getAbsolutePath(), jsonSignatureCheckFilePath.getAbsolutePath());
+
+      processBuilder.redirectErrorStream(true);
+      processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+
+      Process process = processBuilder.start();
+
+      InputStream inputStream = process.getInputStream();
+      String inputlog = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+      LOGGER.debug("sub process input log: " + inputlog);
+
+      // ...
+      int exitCode = process.waitFor();
+      LOGGER.debug("Exit Code: " + exitCode);
+
+      inputStream.close();
+
+      return exitCode;
+    } catch (Exception e) {
+      throw new DfxException("executeSignatureCheck", e);
+    }
+  }
+}

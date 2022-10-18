@@ -1,6 +1,7 @@
-package ch.dfx.api.data;
+package ch.dfx.api.data.transaction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
@@ -14,6 +15,13 @@ public class OpenTransactionDTOList extends ArrayList<OpenTransactionDTO> {
    * 
    */
   public OpenTransactionDTOList() {
+  }
+
+  /**
+   * 
+   */
+  public OpenTransactionDTOList(Collection<OpenTransactionDTO> collection) {
+    super(collection);
   }
 
   @Override

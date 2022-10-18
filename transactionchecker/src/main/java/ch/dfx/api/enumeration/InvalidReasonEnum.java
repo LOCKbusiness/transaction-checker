@@ -6,7 +6,8 @@ import javax.annotation.Nonnull;
  * 
  */
 public enum InvalidReasonEnum {
-  INVALID_ISSUER_SIGNATURE("Invalid Issure Signature");
+  INVALID_ISSUER_SIGNATURE("Invalid Issure Signature"),
+  INVALID_WITHDRAW_SIGNATURE("Invalid Withdraw Signature");
 
   // ...
   private final String reason;

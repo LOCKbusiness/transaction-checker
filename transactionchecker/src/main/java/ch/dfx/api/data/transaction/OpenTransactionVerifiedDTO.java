@@ -1,18 +1,17 @@
-package ch.dfx.api.data;
+package ch.dfx.api.data.transaction;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
  */
-public class OpenTransactionInvalidatedDTO {
+public class OpenTransactionVerifiedDTO {
   private String signature = null;
-  private String reason = null;
 
   /**
    * 
    */
-  public OpenTransactionInvalidatedDTO() {
+  public OpenTransactionVerifiedDTO() {
   }
 
   public String getSignature() {
@@ -21,14 +20,6 @@ public class OpenTransactionInvalidatedDTO {
 
   public void setSignature(String signature) {
     this.signature = signature;
-  }
-
-  public String getReason() {
-    return reason;
-  }
-
-  public void setReason(String reason) {
-    this.reason = reason;
   }
 
   @Override

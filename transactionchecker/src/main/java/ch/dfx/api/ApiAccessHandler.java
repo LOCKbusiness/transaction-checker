@@ -3,6 +3,7 @@ package ch.dfx.api;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Objects;
 
@@ -25,10 +26,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 
-import ch.dfx.api.data.LoginDTO;
-import ch.dfx.api.data.OpenTransactionDTOList;
-import ch.dfx.api.data.OpenTransactionInvalidatedDTO;
-import ch.dfx.api.data.OpenTransactionVerifiedDTO;
+import ch.dfx.api.data.signin.SignInAccessTokenHeaderDTO;
+import ch.dfx.api.data.signin.SignInAccessTokenPayloadDTO;
+import ch.dfx.api.data.signin.SignInDTO;
+import ch.dfx.api.data.transaction.OpenTransactionDTOList;
+import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
+import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
+import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -44,20 +48,43 @@ public class ApiAccessHandler {
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS");
 
+  public static final String TEST_TOKEN =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXRJZCI6NSwidXNlcklkIjozLCJhZGRyZXNzIjoidGYxcTJ0azN1bjJwZGVkZmQ1aHpjc21meGp5bTMyZGVsZ3Z0ZzlxaHp6IiwiYmxvY2tjaGFpbiI6IkRlRmlDaGFpbiIsInJvbGUiOiJUcmFuc2FjdGlvbkNoZWNrZXIiLCJpYXQiOjE2NjU4MjAxNzksImV4cCI6MTY2NTk5Mjk3OX0.lfyMpb49XtWV91dcsilj3gFWo7cvYZ6iVA4k2YDTXOE";
+
   // ...
+  private final Base64.Decoder urlDecoder;
+
   private final HttpClient httpClient;
 
   private final Gson gson;
 
-  private LoginDTO loginDTO = null;
+  // ...
+  private SignInDTO signInDTO = null;
 
   /**
    * 
    */
   public ApiAccessHandler() {
+    this.urlDecoder = Base64.getUrlDecoder();
+
     this.httpClient = HttpClientBuilder.create().build();
 
     this.gson = new GsonBuilder().setPrettyPrinting().create();
+  }
+
+  /**
+   * 
+   */
+  public void fakeForTest() {
+    signInDTO = createLoginData();
+    signInDTO.setAccessToken(TEST_TOKEN);
+  }
+
+  /**
+   * 
+   */
+  public void resetSignIn() {
+    signInDTO = null;
   }
 
   /**
@@ -67,32 +94,46 @@ public class ApiAccessHandler {
     LOGGER.trace("signIn() ...");
 
     try {
-      // ...
-      HttpClient httpClient = HttpClientBuilder.create().build();
+      if (isAccessTokenExpired()) {
+        // ...
+        String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/auth/sign-in";
+        LOGGER.debug("URL: " + url);
+        HttpPost httpPost = new HttpPost(url);
 
-      String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/auth/sign-in";
-      LOGGER.trace("URL: " + url);
-      HttpPost httpPost = new HttpPost(url);
+        signInDTO = createLoginData();
 
-      loginDTO = createLoginData();
+        String jsonLoginData = gson.toJson(signInDTO);
+        StringEntity stringEntity = new StringEntity(jsonLoginData, ContentType.APPLICATION_JSON);
+        httpPost.setEntity(stringEntity);
 
-      String jsonLoginData = gson.toJson(loginDTO);
-      StringEntity stringEntity = new StringEntity(jsonLoginData, ContentType.APPLICATION_JSON);
-      httpPost.setEntity(stringEntity);
+        HttpResponse httpResponse = httpClient.execute(httpPost);
 
-      HttpResponse httpResponse = httpClient.execute(httpPost);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
 
-      int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (HttpStatus.SC_CREATED != statusCode) {
+          throw new DfxException("HTTP Status Code: " + statusCode);
+        }
 
-      if (HttpStatus.SC_CREATED != statusCode) {
-        throw new DfxException("HTTP Status Code: " + statusCode);
+        String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
+        LOGGER.trace(jsonResponse);
+
+        // ...
+        AccessTokenDTO accessTokenDTO = gson.fromJson(jsonResponse, AccessTokenDTO.class);
+        signInDTO.setAccessToken(accessTokenDTO.accessToken);
+
+        // ...
+        String[] accessTokenSplit = accessTokenDTO.accessToken.split("\\.");
+
+        if (2 > accessTokenSplit.length) {
+          throw new DfxException("unknown access token format");
+        }
+
+        String header = new String(urlDecoder.decode(accessTokenSplit[0]));
+        String payload = new String(urlDecoder.decode(accessTokenSplit[1]));
+
+        signInDTO.setAccessTokenHeader(gson.fromJson(header, SignInAccessTokenHeaderDTO.class));
+        signInDTO.setAccessTokenPayload(gson.fromJson(payload, SignInAccessTokenPayloadDTO.class));
       }
-
-      String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
-      LOGGER.trace(jsonResponse);
-
-      AccessTokenDTO accessTokenDTO = gson.fromJson(jsonResponse, AccessTokenDTO.class);
-      loginDTO.setAccessToken(accessTokenDTO.accessToken);
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
@@ -101,29 +142,62 @@ public class ApiAccessHandler {
   }
 
   /**
-   * 
+   * Get the expired time from the access token payload.
+   * Subtract a time tolerance (e.g. 10 minutes) from the expired time.
+   * Get the current system time (in seconds)
+   * Check, if the current time is before the expired time.
+   */
+  private boolean isAccessTokenExpired() throws DfxException {
+    LOGGER.trace("isAccessTokenExpired() ...");
+
+    try {
+      boolean isExpired = true;
+
+      if (null != signInDTO) {
+        SignInAccessTokenPayloadDTO accessTokenPayloadDTO = signInDTO.getAccessTokenPayload();
+
+        if (null != accessTokenPayloadDTO) {
+          Long payloadExpired = accessTokenPayloadDTO.getExp();
+
+          if (null != payloadExpired) {
+            long expiredTime = payloadExpired.longValue() - (10 * 60); // minus 10 minutes ...;
+            long currentTime = System.currentTimeMillis() / 1000;
+
+            isExpired = currentTime > expiredTime;
+          }
+        }
+      }
+
+      return isExpired;
+    } catch (Exception e) {
+      throw new DfxException("isAccessTokenExpired", e);
+    }
+  }
+
+  /**
+   *
    */
   public OpenTransactionDTOList getOpenTransactionDTOList() throws DfxException {
-    Objects.requireNonNull(loginDTO, "null loginDTO: first call signIn()");
     LOGGER.trace("getOpenTransactionDTOList() ...");
+    Objects.requireNonNull(signInDTO, "null signInDTO: first call signIn()");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/open";
-      LOGGER.trace("URL: " + url);
+      LOGGER.debug("URL: " + url);
 
       HttpGet httpGet = new HttpGet(url);
-      httpGet.addHeader("Authorization", "Bearer " + loginDTO.getAccessToken());
+      httpGet.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
 
       HttpResponse httpResponse = httpClient.execute(httpGet);
 
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
       if (HttpStatus.SC_OK != statusCode) {
-        throw new DfxException("HTTP Status Code: " + statusCode);
+        throw new DfxException("[Transaction] HTTP Status Code: " + statusCode);
       }
 
       String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
-      logJSONResponse(jsonResponse);
+      logJSON("transaction", jsonResponse);
 
       return gson.fromJson(jsonResponse, OpenTransactionDTOList.class);
     } catch (DfxException e) {
@@ -136,26 +210,33 @@ public class ApiAccessHandler {
   /**
    * 
    */
-  private void logJSONResponse(@Nonnull String jsonResponse) {
-    LOGGER.trace("logJSONResponse() ...");
+  public PendingWithdrawalDTOList getPendingWithdrawalDTOList() throws DfxException {
+    LOGGER.trace("getPendingWithdrawalDTOList() ...");
+    Objects.requireNonNull(signInDTO, "null signInDTO: first call signIn()");
 
     try {
-      String fileName =
-          new StringBuilder()
-              .append("transactions-")
-              .append(DATE_FORMAT.format(new Date()))
-              .append(".json")
-              .toString();
+      String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/withdrawal/pending";
+      LOGGER.debug("URL: " + url);
 
-      Path jsonLogFilePath = Path.of("", "logs", "json", fileName);
-      String jsonResponsePrettyPrinted = gson.toJson(JsonParser.parseString(jsonResponse));
+      HttpGet httpGet = new HttpGet(url);
+      httpGet.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
 
-      if (!"[]".equals(jsonResponsePrettyPrinted)) {
-        Files.createDirectories(jsonLogFilePath.getParent());
-        Files.writeString(jsonLogFilePath, jsonResponsePrettyPrinted);
+      HttpResponse httpResponse = httpClient.execute(httpGet);
+
+      int statusCode = httpResponse.getStatusLine().getStatusCode();
+
+      if (HttpStatus.SC_OK != statusCode) {
+        throw new DfxException("[Withdrawal] HTTP Status Code: " + statusCode);
       }
+
+      String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
+      logJSON("withdrawal", jsonResponse);
+
+      return gson.fromJson(jsonResponse, PendingWithdrawalDTOList.class);
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
-      LOGGER.error("logJSONResponse", e);
+      throw new DfxException("getPendingWithdrawalDTOList", e);
     }
   }
 
@@ -166,16 +247,19 @@ public class ApiAccessHandler {
       @Nonnull String openTransactionId,
       @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) throws DfxException {
     LOGGER.trace("sendOpenTransactionVerified() ...");
+    Objects.requireNonNull(signInDTO, "null signInDTO: first call signIn()");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/verified";
       LOGGER.debug("URL: " + url);
 
       HttpPut httpPut = new HttpPut(url);
-      httpPut.addHeader("Authorization", "Bearer " + loginDTO.getAccessToken());
+      httpPut.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
 
-      String jsonOpenTransactionVerifiedDTO = gson.toJson(openTransactionVerifiedDTO);
-      StringEntity entity = new StringEntity(jsonOpenTransactionVerifiedDTO, ContentType.APPLICATION_JSON);
+      String jsonOpenTransactionVerified = gson.toJson(openTransactionVerifiedDTO);
+      logJSON("verified", jsonOpenTransactionVerified);
+
+      StringEntity entity = new StringEntity(jsonOpenTransactionVerified, ContentType.APPLICATION_JSON);
       httpPut.setEntity(entity);
 
       HttpResponse httpResponse = httpClient.execute(httpPut);
@@ -183,7 +267,7 @@ public class ApiAccessHandler {
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
       if (HttpStatus.SC_OK != statusCode) {
-        throw new DfxException("HTTP Status Code: " + statusCode);
+        throw new DfxException("[Verified] HTTP Status Code: " + statusCode);
       }
     } catch (DfxException e) {
       throw e;
@@ -199,16 +283,19 @@ public class ApiAccessHandler {
       @Nonnull String openTransactionId,
       @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) throws DfxException {
     LOGGER.trace("sendOpenTransactionInvalidated() ...");
+    Objects.requireNonNull(signInDTO, "null signInDTO: first call signIn()");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/invalidated";
       LOGGER.debug("URL: " + url);
 
       HttpPut httpPut = new HttpPut(url);
-      httpPut.addHeader("Authorization", "Bearer " + loginDTO.getAccessToken());
+      httpPut.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
 
-      String jsonOpenTransactionVerifiedDTO = gson.toJson(openTransactionInvalidatedDTO);
-      StringEntity entity = new StringEntity(jsonOpenTransactionVerifiedDTO, ContentType.APPLICATION_JSON);
+      String jsonOpenTransactionInvalidated = gson.toJson(openTransactionInvalidatedDTO);
+      logJSON("invalidated", jsonOpenTransactionInvalidated);
+
+      StringEntity entity = new StringEntity(jsonOpenTransactionInvalidated, ContentType.APPLICATION_JSON);
       httpPut.setEntity(entity);
 
       HttpResponse httpResponse = httpClient.execute(httpPut);
@@ -216,7 +303,7 @@ public class ApiAccessHandler {
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
       if (HttpStatus.SC_OK != statusCode) {
-        throw new DfxException("HTTP Status Code: " + statusCode);
+        throw new DfxException("[Invalidated] HTTP Status Code: " + statusCode);
       }
     } catch (DfxException e) {
       throw e;
@@ -225,53 +312,39 @@ public class ApiAccessHandler {
     }
   }
 
-//  /**
-//   * 
-//   */
-//  public void postOpenTransactionDTOList(@Nonnull OpenTransactionDTOList openTransactionDTOList) throws DfxException {
-//    LOGGER.trace("postOpenTransactionDTOList() ...");
-//
-//    try {
-//      String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transactions/open";
-//      LOGGER.trace("URL: " + url);
-//
-//      HttpPost httpPost = new HttpPost(url);
-//      httpPost.addHeader("Authorization", "Bearer " + loginDTO.getAccessToken());
-//
-//      String jsonOpenTransactionDTOList = gson.toJson(openTransactionDTOList);
-//      StringEntity entity = new StringEntity(jsonOpenTransactionDTOList, ContentType.APPLICATION_JSON);
-//      httpPost.setEntity(entity);
-//
-////      MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
-////
-////      multipartEntityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-////      multipartEntityBuilder.setContentType(ContentType.MULTIPART_FORM_DATA);
-////      
-////      // ...
-////      HttpEntity multipartEntity = multipartEntityBuilder.build();
-////
-////      httpPost.setEntity(multipartEntity);
-//
-//      // ...
-//      HttpResponse httpResponse = httpClient.execute(httpPost);
-//
-//      int statusCode = httpResponse.getStatusLine().getStatusCode();
-//
-//      if (HttpStatus.SC_OK != statusCode) {
-//        throw new DfxException("HTTP Status Code: " + statusCode);
-//      }
-//    } catch (DfxException e) {
-//      throw e;
-//    } catch (Exception e) {
-//      throw new DfxException("postOpenTransactionDTOList", e);
-//    }
-//  }
+  /**
+   * 
+   */
+  private void logJSON(
+      @Nonnull String type,
+      @Nonnull String jsonString) {
+    LOGGER.trace("logJSON() ...");
+
+    try {
+      String fileName =
+          new StringBuilder()
+              .append(type)
+              .append("-").append(DATE_FORMAT.format(new Date()))
+              .append(".json")
+              .toString();
+
+      Path jsonLogFilePath = Path.of("", "logs", "json", type, fileName);
+      String jsonPrettyPrinted = gson.toJson(JsonParser.parseString(jsonString));
+
+      if (!"[]".equals(jsonPrettyPrinted)) {
+        Files.createDirectories(jsonLogFilePath.getParent());
+        Files.writeString(jsonLogFilePath, jsonPrettyPrinted);
+      }
+    } catch (Exception e) {
+      LOGGER.error("logJSON", e);
+    }
+  }
 
   /**
    * 
    */
-  private LoginDTO createLoginData() {
-    LoginDTO loginData = new LoginDTO();
+  private SignInDTO createLoginData() {
+    SignInDTO loginData = new SignInDTO();
 
     loginData.setAddress(ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_ADDRESS));
     loginData.setSignature(ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_SIGNATURE));

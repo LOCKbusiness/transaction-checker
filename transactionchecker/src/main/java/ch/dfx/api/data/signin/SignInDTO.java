@@ -1,21 +1,22 @@
-package ch.dfx.api.data;
+package ch.dfx.api.data.signin;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
  */
-public class LoginDTO {
+public class SignInDTO {
   private String address = null;
-
   private String signature = null;
 
   private String accessToken = null;
+  private SignInAccessTokenHeaderDTO accessTokenHeader = null;
+  private SignInAccessTokenPayloadDTO accessTokenPayload = null;
 
   /**
    * 
    */
-  public LoginDTO() {
+  public SignInDTO() {
   }
 
   public String getAddress() {
@@ -40,6 +41,22 @@ public class LoginDTO {
 
   public void setAccessToken(String accessToken) {
     this.accessToken = accessToken;
+  }
+
+  public SignInAccessTokenHeaderDTO getAccessTokenHeader() {
+    return accessTokenHeader;
+  }
+
+  public void setAccessTokenHeader(SignInAccessTokenHeaderDTO accessTokenHeader) {
+    this.accessTokenHeader = accessTokenHeader;
+  }
+
+  public SignInAccessTokenPayloadDTO getAccessTokenPayload() {
+    return accessTokenPayload;
+  }
+
+  public void setAccessTokenPayload(SignInAccessTokenPayloadDTO accessTokenPayload) {
+    this.accessTokenPayload = accessTokenPayload;
   }
 
   @Override

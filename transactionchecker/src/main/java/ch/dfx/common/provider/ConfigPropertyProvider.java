@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,6 +51,23 @@ public class ConfigPropertyProvider {
    */
   public String getProperty(@Nonnull PropertyEnum property) {
     return propertyMap.get(property);
+  }
+
+  /**
+   * 
+   */
+  public int getIntValueOrDefault(
+      @Nonnull PropertyEnum property,
+      int defaultValue) {
+    String propertyValue = getProperty(property);
+
+    int value = defaultValue;
+
+    if (StringUtils.isNumeric(propertyValue)) {
+      value = Integer.parseInt(propertyValue);
+    }
+
+    return value;
   }
 
   /**

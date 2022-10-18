@@ -9,7 +9,7 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.api.data.OpenTransactionMasternodeDTO;
+import ch.dfx.api.data.transaction.OpenTransactionMasternodeDTO;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;

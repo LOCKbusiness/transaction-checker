@@ -2,6 +2,7 @@ package ch.dfx.common;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,6 +27,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
 
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
@@ -216,6 +218,17 @@ public class TransactionCheckerUtils {
     }
 
     return jsonString;
+  }
+
+  /**
+   * 
+   */
+  public static <T> T fromJson(@Nonnull File jsonFile, Class<T> clazz) throws DfxException {
+    try (JsonReader reader = new JsonReader(new FileReader(jsonFile))) {
+      return GSON.fromJson(reader, clazz);
+    } catch (Exception e) {
+      throw new DfxException("fromJson", e);
+    }
   }
 
   /**

@@ -46,12 +46,10 @@ public class MessageHandler {
    * 
    */
   public Boolean verifyMessage(
+      @Nonnull String verifyAddress,
       @Nonnull String signature,
       @Nonnull String message) throws DfxException {
     LOGGER.trace("verifyMessage() ...");
-
-    String verifyAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_VERIFY_ADDRESS);
-
     return dataProvider.verifyMessage(verifyAddress, signature, message);
   }
 }

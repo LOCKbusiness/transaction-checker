@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@defichain/jellyfish-network": "^2.65.0",
+    "@types/node": "^18.11.0",
+    "bitcoinjs-message": "^2.2.0",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "pkg": "^5.8.0"
+  }
+}

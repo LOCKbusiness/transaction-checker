@@ -44,8 +44,8 @@ public class OpenTransactionManagerMain {
       walletHandler.loadWallet(wallet);
 
       // ...
-      OpenTransactionManager masternodeManager = new OpenTransactionManager();
-      masternodeManager.execute();
+      OpenTransactionManager transactionManager = new OpenTransactionManager();
+      transactionManager.execute();
     } catch (Exception e) {
       LOGGER.error("Fatal Error ...", e);
     }

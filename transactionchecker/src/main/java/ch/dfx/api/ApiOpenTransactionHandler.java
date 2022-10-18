@@ -10,10 +10,8 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.api.data.OpenTransactionDTOList;
-import ch.dfx.api.data.OpenTransactionInvalidatedDTO;
-import ch.dfx.api.data.OpenTransactionMasternodeDTO;
-import ch.dfx.api.data.OpenTransactionVerifiedDTO;
+import ch.dfx.api.data.transaction.OpenTransactionDTOList;
+import ch.dfx.api.data.transaction.OpenTransactionMasternodeDTO;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
@@ -44,10 +42,6 @@ public class ApiOpenTransactionHandler {
     this.transactionMasternodeDTOList = new ArrayList<>();
   }
 
-  public List<OpenTransactionMasternodeDTO> getTransactionMasternodeDTOList() {
-    return transactionMasternodeDTOList;
-  }
-
   /**
    * 
    */
@@ -55,7 +49,7 @@ public class ApiOpenTransactionHandler {
     LOGGER.debug("getOpenTransactionList() ...");
 
     // ...
-    transactionMasternodeDTOList.clear();
+//    transactionMasternodeDTOList.clear();
 
     // ...
     OpenTransactionDTOList openTransactionDTOList = apiAccessHandler.getOpenTransactionDTOList();
@@ -75,26 +69,6 @@ public class ApiOpenTransactionHandler {
 //    }
 
     return openTransactionDTOList;
-  }
-
-  /**
-   * 
-   */
-  public void sendOpenTransactionVerified(
-      @Nonnull String openTransactionId,
-      @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) throws DfxException {
-    LOGGER.trace("sendOpenTransactionVerified() ...");
-    apiAccessHandler.sendOpenTransactionVerified(openTransactionId, openTransactionVerifiedDTO);
-  }
-
-  /**
-   * 
-   */
-  public void sendOpenTransactionInvalidated(
-      @Nonnull String openTransactionId,
-      @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) throws DfxException {
-    LOGGER.trace("sendOpenTransactionVerified() ...");
-    apiAccessHandler.sendOpenTransactionInvalidated(openTransactionId, openTransactionInvalidatedDTO);
   }
 
 //  /**

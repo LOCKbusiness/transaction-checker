@@ -1,4 +1,4 @@
-package ch.dfx.api.data;
+package ch.dfx.api.data.transaction;
 
 import ch.dfx.common.TransactionCheckerUtils;
 

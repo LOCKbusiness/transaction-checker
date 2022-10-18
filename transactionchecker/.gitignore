@@ -9,9 +9,21 @@
 *~
 #*#
 *.bak
+*Kopie*
 
 # Maven build directories
 /target/
+
+# JavaScript Node Modules
+/javascript/node_modules/
+
+# JavaScript executables
+/javascript/app-linux
+/javascript/app-macos
+/javascript/app-win.exe
+
+# Data directories
+/data/
 
 # Secrets
 config.secret.properties

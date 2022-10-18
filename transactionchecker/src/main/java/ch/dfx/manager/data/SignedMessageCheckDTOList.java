@@ -1,4 +1,4 @@
-package ch.dfx.httpserver.data;
+package ch.dfx.manager.data;
 
 import java.util.ArrayList;
 
@@ -7,13 +7,13 @@ import ch.dfx.common.TransactionCheckerUtils;
 /**
  * 
  */
-public class HttpTransactionDTOList extends ArrayList<HttpTransactionDTO> {
-  private static final long serialVersionUID = 6623566451024443473L;
+public class SignedMessageCheckDTOList extends ArrayList<SignedMessageCheckDTO> {
+  private static final long serialVersionUID = 3911221784127212087L;
 
   /**
    * 
    */
-  public HttpTransactionDTOList() {
+  public SignedMessageCheckDTOList() {
   }
 
   @Override

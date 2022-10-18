@@ -72,7 +72,7 @@ public class TransactionServerMain {
       } else if (isInitialSetup) {
         initialSetup();
       } else {
-        execute(isServerOnly);
+        execute(isMainnet, isServerOnly);
       }
     } catch (Exception e) {
       LOGGER.error("Fatal Error" + e);
@@ -114,7 +114,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void execute(boolean isServerOnly) throws DfxException {
+  private static void execute(boolean isMainnet, boolean isServerOnly) throws DfxException {
     LOGGER.debug("execute");
 
     if (createLockFile()) {
@@ -129,11 +129,16 @@ public class TransactionServerMain {
       startServer();
 
       // ...
-      DatabaseRunnable databaseRunnable = new DatabaseRunnable(LOCK_FILE, isServerOnly);
-      SchedulerProvider.getInstance().add(databaseRunnable, 5, 30, TimeUnit.SECONDS);
+      int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
+      int runPeriodAPI = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_API, 60);
 
-      ManagerRunnable managerRunnable = new ManagerRunnable(isServerOnly);
-      SchedulerProvider.getInstance().add(managerRunnable, 15, 10, TimeUnit.SECONDS);
+      DatabaseRunnable databaseRunnable = new DatabaseRunnable(LOCK_FILE, isServerOnly);
+      SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
+
+      if (!isMainnet) {
+        ManagerRunnable managerRunnable = new ManagerRunnable(isServerOnly);
+        SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
+      }
     }
   }
 

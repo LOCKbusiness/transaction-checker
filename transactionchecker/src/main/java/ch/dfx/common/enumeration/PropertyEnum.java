@@ -30,5 +30,9 @@ public enum PropertyEnum {
   // LOCK API ...
   LOCK_API_URL,
   LOCK_ADDRESS,
-  LOCK_SIGNATURE;
+  LOCK_SIGNATURE,
+
+  // Run Period für Scheduler ...
+  RUN_PERIOD_DATABASE,
+  RUN_PERIOD_API;
 }

@@ -48,9 +48,6 @@ public class ApiAccessHandler {
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS");
 
-  public static final String TEST_TOKEN =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXRJZCI6NSwidXNlcklkIjozLCJhZGRyZXNzIjoidGYxcTJ0azN1bjJwZGVkZmQ1aHpjc21meGp5bTMyZGVsZ3Z0ZzlxaHp6IiwiYmxvY2tjaGFpbiI6IkRlRmlDaGFpbiIsInJvbGUiOiJUcmFuc2FjdGlvbkNoZWNrZXIiLCJpYXQiOjE2NjU4MjAxNzksImV4cCI6MTY2NTk5Mjk3OX0.lfyMpb49XtWV91dcsilj3gFWo7cvYZ6iVA4k2YDTXOE";
-
   // ...
   private final Base64.Decoder urlDecoder;
 
@@ -76,8 +73,10 @@ public class ApiAccessHandler {
    * 
    */
   public void fakeForTest() {
+    String testToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_TEST_TOKEN);
+
     signInDTO = createLoginData();
-    signInDTO.setAccessToken(TEST_TOKEN);
+    signInDTO.setAccessToken(testToken);
   }
 
   /**

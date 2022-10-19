@@ -72,9 +72,9 @@ public class OpenTransactionManager {
     OpenTransactionDTOList apiOpenTransactionDTOList = apiAccessHandler.getOpenTransactionDTOList();
 
     // ...
-    LOGGER.debug("Pending Withdrawal size: " + apiPendingWithdrawalDTOList.size());
-    LOGGER.debug("Open Transaction size:   " + apiOpenTransactionDTOList.size());
-    LOGGER.debug("");
+    LOGGER.debug(
+        "Pending Withdrawal / Open Transaction Size: "
+            + apiPendingWithdrawalDTOList.size() + " / " + apiOpenTransactionDTOList.size());
 
     OpenTransactionDTOList workOpenTransactionDTOList = checkTransactionSignature(apiOpenTransactionDTOList);
 
@@ -143,32 +143,18 @@ public class OpenTransactionManager {
   /**
    * 
    */
-  private void sendVerified(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("sendVerified() ...");
+  private boolean validateIssuerSignature(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
+    LOGGER.trace("validateIssurerSignature() ...");
 
+    String openTransactionIssuerSignature = openTransactionDTO.getIssuerSignature();
     String openTransactionHex = openTransactionDTO.getRawTx().getHex();
-    String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
 
-    OpenTransactionVerifiedDTO openTransactionVerifiedDTO = new OpenTransactionVerifiedDTO();
-    openTransactionVerifiedDTO.setSignature(openTransactionCheckerSignature);
+    String verifyAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_VERIFY_ADDRESS);
 
-    apiAccessHandler.sendOpenTransactionVerified(openTransactionDTO.getId(), openTransactionVerifiedDTO);
-  }
+    Boolean isValid = messageHandler.verifyMessage(verifyAddress, openTransactionIssuerSignature, openTransactionHex);
+    LOGGER.debug("Open Transaction Id: " + openTransactionDTO.getId() + " / " + isValid);
 
-  /**
-   * 
-   */
-  private void sendInvalidated(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("sendInvalidated() ...");
-
-    String openTransactionHex = openTransactionDTO.getRawTx().getHex();
-    String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
-
-    OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO = new OpenTransactionInvalidatedDTO();
-    openTransactionInvalidatedDTO.setSignature(openTransactionCheckerSignature);
-    openTransactionInvalidatedDTO.setReason(InvalidReasonEnum.INVALID_ISSUER_SIGNATURE.getReason());
-
-    apiAccessHandler.sendOpenTransactionInvalidated(openTransactionDTO.getId(), openTransactionInvalidatedDTO);
+    return BooleanUtils.isTrue(isValid);
   }
 
   /**
@@ -367,17 +353,31 @@ public class OpenTransactionManager {
   /**
    * 
    */
-  private boolean validateIssuerSignature(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("validateIssurerSignature() ...");
+  private void sendVerified(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
+    LOGGER.trace("sendVerified() ...");
 
-    String openTransactionIssuerSignature = openTransactionDTO.getIssuerSignature();
     String openTransactionHex = openTransactionDTO.getRawTx().getHex();
+    String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
 
-    String verifyAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_VERIFY_ADDRESS);
+    OpenTransactionVerifiedDTO openTransactionVerifiedDTO = new OpenTransactionVerifiedDTO();
+    openTransactionVerifiedDTO.setSignature(openTransactionCheckerSignature);
 
-    Boolean isValid = messageHandler.verifyMessage(verifyAddress, openTransactionIssuerSignature, openTransactionHex);
-    LOGGER.debug("Open Transaction Id: " + openTransactionDTO.getId() + " / " + isValid);
+    apiAccessHandler.sendOpenTransactionVerified(openTransactionDTO.getId(), openTransactionVerifiedDTO);
+  }
 
-    return BooleanUtils.isTrue(isValid);
+  /**
+   * 
+   */
+  private void sendInvalidated(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
+    LOGGER.trace("sendInvalidated() ...");
+
+    String openTransactionHex = openTransactionDTO.getRawTx().getHex();
+    String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
+
+    OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO = new OpenTransactionInvalidatedDTO();
+    openTransactionInvalidatedDTO.setSignature(openTransactionCheckerSignature);
+    openTransactionInvalidatedDTO.setReason(InvalidReasonEnum.INVALID_ISSUER_SIGNATURE.getReason());
+
+    apiAccessHandler.sendOpenTransactionInvalidated(openTransactionDTO.getId(), openTransactionInvalidatedDTO);
   }
 }

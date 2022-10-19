@@ -17,7 +17,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import ch.dfx.api.ApiAccessHandler;
+import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.provider.ConfigPropertyProvider;
 
 /**
  * 
@@ -49,7 +50,7 @@ public abstract class APIRequestHandler {
 
     boolean isAuthorized = false;
 
-    String token = "Bearer " + ApiAccessHandler.TEST_TOKEN;
+    String token = "Bearer " + ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_TEST_TOKEN);
 
     for (Header header : headerArray) {
       if ("Authorization".equals(header.getName())

@@ -13,6 +13,7 @@ import java.util.Properties;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -242,5 +243,26 @@ public class TransactionCheckerUtils {
     } catch (Exception e) {
       throw new DfxException("rollback ...", e);
     }
+  }
+
+  /**
+   * 
+   */
+  public static String emptyIfNull(@Nullable String value) {
+    return StringUtils.defaultIfEmpty(value, "");
+  }
+
+  /**
+   * 
+   */
+  public static Integer zeroIfNull(@Nullable Integer value) {
+    return null == value ? Integer.valueOf(0) : value;
+  }
+
+  /**
+   * 
+   */
+  public static BigDecimal zeroIfNull(@Nullable BigDecimal value) {
+    return null == value ? BigDecimal.ZERO : value;
   }
 }

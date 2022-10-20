@@ -18,10 +18,10 @@ import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionPayloadDTO;
+import ch.dfx.api.data.transaction.OpenTransactionRawTxDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
-import ch.dfx.api.enumeration.InvalidReasonEnum;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
@@ -37,23 +37,21 @@ import ch.dfx.message.MessageHandler;
 public class OpenTransactionManager {
   private static final Logger LOGGER = LogManager.getLogger(OpenTransactionManager.class);
 
-  private final DefiDataProvider dataProvider;
-
-  private final MessageHandler messageHandler;
   private final ApiAccessHandler apiAccessHandler;
 
+  private final MessageHandler messageHandler;
   private final SignedMessageChecker signedMessageChecker;
 
   /**
    * 
    */
-  public OpenTransactionManager() {
-    this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+  public OpenTransactionManager(
+      @Nonnull ApiAccessHandler apiAccessHandler,
+      @Nonnull DefiDataProvider dataProvider) {
+    this.apiAccessHandler = apiAccessHandler;
 
     this.messageHandler = new MessageHandler(dataProvider);
-    this.apiAccessHandler = new ApiAccessHandler();
-
-    this.signedMessageChecker = new SignedMessageChecker();
+    this.signedMessageChecker = new SignedMessageChecker(dataProvider);
   }
 
   /**
@@ -61,11 +59,6 @@ public class OpenTransactionManager {
    */
   public void execute() throws DfxException {
     LOGGER.trace("execute() ...");
-
-    // ...
-    // TODO: ONLY FOR TESTING PURPOSES! ...
-    // apiAccessHandler.fakeForTest();
-    apiAccessHandler.signIn();
 
     // ...
     PendingWithdrawalDTOList apiPendingWithdrawalDTOList = apiAccessHandler.getPendingWithdrawalDTOList();
@@ -76,31 +69,73 @@ public class OpenTransactionManager {
         "Pending Withdrawal / Open Transaction Size: "
             + apiPendingWithdrawalDTOList.size() + " / " + apiOpenTransactionDTOList.size());
 
-    OpenTransactionDTOList workOpenTransactionDTOList = checkTransactionSignature(apiOpenTransactionDTOList);
-
-    // TODO: Onyl shortcut, until further implementation is tested and ready ...
-    justSendVerified(workOpenTransactionDTOList);
+    // ...
+    checkReceivedDTO(apiPendingWithdrawalDTOList, apiOpenTransactionDTOList);
 
     // ...
-//    WithdrawalTransactionDTOList withdrawalTransactionDTOList = createWithdrawalTransactionDTOList(apiPendingWithdrawalDTOList, workOpenTransactionDTOList);
-//
-//    if (!withdrawalTransactionDTOList.isEmpty()) {
-//      processPendingWithdrawal(withdrawalTransactionDTOList);
-//    }
-//
-//    // ...
-//    send(withdrawalTransactionDTOList);
-//
-//    // ...
-//    Map<String, OpenTransactionDTO> transactionIdToOpenTransactionMap = new HashMap<>();
-//    workOpenTransactionDTOList.forEach(dto -> transactionIdToOpenTransactionMap.put(dto.getId(), dto));
-//    withdrawalTransactionDTOList.forEach(dto -> transactionIdToOpenTransactionMap.remove(dto.getOpenTransactionDTO().getId()));
-//
-//    // TODO: There must be no open transactions anymore available at this point, if implementation is finished ...
-//    OpenTransactionDTOList openTransactionDTOList =
-//        new OpenTransactionDTOList(transactionIdToOpenTransactionMap.values());
-//
-//    justSendVerified(openTransactionDTOList);
+    OpenTransactionDTOList workOpenTransactionDTOList = checkTransactionSignature(apiOpenTransactionDTOList);
+
+    // ...
+    WithdrawalTransactionDTOList withdrawalTransactionDTOList = createWithdrawalTransactionDTOList(apiPendingWithdrawalDTOList, workOpenTransactionDTOList);
+
+    if (!withdrawalTransactionDTOList.isEmpty()) {
+      processPendingWithdrawal(withdrawalTransactionDTOList);
+      send(withdrawalTransactionDTOList);
+    }
+
+    // ...
+    Map<String, OpenTransactionDTO> transactionIdToOpenTransactionMap = new HashMap<>();
+    workOpenTransactionDTOList.forEach(dto -> transactionIdToOpenTransactionMap.put(dto.getId(), dto));
+    withdrawalTransactionDTOList.forEach(dto -> transactionIdToOpenTransactionMap.remove(dto.getOpenTransactionDTO().getId()));
+
+    // TODO: There must be no open transactions anymore available at this point, if implementation is finished ...
+    OpenTransactionDTOList openTransactionDTOList =
+        new OpenTransactionDTOList(transactionIdToOpenTransactionMap.values());
+
+    // TODO: Onyl shortcut, until further implementation is tested and ready ...
+    justSendVerified(openTransactionDTOList);
+  }
+
+  /**
+   * 
+   */
+  private void checkReceivedDTO(
+      @Nonnull PendingWithdrawalDTOList apiPendingWithdrawalDTOList,
+      @Nonnull OpenTransactionDTOList apiOpenTransactionDTOList) {
+
+    // ...
+    for (PendingWithdrawalDTO pendingWithdrawalDTO : apiPendingWithdrawalDTOList) {
+      // ID ...
+      pendingWithdrawalDTO.setId(TransactionCheckerUtils.zeroIfNull(pendingWithdrawalDTO.getId()));
+
+      // Sign Message ...
+      pendingWithdrawalDTO.setSignMessage(TransactionCheckerUtils.emptyIfNull(pendingWithdrawalDTO.getSignMessage()));
+
+      // Signature ...
+      pendingWithdrawalDTO.setSignature(TransactionCheckerUtils.emptyIfNull(pendingWithdrawalDTO.getSignature()));
+
+      // Amount ...
+      pendingWithdrawalDTO.setAmount(TransactionCheckerUtils.zeroIfNull(pendingWithdrawalDTO.getAmount()));
+    }
+
+    // ...
+    for (OpenTransactionDTO openTransactionDTO : apiOpenTransactionDTOList) {
+      // ID ...
+      openTransactionDTO.setId(TransactionCheckerUtils.emptyIfNull(openTransactionDTO.getId()));
+
+      // Signature ...
+      openTransactionDTO.setIssuerSignature(TransactionCheckerUtils.emptyIfNull(openTransactionDTO.getIssuerSignature()));
+
+      // Transaction ...
+      OpenTransactionRawTxDTO openTransactionRawTxDTO = openTransactionDTO.getRawTx();
+
+      if (null == openTransactionRawTxDTO) {
+        openTransactionRawTxDTO = new OpenTransactionRawTxDTO();
+        openTransactionDTO.setRawTx(openTransactionRawTxDTO);
+      }
+
+      openTransactionRawTxDTO.setHex(TransactionCheckerUtils.emptyIfNull(openTransactionRawTxDTO.getHex()));
+    }
   }
 
   /**
@@ -127,9 +162,11 @@ public class OpenTransactionManager {
     LOGGER.trace("doCheckTransactionSignature() ...");
 
     try {
+      // ...
       boolean isValid = validateIssuerSignature(openTransactionDTO);
 
       if (!isValid) {
+        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - invalid signature");
         sendInvalidated(openTransactionDTO);
       }
 
@@ -236,7 +273,7 @@ public class OpenTransactionManager {
   private void processPendingWithdrawal(@Nonnull WithdrawalTransactionDTOList withdrawalTransactionDTOList) {
     LOGGER.trace("processPendingWithdrawal() ...");
 
-    checkWithdrawalMessage(withdrawalTransactionDTOList);
+    WithdrawalTransactionDTOList checkWithdrawalMessage = checkWithdrawalMessage(withdrawalTransactionDTOList);
 
 //   checkWithdrawalBalance(checkedWithdrawalTransactionDTOList);
   }
@@ -247,12 +284,39 @@ public class OpenTransactionManager {
   private WithdrawalTransactionDTOList checkWithdrawalMessage(@Nonnull WithdrawalTransactionDTOList withdrawalTransactionDTOList) {
     LOGGER.trace("checkWithdrawalMessage() ...");
 
-    WithdrawalTransactionDTOList checkedWithdrawalTransactionDTOList = new WithdrawalTransactionDTOList();
-
     // Check 1: Check the sign message format ...
-    checkSignMessageFormat(withdrawalTransactionDTOList);
+    WithdrawalTransactionDTOList checkWithdrawalTransactionDTOList = checkSignMessageFormat(withdrawalTransactionDTOList);
 
     // Check 2: Check the message signature ...
+    return checkSignMessageSignature(checkWithdrawalTransactionDTOList);
+  }
+
+  /**
+   * 
+   */
+  private WithdrawalTransactionDTOList checkSignMessageFormat(@Nonnull WithdrawalTransactionDTOList withdrawalTransactionDTOList) {
+    LOGGER.trace("checkSignMessageFormat() ...");
+
+    WithdrawalTransactionDTOList checkedWithdrawalTransactionDTOList = new WithdrawalTransactionDTOList();
+
+    for (WithdrawalTransactionDTO withdrawalTransactionDTO : withdrawalTransactionDTOList) {
+      if (signedMessageChecker.checkSignMessageFormat(withdrawalTransactionDTO)) {
+        checkedWithdrawalTransactionDTOList.add(withdrawalTransactionDTO);
+      }
+    }
+
+    return checkedWithdrawalTransactionDTOList;
+  }
+
+  /**
+   * 
+   */
+  private WithdrawalTransactionDTOList checkSignMessageSignature(@Nonnull WithdrawalTransactionDTOList withdrawalTransactionDTOList) {
+    LOGGER.trace("checkSignMessageSignature() ...");
+
+    WithdrawalTransactionDTOList checkedWithdrawalTransactionDTOList = new WithdrawalTransactionDTOList();
+
+    // ...
     SignedMessageCheckDTOList uncheckedSignedMessageCheckDTOList = createSignedMessageCheckDTOList(withdrawalTransactionDTOList);
     SignedMessageCheckDTOList checkedSignedMessageCheckDTOList = signedMessageChecker.checkSignature(uncheckedSignedMessageCheckDTOList);
 
@@ -263,7 +327,6 @@ public class OpenTransactionManager {
     Map<Integer, SignedMessageCheckDTO> idToCheckedSignedMessageCheckDTOMap = new HashMap<>();
     checkedSignedMessageCheckDTOList.forEach(dto -> idToCheckedSignedMessageCheckDTOMap.put(dto.getId(), dto));
 
-    // ...
     for (Entry<Integer, WithdrawalTransactionDTO> idToWithdrawalTransactionDTOMapEntry : idToWithdrawalTransactionDTOMap.entrySet()) {
       Integer id = idToWithdrawalTransactionDTOMapEntry.getKey();
       WithdrawalTransactionDTO withdrawalTransactionDTO = idToWithdrawalTransactionDTOMapEntry.getValue();
@@ -275,23 +338,12 @@ public class OpenTransactionManager {
         withdrawalTransactionDTO.setState(WithdrawalTransactionStateEnum.SIGNATURE_CHECKED);
         checkedWithdrawalTransactionDTOList.add(withdrawalTransactionDTO);
       } else {
-        withdrawalTransactionDTO.setCheckMessage("[processPendingWithdrawal] ID: " + id + " - invalid signature");
+        withdrawalTransactionDTO.setStateReason("[Withdrawal] ID: " + withdrawalTransactionDTO.getId() + " - invalid signature");
         withdrawalTransactionDTO.setState(WithdrawalTransactionStateEnum.INVALID);
       }
     }
 
     return checkedWithdrawalTransactionDTOList;
-  }
-
-  /**
-   * 
-   */
-  private void checkSignMessageFormat(@Nonnull WithdrawalTransactionDTOList withdrawalTransactionDTOList) {
-    LOGGER.trace("checkSignMessageFormat() ...");
-
-    for (WithdrawalTransactionDTO withdrawalTransactionDTO : withdrawalTransactionDTOList) {
-      signedMessageChecker.checkSignMessageFormat(withdrawalTransactionDTO);
-    }
   }
 
   /**
@@ -333,6 +385,7 @@ public class OpenTransactionManager {
       if (WithdrawalTransactionStateEnum.SIGNATURE_CHECKED == withdrawalTransactionDTO.getState()) {
         sendVerified(openTransactionDTO);
       } else {
+        openTransactionDTO.setInvalidatedReason(withdrawalTransactionDTO.getStateReason());
         sendInvalidated(openTransactionDTO);
       }
     }
@@ -376,7 +429,7 @@ public class OpenTransactionManager {
 
     OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO = new OpenTransactionInvalidatedDTO();
     openTransactionInvalidatedDTO.setSignature(openTransactionCheckerSignature);
-    openTransactionInvalidatedDTO.setReason(InvalidReasonEnum.INVALID_ISSUER_SIGNATURE.getReason());
+    openTransactionInvalidatedDTO.setReason(openTransactionDTO.getInvalidatedReason());
 
     apiAccessHandler.sendOpenTransactionInvalidated(openTransactionDTO.getId(), openTransactionInvalidatedDTO);
   }

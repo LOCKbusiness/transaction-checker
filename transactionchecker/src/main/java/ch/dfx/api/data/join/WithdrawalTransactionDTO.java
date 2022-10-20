@@ -16,7 +16,7 @@ public class WithdrawalTransactionDTO {
   // ...
   private String address = null;
 
-  private String checkMessage = null;
+  private String stateReason = null;
   private WithdrawalTransactionStateEnum state = WithdrawalTransactionStateEnum.OPEN;
 
   /**
@@ -57,12 +57,12 @@ public class WithdrawalTransactionDTO {
     this.address = address;
   }
 
-  public String getCheckMessage() {
-    return checkMessage;
+  public String getStateReason() {
+    return stateReason;
   }
 
-  public void setCheckMessage(String checkMessage) {
-    this.checkMessage = checkMessage;
+  public void setStateReason(String stateReason) {
+    this.stateReason = stateReason;
   }
 
   public WithdrawalTransactionStateEnum getState() {

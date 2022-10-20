@@ -1,5 +1,7 @@
 package ch.dfx.httpserver;
 
+import java.util.stream.Stream;
+
 import org.apache.http.impl.bootstrap.HttpServer;
 import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.logging.log4j.LogManager;
@@ -28,6 +30,10 @@ public class HttpServerMain {
   public static void main(String[] args) {
     try {
       // ...
+      boolean isMainnet = Stream.of(args).anyMatch(a -> "--mainnet".equals(a));
+
+      // ...
+      String network = (isMainnet ? "mainnet" : "testnet");
       String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
@@ -36,6 +42,9 @@ public class HttpServerMain {
 
       Log4jContextFactory factory = (Log4jContextFactory) LogManager.getFactory();
       ((DefaultShutdownCallbackRegistry) factory.getShutdownCallbackRegistry()).stop();
+
+      // ...
+      TransactionCheckerUtils.loadConfigProperties(network, environment);
 
       // ...
       Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));

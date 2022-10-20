@@ -3,7 +3,11 @@ package ch.dfx.manager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.api.ApiAccessHandler;
+import ch.dfx.api.ApiAccessHandlerImpl;
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.errorhandling.DfxException;
+import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
@@ -13,16 +17,22 @@ import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 public class ManagerRunnable implements SchedulerProviderRunnable {
   private static final Logger LOGGER = LogManager.getLogger(ManagerRunnable.class);
 
+  // ...
+  private final ApiAccessHandler apiAccessHandler;
+
+  // ...
   private boolean isProcessing = false;
 
   private final boolean isServerOnly;
 
-  private int masterNodeErrorCounter = 0;
+  private int openTransactionErrorCounter = 0;
 
   /**
    * 
    */
   public ManagerRunnable(boolean isServerOnly) {
+    this.apiAccessHandler = new ApiAccessHandlerImpl();
+
     this.isServerOnly = isServerOnly;
   }
 
@@ -56,7 +66,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
     isProcessing = true;
 
     try {
-      executeMasternode();
+      executeOpenTransaction();
     } finally {
       isProcessing = false;
     }
@@ -65,18 +75,24 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  private void executeMasternode() {
-    LOGGER.trace("executeMasternode() ...");
+  private void executeOpenTransaction() {
+    LOGGER.trace("executeOpenTransaction() ...");
 
     try {
-      OpenTransactionManager masternodeManager = new OpenTransactionManager();
-      masternodeManager.execute();
+      // ...
+      apiAccessHandler.signIn();
+
+      // ...
+      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+
+      OpenTransactionManager openTransactionManager = new OpenTransactionManager(apiAccessHandler, dataProvider);
+      openTransactionManager.execute();
     } catch (DfxException e) {
-      masterNodeErrorCounter++;
-      LOGGER.error("executeMasternode: masterNodeErrorCounter=" + masterNodeErrorCounter, e.getMessage());
+      openTransactionErrorCounter++;
+      LOGGER.error("executeOpenTransaction: openTransactionErrorCounter=" + openTransactionErrorCounter, e.getMessage());
     } catch (Exception e) {
-      masterNodeErrorCounter++;
-      LOGGER.error("executeMasternode: masterNodeErrorCounter=" + masterNodeErrorCounter, e);
+      openTransactionErrorCounter++;
+      LOGGER.error("executeOpenTransaction: openTransactionErrorCounter=" + openTransactionErrorCounter, e);
     }
   }
 
@@ -86,7 +102,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   private void checkErrorCounter() {
     LOGGER.trace("checkErrorCounter() ...");
 
-    if (2 < masterNodeErrorCounter) {
+    if (2 < openTransactionErrorCounter) {
       LOGGER.error("Too many errors, will exit now");
       SchedulerProvider.getInstance().exit(-1);
     }

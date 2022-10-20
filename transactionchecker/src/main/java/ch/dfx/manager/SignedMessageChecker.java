@@ -16,7 +16,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -59,10 +58,13 @@ public class SignedMessageChecker {
   /**
    * 
    */
-  public SignedMessageChecker() {
-    this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+  public SignedMessageChecker(@Nonnull DefiDataProvider dataProvider) {
+    this.dataProvider = dataProvider;
   }
 
+  /**
+   * 
+   */
   public @Nullable String getCheckSignatureMessage() {
     return checkSignatureMessage;
   }
@@ -80,19 +82,7 @@ public class SignedMessageChecker {
       OpenTransactionDTO openTransactionDTO = withdrawalTransactionDTO.getOpenTransactionDTO();
 
       OpenTransactionRawTxDTO openTransactionRawTxDTO = openTransactionDTO.getRawTx();
-
-      if (null == openTransactionRawTxDTO) {
-        setCheckSignatureMessage(withdrawalTransactionDTO, "no raw transaction found");
-        return false;
-      }
-
-      // ...
       String hex = openTransactionRawTxDTO.getHex();
-
-      if (StringUtils.isEmpty(hex)) {
-        setCheckSignatureMessage(withdrawalTransactionDTO, "no raw transaction found");
-        return false;
-      }
 
       // ...
       DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
@@ -171,9 +161,9 @@ public class SignedMessageChecker {
       @Nonnull String messageInfo) {
     LOGGER.trace("setCheckSignatureMessage() ...");
 
-    String message = "[checkSignature] ID: " + withdrawalTransactionDTO.getId() + " - " + messageInfo;
+    String message = "[Withdrawal] ID: " + withdrawalTransactionDTO.getId() + " - " + messageInfo;
 
-    withdrawalTransactionDTO.setCheckMessage(message);
+    withdrawalTransactionDTO.setStateReason(message);
     withdrawalTransactionDTO.setState(WithdrawalTransactionStateEnum.INVALID);
   }
 

@@ -5,6 +5,8 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.api.ApiAccessHandler;
+import ch.dfx.api.ApiAccessHandlerImpl;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -44,7 +46,15 @@ public class OpenTransactionManagerMain {
       walletHandler.loadWallet(wallet);
 
       // ...
-      OpenTransactionManager transactionManager = new OpenTransactionManager();
+      ApiAccessHandler apiAccessHandler = new ApiAccessHandlerImpl();
+
+      // ...
+      // TODO: ONLY FOR TESTING PURPOSES! ...
+      apiAccessHandler.fakeForTest();
+      // apiAccessHandler.signIn();
+
+      // ...
+      OpenTransactionManager transactionManager = new OpenTransactionManager(apiAccessHandler, dataProvider);
       transactionManager.execute();
     } catch (Exception e) {
       LOGGER.error("Fatal Error ...", e);

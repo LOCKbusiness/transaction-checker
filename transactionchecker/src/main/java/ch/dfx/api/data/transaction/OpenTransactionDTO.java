@@ -12,6 +12,8 @@ public class OpenTransactionDTO {
   private OpenTransactionRawTxDTO rawTx = null;
   private OpenTransactionPayloadDTO payload = null;
 
+  private String invalidatedReason = null;
+
   /**
    * 
    */
@@ -48,6 +50,14 @@ public class OpenTransactionDTO {
 
   public void setPayload(OpenTransactionPayloadDTO payload) {
     this.payload = payload;
+  }
+
+  public String getInvalidatedReason() {
+    return invalidatedReason;
+  }
+
+  public void setInvalidatedReason(String invalidatedReason) {
+    this.invalidatedReason = invalidatedReason;
   }
 
   @Override

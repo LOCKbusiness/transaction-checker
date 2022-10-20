@@ -14,6 +14,8 @@ import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.defichain.handler.DefiWalletHandler;
+import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.manager.ManagerRunnable;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
 import ch.dfx.transactionserver.database.DatabaseRunnable;
@@ -129,6 +131,9 @@ public class TransactionServerMain {
       startServer();
 
       // ...
+      loadWallet();
+
+      // ...
       int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
       int runPeriodAPI = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_API, 60);
 
@@ -148,6 +153,8 @@ public class TransactionServerMain {
   private static void shutdown() {
     LOGGER.debug("shutdown()");
 
+    unloadWallet();
+
     SchedulerProvider.getInstance().shutdown();
 
     stopServer();
@@ -157,6 +164,36 @@ public class TransactionServerMain {
     LOGGER.debug("finish");
 
     LogManager.shutdown();
+  }
+
+  /**
+   * 
+   */
+  private static void loadWallet() throws DfxException {
+    LOGGER.debug("loadWallet()");
+
+    String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+    DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+
+    DefiWalletHandler walletHandler = new DefiWalletHandler(dataProvider);
+    walletHandler.loadWallet(wallet);
+  }
+
+  /**
+   * 
+   */
+  private static void unloadWallet() {
+    LOGGER.debug("unloadWallet()");
+
+    try {
+      String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+
+      DefiWalletHandler walletHandler = new DefiWalletHandler(dataProvider);
+      walletHandler.unloadWallet(wallet);
+    } catch (Exception e) {
+      LOGGER.error("unloadWallet", e);
+    }
   }
 
   /**

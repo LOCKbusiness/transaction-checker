@@ -126,32 +126,6 @@ public class DatabaseBuilder {
   /**
    * 
    */
-  private BlockDTO createCacheBlockData(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("createCacheBlockData() ...");
-
-    String blockHash = dataProvider.getBlockHash((long) nextBlockNumber);
-    BlockDTO cacheBlockData = new BlockDTO(nextBlockNumber, blockHash);
-
-    List<String> transactionIdList = getTransactionIdList(blockHash);
-
-    for (int i = 0; i < transactionIdList.size(); i++) {
-      String transactionId = transactionIdList.get(i);
-
-      TransactionDTO cacheTransactionData = new TransactionDTO(nextBlockNumber, i, transactionId);
-
-      fillAddressList(blockHash, transactionId, cacheBlockData, cacheTransactionData);
-
-      cacheBlockData.addTransactionDTO(cacheTransactionData);
-    }
-
-    nextBlockNumber++;
-
-    return cacheBlockData;
-  }
-
-  /**
-   * 
-   */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
     LOGGER.trace("openStatements() ...");
 
@@ -217,6 +191,32 @@ public class DatabaseBuilder {
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
     }
+  }
+
+  /**
+   * 
+   */
+  private BlockDTO createCacheBlockData(@Nonnull Connection connection) throws DfxException {
+    LOGGER.trace("createCacheBlockData() ...");
+
+    String blockHash = dataProvider.getBlockHash((long) nextBlockNumber);
+    BlockDTO cacheBlockData = new BlockDTO(nextBlockNumber, blockHash);
+
+    List<String> transactionIdList = getTransactionIdList(blockHash);
+
+    for (int i = 0; i < transactionIdList.size(); i++) {
+      String transactionId = transactionIdList.get(i);
+
+      TransactionDTO cacheTransactionData = new TransactionDTO(nextBlockNumber, i, transactionId);
+
+      fillAddressList(blockHash, transactionId, cacheBlockData, cacheTransactionData);
+
+      cacheBlockData.addTransactionDTO(cacheTransactionData);
+    }
+
+    nextBlockNumber++;
+
+    return cacheBlockData;
   }
 
   /**

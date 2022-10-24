@@ -7,22 +7,22 @@ import ch.dfx.common.TransactionCheckerUtils;
 /**
  * 
  */
-public class WithdrawalTransactionDTO {
+public class TransactionWithdrawalDTO {
   private Integer id = null;
 
-  private PendingWithdrawalDTO pendingWithdrawalDTO = null;
   private OpenTransactionDTO openTransactionDTO = null;
+  private PendingWithdrawalDTO pendingWithdrawalDTO = null;
 
   // ...
   private String address = null;
 
   private String stateReason = null;
-  private WithdrawalTransactionStateEnum state = WithdrawalTransactionStateEnum.OPEN;
+  private TransactionWithdrawalStateEnum state = TransactionWithdrawalStateEnum.OPEN;
 
   /**
    * 
    */
-  public WithdrawalTransactionDTO() {
+  public TransactionWithdrawalDTO() {
   }
 
   public Integer getId() {
@@ -33,20 +33,20 @@ public class WithdrawalTransactionDTO {
     this.id = id;
   }
 
-  public PendingWithdrawalDTO getPendingWithdrawalDTO() {
-    return pendingWithdrawalDTO;
-  }
-
-  public void setPendingWithdrawalDTO(PendingWithdrawalDTO pendingWithdrawalDTO) {
-    this.pendingWithdrawalDTO = pendingWithdrawalDTO;
-  }
-
   public OpenTransactionDTO getOpenTransactionDTO() {
     return openTransactionDTO;
   }
 
   public void setOpenTransactionDTO(OpenTransactionDTO openTransactionDTO) {
     this.openTransactionDTO = openTransactionDTO;
+  }
+
+  public PendingWithdrawalDTO getPendingWithdrawalDTO() {
+    return pendingWithdrawalDTO;
+  }
+
+  public void setPendingWithdrawalDTO(PendingWithdrawalDTO pendingWithdrawalDTO) {
+    this.pendingWithdrawalDTO = pendingWithdrawalDTO;
   }
 
   public String getAddress() {
@@ -65,11 +65,11 @@ public class WithdrawalTransactionDTO {
     this.stateReason = stateReason;
   }
 
-  public WithdrawalTransactionStateEnum getState() {
+  public TransactionWithdrawalStateEnum getState() {
     return state;
   }
 
-  public void setState(WithdrawalTransactionStateEnum state) {
+  public void setState(TransactionWithdrawalStateEnum state) {
     this.state = state;
   }
 

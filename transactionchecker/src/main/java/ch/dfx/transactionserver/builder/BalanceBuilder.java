@@ -80,89 +80,6 @@ public class BalanceBuilder {
   /**
    * 
    */
-  private List<BalanceDTO> calcLiquidityBalance(@Nonnull Connection connection) throws DfxException {
-    LOGGER.debug("calcLiquidityBalance() ...");
-
-    List<BalanceDTO> balanceDTOList = new ArrayList<>();
-
-    List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
-
-    for (LiquidityDTO liquidityDTO : liquidityDTOList) {
-      BalanceDTO balanceDTO = calcBalance(connection, liquidityDTO.getAddressNumber());
-      balanceDTO.setLiquidityDTO(liquidityDTO);
-
-      balanceDTOList.add(balanceDTO);
-    }
-
-    return balanceDTOList;
-  }
-
-  /**
-   * 
-   */
-  private List<BalanceDTO> calcDepositBalance(@Nonnull Connection connection) throws DfxException {
-    LOGGER.debug("calcDepositBalance() ...");
-
-    List<BalanceDTO> balanceDTOList = new ArrayList<>();
-
-    List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
-
-    for (DepositDTO depositDTO : depositDTOList) {
-      BalanceDTO balanceDTO = calcBalance(connection, depositDTO.getDepositAddressNumber());
-      balanceDTO.setDepositDTO(depositDTO);
-
-      balanceDTOList.add(balanceDTO);
-    }
-
-    return balanceDTOList;
-  }
-
-  /**
-   * 
-   */
-  private BalanceDTO calcBalance(
-      @Nonnull Connection connection,
-      @Nonnull Integer addressNumber) throws DfxException {
-    LOGGER.trace("calcBalance() ...");
-
-    try {
-      BalanceDTO balanceDTO = getBalanceDTO(addressNumber);
-
-      // ...
-      int balanceBlockNumber = balanceDTO.getBlockNumber();
-
-      BalanceDTO voutBalanceDTO = calcVout(balanceBlockNumber, addressNumber);
-      BalanceDTO vinBalanceDTO = calcVin(balanceBlockNumber, addressNumber);
-
-      int maxBalanceBlockNumber = balanceBlockNumber;
-      maxBalanceBlockNumber = Math.max(maxBalanceBlockNumber, voutBalanceDTO.getBlockNumber());
-      maxBalanceBlockNumber = Math.max(maxBalanceBlockNumber, vinBalanceDTO.getBlockNumber());
-
-      // ...
-      balanceDTO.setBlockNumber(maxBalanceBlockNumber);
-      balanceDTO.addTransactionCount(voutBalanceDTO.getTransactionCount());
-      balanceDTO.addTransactionCount(vinBalanceDTO.getTransactionCount());
-      balanceDTO.addVout(voutBalanceDTO.getVout());
-      balanceDTO.addVin(vinBalanceDTO.getVin());
-
-      // ...
-      if (-1 == balanceBlockNumber) {
-        insertBalance(balanceDTO);
-      } else if (maxBalanceBlockNumber > balanceBlockNumber) {
-        updateBalance(balanceDTO);
-      }
-
-      return balanceDTO;
-    } catch (DfxException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new DfxException("calcBalance", e);
-    }
-  }
-
-  /**
-   * 
-   */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
     LOGGER.trace("openStatements() ...");
 
@@ -211,6 +128,91 @@ public class BalanceBuilder {
   /**
    * 
    */
+  private List<BalanceDTO> calcLiquidityBalance(@Nonnull Connection connection) throws DfxException {
+    LOGGER.debug("calcLiquidityBalance() ...");
+
+    List<BalanceDTO> balanceDTOList = new ArrayList<>();
+
+    List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
+
+    for (LiquidityDTO liquidityDTO : liquidityDTOList) {
+      BalanceDTO balanceDTO = calcBalance(connection, liquidityDTO.getAddressNumber());
+      balanceDTO.setLiquidityDTO(liquidityDTO);
+
+      balanceDTOList.add(balanceDTO);
+    }
+
+    return balanceDTOList;
+  }
+
+  /**
+   * 
+   */
+  private List<BalanceDTO> calcDepositBalance(@Nonnull Connection connection) throws DfxException {
+    LOGGER.debug("calcDepositBalance() ...");
+
+    List<BalanceDTO> balanceDTOList = new ArrayList<>();
+
+    List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
+
+    for (DepositDTO depositDTO : depositDTOList) {
+      BalanceDTO balanceDTO = calcBalance(connection, depositDTO.getDepositAddressNumber());
+      balanceDTO.setDepositDTO(depositDTO);
+
+      balanceDTOList.add(balanceDTO);
+    }
+
+    return balanceDTOList;
+  }
+
+  /**
+   * 
+   */
+  private BalanceDTO calcBalance(
+      @Nonnull Connection connection,
+      int addressNumber) throws DfxException {
+    LOGGER.trace("calcBalance() ...");
+
+    try {
+      BalanceDTO balanceDTO = getBalanceDTO(addressNumber);
+
+      // ...
+      int balanceBlockNumber = balanceDTO.getBlockNumber();
+
+      // ...
+      BalanceDTO voutBalanceDTO = calcVout(balanceBlockNumber, addressNumber);
+      BalanceDTO vinBalanceDTO = calcVin(balanceBlockNumber, addressNumber);
+
+      // ...
+      int maxBalanceBlockNumber = balanceBlockNumber;
+      maxBalanceBlockNumber = Math.max(maxBalanceBlockNumber, voutBalanceDTO.getBlockNumber());
+      maxBalanceBlockNumber = Math.max(maxBalanceBlockNumber, vinBalanceDTO.getBlockNumber());
+
+      // ...
+      balanceDTO.setBlockNumber(maxBalanceBlockNumber);
+      balanceDTO.addTransactionCount(voutBalanceDTO.getTransactionCount());
+      balanceDTO.addTransactionCount(vinBalanceDTO.getTransactionCount());
+      balanceDTO.addVout(voutBalanceDTO.getVout());
+      balanceDTO.addVin(vinBalanceDTO.getVin());
+
+      // ...
+      if (-1 == balanceBlockNumber) {
+        insertBalance(balanceDTO);
+      } else if (maxBalanceBlockNumber > balanceBlockNumber) {
+        updateBalance(balanceDTO);
+      }
+
+      return balanceDTO;
+    } catch (DfxException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new DfxException("calcBalance", e);
+    }
+  }
+
+  /**
+   * 
+   */
   private BalanceDTO getBalanceDTO(int addressNumber) throws DfxException {
     LOGGER.trace("getBalanceDTO() ...");
 
@@ -222,10 +224,10 @@ public class BalanceBuilder {
       ResultSet resultSet = balanceSelectStatement.executeQuery();
 
       if (resultSet.next()) {
-        balanceDTO.setBlockNumber(DatabaseUtils.getIntOrDefault(resultSet, 2, -1));
-        balanceDTO.setTransactionCount(DatabaseUtils.getIntOrDefault(resultSet, 3, 0));
-        balanceDTO.setVout(DatabaseUtils.getBigDecimalOrDefault(resultSet, 4, BigDecimal.ZERO));
-        balanceDTO.setVin(DatabaseUtils.getBigDecimalOrDefault(resultSet, 5, BigDecimal.ZERO));
+        balanceDTO.setBlockNumber(DatabaseUtils.getIntOrDefault(resultSet, "block_number", -1));
+        balanceDTO.setTransactionCount(DatabaseUtils.getIntOrDefault(resultSet, "transaction_count", 0));
+        balanceDTO.setVout(DatabaseUtils.getBigDecimalOrDefault(resultSet, "vout", BigDecimal.ZERO));
+        balanceDTO.setVin(DatabaseUtils.getBigDecimalOrDefault(resultSet, "vin", BigDecimal.ZERO));
       }
 
       resultSet.close();

@@ -7,13 +7,13 @@ import ch.dfx.common.TransactionCheckerUtils;
 /**
  * 
  */
-public class WithdrawalTransactionDTOList extends ArrayList<WithdrawalTransactionDTO> {
+public class TransactionWithdrawalDTOList extends ArrayList<TransactionWithdrawalDTO> {
   private static final long serialVersionUID = 7297440712035539058L;
 
   /**
    * 
    */
-  public WithdrawalTransactionDTOList() {
+  public TransactionWithdrawalDTOList() {
   }
 
   @Override

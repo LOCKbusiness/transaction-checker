@@ -7,20 +7,23 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.api.data.join.WithdrawalTransactionDTO;
-import ch.dfx.api.data.join.WithdrawalTransactionStateEnum;
+import ch.dfx.api.data.join.TransactionWithdrawalDTO;
+import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
+import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionRawTxDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
@@ -30,13 +33,14 @@ import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.manager.data.SignedMessageCheckDTO;
 import ch.dfx.manager.data.SignedMessageCheckDTOList;
 
 /**
  * 
  */
-public class SignedMessageChecker {
-  private static final Logger LOGGER = LogManager.getLogger(SignedMessageChecker.class);
+public class WithdrawalManager {
+  private static final Logger LOGGER = LogManager.getLogger(WithdrawalManager.class);
 
   // ...
   private static final String SIGN_MESSAGE_FORMAT = "Withdraw_${amount}_${asset}_from_${address}_staking_id_${stakingId}_withdrawal_id_${withdrawalId}";
@@ -52,30 +56,35 @@ public class SignedMessageChecker {
   // ...
   private final DefiDataProvider dataProvider;
 
-  // ...
-  private String checkSignatureMessage = null;
-
   /**
    * 
    */
-  public SignedMessageChecker(@Nonnull DefiDataProvider dataProvider) {
+  public WithdrawalManager(@Nonnull DefiDataProvider dataProvider) {
     this.dataProvider = dataProvider;
   }
 
   /**
    * 
    */
-  public @Nullable String getCheckSignatureMessage() {
-    return checkSignatureMessage;
+  public TransactionWithdrawalDTOList checkSignMessageFormat(@Nonnull TransactionWithdrawalDTOList withdrawalTransactionDTOList) {
+    LOGGER.trace("checkSignMessageFormat() ...");
+
+    TransactionWithdrawalDTOList checkedWithdrawalTransactionDTOList = new TransactionWithdrawalDTOList();
+
+    for (TransactionWithdrawalDTO withdrawalTransactionDTO : withdrawalTransactionDTOList) {
+      if (checkSignMessageFormat(withdrawalTransactionDTO)) {
+        checkedWithdrawalTransactionDTOList.add(withdrawalTransactionDTO);
+      }
+    }
+
+    return checkedWithdrawalTransactionDTOList;
   }
 
   /**
    * 
    */
-  public boolean checkSignMessageFormat(@Nonnull WithdrawalTransactionDTO withdrawalTransactionDTO) {
+  private boolean checkSignMessageFormat(@Nonnull TransactionWithdrawalDTO withdrawalTransactionDTO) {
     LOGGER.trace("checkSignMessageFormat() ...");
-
-    checkSignatureMessage = null;
 
     // ...
     try {
@@ -143,7 +152,7 @@ public class SignedMessageChecker {
       }
 
       withdrawalTransactionDTO.setAddress(signMessageAddress);
-      withdrawalTransactionDTO.setState(WithdrawalTransactionStateEnum.SIGN_MESSAGE_FORMAT_CHECKED);
+      withdrawalTransactionDTO.setState(TransactionWithdrawalStateEnum.SIGN_MESSAGE_FORMAT_CHECKED);
 
       return true;
     } catch (Exception e) {
@@ -157,14 +166,14 @@ public class SignedMessageChecker {
    * 
    */
   private void setCheckSignatureMessage(
-      @Nonnull WithdrawalTransactionDTO withdrawalTransactionDTO,
+      @Nonnull TransactionWithdrawalDTO withdrawalTransactionDTO,
       @Nonnull String messageInfo) {
     LOGGER.trace("setCheckSignatureMessage() ...");
 
     String message = "[Withdrawal] ID: " + withdrawalTransactionDTO.getId() + " - " + messageInfo;
 
     withdrawalTransactionDTO.setStateReason(message);
-    withdrawalTransactionDTO.setState(WithdrawalTransactionStateEnum.INVALID);
+    withdrawalTransactionDTO.setState(TransactionWithdrawalStateEnum.INVALID);
   }
 
   /**
@@ -217,7 +226,73 @@ public class SignedMessageChecker {
   /**
    * 
    */
-  public SignedMessageCheckDTOList checkSignature(@Nonnull SignedMessageCheckDTOList uncheckedSignedMessageCheckDTOList) {
+  public TransactionWithdrawalDTOList checkSignMessageSignature(@Nonnull TransactionWithdrawalDTOList withdrawalTransactionDTOList) {
+    LOGGER.trace("checkSignMessageSignature() ...");
+
+    TransactionWithdrawalDTOList checkedWithdrawalTransactionDTOList = new TransactionWithdrawalDTOList();
+
+    // ...
+    if (!withdrawalTransactionDTOList.isEmpty()) {
+      SignedMessageCheckDTOList uncheckedSignedMessageCheckDTOList = createSignedMessageCheckDTOList(withdrawalTransactionDTOList);
+      SignedMessageCheckDTOList checkedSignedMessageCheckDTOList = checkSignature(uncheckedSignedMessageCheckDTOList);
+
+      // ...
+      Map<Integer, TransactionWithdrawalDTO> idToWithdrawalTransactionDTOMap = new HashMap<>();
+      withdrawalTransactionDTOList.forEach(dto -> idToWithdrawalTransactionDTOMap.put(dto.getId(), dto));
+
+      Map<Integer, SignedMessageCheckDTO> idToCheckedSignedMessageCheckDTOMap = new HashMap<>();
+      checkedSignedMessageCheckDTOList.forEach(dto -> idToCheckedSignedMessageCheckDTOMap.put(dto.getId(), dto));
+
+      for (Entry<Integer, TransactionWithdrawalDTO> idToWithdrawalTransactionDTOMapEntry : idToWithdrawalTransactionDTOMap.entrySet()) {
+        Integer id = idToWithdrawalTransactionDTOMapEntry.getKey();
+        TransactionWithdrawalDTO withdrawalTransactionDTO = idToWithdrawalTransactionDTOMapEntry.getValue();
+
+        SignedMessageCheckDTO checkedSignedMessageCheckDTO = idToCheckedSignedMessageCheckDTOMap.get(id);
+
+        if (null != checkedSignedMessageCheckDTO
+            && checkedSignedMessageCheckDTO.isValid()) {
+          withdrawalTransactionDTO.setState(TransactionWithdrawalStateEnum.SIGNATURE_CHECKED);
+          checkedWithdrawalTransactionDTOList.add(withdrawalTransactionDTO);
+        } else {
+          withdrawalTransactionDTO.setStateReason("[Withdrawal] ID: " + withdrawalTransactionDTO.getId() + " - invalid signature");
+          withdrawalTransactionDTO.setState(TransactionWithdrawalStateEnum.INVALID);
+        }
+      }
+    }
+
+    return checkedWithdrawalTransactionDTOList;
+  }
+
+  /**
+   * 
+   */
+  private SignedMessageCheckDTOList createSignedMessageCheckDTOList(@Nonnull TransactionWithdrawalDTOList withdrawalTransactionDTOList) {
+    LOGGER.trace("createSignedMessageCheckDTOList() ...");
+
+    SignedMessageCheckDTOList signedMessageCheckDTOList = new SignedMessageCheckDTOList();
+
+    for (TransactionWithdrawalDTO withdrawalTransactionDTO : withdrawalTransactionDTOList) {
+      if (TransactionWithdrawalStateEnum.SIGN_MESSAGE_FORMAT_CHECKED == withdrawalTransactionDTO.getState()) {
+        PendingWithdrawalDTO pendingWithdrawalDTO = withdrawalTransactionDTO.getPendingWithdrawalDTO();
+
+        SignedMessageCheckDTO signedMessageCheckDTO = new SignedMessageCheckDTO();
+
+        signedMessageCheckDTO.setId(pendingWithdrawalDTO.getId());
+        signedMessageCheckDTO.setMessage(pendingWithdrawalDTO.getSignMessage());
+        signedMessageCheckDTO.setAddress(withdrawalTransactionDTO.getAddress());
+        signedMessageCheckDTO.setSignature(pendingWithdrawalDTO.getSignature());
+
+        signedMessageCheckDTOList.add(signedMessageCheckDTO);
+      }
+    }
+
+    return signedMessageCheckDTOList;
+  }
+
+  /**
+   * 
+   */
+  private SignedMessageCheckDTOList checkSignature(@Nonnull SignedMessageCheckDTOList uncheckedSignedMessageCheckDTOList) {
     LOGGER.trace("checkSignature() ...");
 
     try {

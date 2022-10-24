@@ -137,10 +137,13 @@ public class TransactionServerMain {
       int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
       int runPeriodAPI = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_API, 60);
 
-      DatabaseRunnable databaseRunnable = new DatabaseRunnable(LOCK_FILE, isServerOnly);
-      SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
+      if (30 <= runPeriodDatabase) {
+        DatabaseRunnable databaseRunnable = new DatabaseRunnable(LOCK_FILE, isServerOnly);
+        SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
+      }
 
-      if (!isMainnet) {
+      if (!isMainnet
+          && 10 <= runPeriodAPI) {
         ManagerRunnable managerRunnable = new ManagerRunnable(isServerOnly);
         SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
       }

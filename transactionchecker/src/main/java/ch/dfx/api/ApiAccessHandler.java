@@ -6,7 +6,6 @@ import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
-import ch.dfx.common.errorhandling.DfxException;
 
 /**
  * 
@@ -16,40 +15,35 @@ public interface ApiAccessHandler {
   /**
    * 
    */
-  void fakeForTest();
-
-  /**
-   * 
-   */
   void resetSignIn();
 
   /**
    * 
    */
-  void signIn() throws DfxException;
+  void signIn();
 
   /**
    *
    */
-  OpenTransactionDTOList getOpenTransactionDTOList() throws DfxException;
+  OpenTransactionDTOList getOpenTransactionDTOList();
 
   /**
    * 
    */
-  PendingWithdrawalDTOList getPendingWithdrawalDTOList() throws DfxException;
+  PendingWithdrawalDTOList getPendingWithdrawalDTOList();
 
   /**
    * 
    */
   void sendOpenTransactionVerified(
       @Nonnull String openTransactionId,
-      @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) throws DfxException;
+      @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO);
 
   /**
    * 
    */
   void sendOpenTransactionInvalidated(
       @Nonnull String openTransactionId,
-      @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) throws DfxException;
+      @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO);
 
 }

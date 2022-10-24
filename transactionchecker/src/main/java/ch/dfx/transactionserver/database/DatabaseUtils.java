@@ -38,10 +38,10 @@ public class DatabaseUtils {
    */
   public static int getIntOrDefault(
       @Nonnull ResultSet resultSet,
-      int columnIndex,
+      @Nonnull String columnLabel,
       int defaultValue) throws DfxException {
     try {
-      int value = resultSet.getInt(columnIndex);
+      int value = resultSet.getInt(columnLabel);
 
       if (resultSet.wasNull()) {
         value = defaultValue;
@@ -58,10 +58,10 @@ public class DatabaseUtils {
    */
   public static BigDecimal getBigDecimalOrDefault(
       @Nonnull ResultSet resultSet,
-      int columnIndex,
+      @Nonnull String columnLabel,
       BigDecimal defaultValue) throws DfxException {
     try {
-      BigDecimal value = resultSet.getBigDecimal(columnIndex);
+      BigDecimal value = resultSet.getBigDecimal(columnLabel);
 
       if (resultSet.wasNull()) {
         value = defaultValue;

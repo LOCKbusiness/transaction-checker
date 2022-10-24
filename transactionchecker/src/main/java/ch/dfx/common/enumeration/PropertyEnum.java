@@ -4,6 +4,9 @@ package ch.dfx.common.enumeration;
  * 
  */
 public enum PropertyEnum {
+  // General ...
+  RAW_TRANSACTION_MAX_SIZE,
+
   // DefiChain ...
   DFI_RPC_USERNAME,
   DFI_RPC_PASSWORD,

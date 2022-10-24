@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -81,17 +80,6 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    * 
    */
   @Override
-  public void fakeForTest() {
-    String testToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_TEST_TOKEN);
-
-    signInDTO = createLoginData();
-    signInDTO.setAccessToken(testToken);
-  }
-
-  /**
-   * 
-   */
-  @Override
   public void resetSignIn() {
     signInDTO = null;
   }
@@ -100,7 +88,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    * 
    */
   @Override
-  public void signIn() throws DfxException {
+  public void signIn() {
     LOGGER.trace("signIn() ...");
 
     try {
@@ -120,34 +108,38 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
         int statusCode = httpResponse.getStatusLine().getStatusCode();
 
-        if (HttpStatus.SC_CREATED != statusCode) {
-          throw new DfxException("HTTP Status Code: " + statusCode);
+        if (HttpStatus.SC_CREATED == statusCode) {
+          String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
+          LOGGER.trace(jsonResponse);
+
+          // ...
+          AccessTokenDTO accessTokenDTO = gson.fromJson(jsonResponse, AccessTokenDTO.class);
+          signInDTO.setAccessToken(accessTokenDTO.accessToken);
+
+          // ...
+          String[] accessTokenSplit = accessTokenDTO.accessToken.split("\\.");
+
+          if (2 > accessTokenSplit.length) {
+            throw new DfxException("unknown access token format");
+          }
+
+          String header = new String(urlDecoder.decode(accessTokenSplit[0]));
+          String payload = new String(urlDecoder.decode(accessTokenSplit[1]));
+
+          signInDTO.setAccessTokenHeader(gson.fromJson(header, SignInAccessTokenHeaderDTO.class));
+          signInDTO.setAccessTokenPayload(gson.fromJson(payload, SignInAccessTokenPayloadDTO.class));
+        } else {
+          // TODO: Error Handling:
+          // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+          LOGGER.error("[SignIn] HTTP Status Code: " + statusCode);
+          resetSignIn();
         }
-
-        String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
-        LOGGER.trace(jsonResponse);
-
-        // ...
-        AccessTokenDTO accessTokenDTO = gson.fromJson(jsonResponse, AccessTokenDTO.class);
-        signInDTO.setAccessToken(accessTokenDTO.accessToken);
-
-        // ...
-        String[] accessTokenSplit = accessTokenDTO.accessToken.split("\\.");
-
-        if (2 > accessTokenSplit.length) {
-          throw new DfxException("unknown access token format");
-        }
-
-        String header = new String(urlDecoder.decode(accessTokenSplit[0]));
-        String payload = new String(urlDecoder.decode(accessTokenSplit[1]));
-
-        signInDTO.setAccessTokenHeader(gson.fromJson(header, SignInAccessTokenHeaderDTO.class));
-        signInDTO.setAccessTokenPayload(gson.fromJson(payload, SignInAccessTokenPayloadDTO.class));
       }
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
-      throw new DfxException("signIn", e);
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("signIn", e);
+      resetSignIn();
     }
   }
 
@@ -188,9 +180,27 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    *
    */
   @Override
-  public OpenTransactionDTOList getOpenTransactionDTOList() throws DfxException {
+  public OpenTransactionDTOList getOpenTransactionDTOList() {
     LOGGER.trace("getOpenTransactionDTOList() ...");
-    Objects.requireNonNull(signInDTO, "null signInDTO: first call signIn()");
+
+    OpenTransactionDTOList openTransactionDTOList = new OpenTransactionDTOList();
+
+    if (null != signInDTO) {
+      fillOpenTransactionDTOList(openTransactionDTOList);
+    } else {
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("[Transaction] no SignIn Data found");
+    }
+
+    return openTransactionDTOList;
+  }
+
+  /**
+   * 
+   */
+  private void fillOpenTransactionDTOList(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
+    LOGGER.trace("fillOpenTransactionDTOList() ...");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/open";
@@ -203,18 +213,20 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
-      if (HttpStatus.SC_OK != statusCode) {
-        throw new DfxException("[Transaction] HTTP Status Code: " + statusCode);
+      if (HttpStatus.SC_OK == statusCode) {
+        String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
+        logJSON("transaction", jsonResponse);
+
+        openTransactionDTOList.addAll(gson.fromJson(jsonResponse, OpenTransactionDTOList.class));
+      } else {
+        // TODO: Error Handling:
+        // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+        LOGGER.error("[Transaction] HTTP Status Code: " + statusCode);
       }
-
-      String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
-      logJSON("transaction", jsonResponse);
-
-      return gson.fromJson(jsonResponse, OpenTransactionDTOList.class);
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
-      throw new DfxException("getOpenTransactionDTOList", e);
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("fillOpenTransactionDTOList", e);
     }
   }
 
@@ -222,9 +234,27 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    * 
    */
   @Override
-  public PendingWithdrawalDTOList getPendingWithdrawalDTOList() throws DfxException {
+  public PendingWithdrawalDTOList getPendingWithdrawalDTOList() {
     LOGGER.trace("getPendingWithdrawalDTOList() ...");
-    Objects.requireNonNull(signInDTO, "null signInDTO: first call signIn()");
+
+    PendingWithdrawalDTOList pendingWithdrawalDTOList = new PendingWithdrawalDTOList();
+
+    if (null != signInDTO) {
+      fillPendingWithdrawalDTOList(pendingWithdrawalDTOList);
+    } else {
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("[Withdrawal] no SignIn Data found");
+    }
+
+    return pendingWithdrawalDTOList;
+  }
+
+  /**
+   * 
+   */
+  private void fillPendingWithdrawalDTOList(@Nonnull PendingWithdrawalDTOList pendingWithdrawalDTOList) {
+    LOGGER.trace("fillPendingWithdrawalDTOList() ...");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/withdrawal/pending";
@@ -237,18 +267,20 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
-      if (HttpStatus.SC_OK != statusCode) {
-        throw new DfxException("[Withdrawal] HTTP Status Code: " + statusCode);
+      if (HttpStatus.SC_OK == statusCode) {
+        String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
+        logJSON("withdrawal", jsonResponse);
+
+        pendingWithdrawalDTOList.addAll(gson.fromJson(jsonResponse, PendingWithdrawalDTOList.class));
+      } else {
+        // TODO: Error Handling:
+        // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+        LOGGER.error("[Withdrawal] HTTP Status Code: " + statusCode);
       }
-
-      String jsonResponse = EntityUtils.toString(httpResponse.getEntity());
-      logJSON("withdrawal", jsonResponse);
-
-      return gson.fromJson(jsonResponse, PendingWithdrawalDTOList.class);
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
-      throw new DfxException("getPendingWithdrawalDTOList", e);
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("getPendingWithdrawalDTOList", e);
     }
   }
 
@@ -257,10 +289,26 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    */
   @Override
   public void sendOpenTransactionVerified(
-      String openTransactionId,
-      OpenTransactionVerifiedDTO openTransactionVerifiedDTO) throws DfxException {
+      @Nonnull String openTransactionId,
+      @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) {
     LOGGER.trace("sendOpenTransactionVerified() ...");
-    Objects.requireNonNull(signInDTO, "null signInDTO: first call signIn()");
+
+    if (null != signInDTO) {
+      doSendOpenTransactionVerified(openTransactionId, openTransactionVerifiedDTO);
+    } else {
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("[Verified] no SignIn Data found");
+    }
+  }
+
+  /**
+   * 
+   */
+  private void doSendOpenTransactionVerified(
+      @Nonnull String openTransactionId,
+      @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) {
+    LOGGER.trace("doSendOpenTransactionVerified() ...");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/verified";
@@ -280,12 +328,14 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
       if (HttpStatus.SC_OK != statusCode) {
-        throw new DfxException("[Verified] HTTP Status Code: " + statusCode);
+        // TODO: Error Handling:
+        // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+        LOGGER.error("[Verified] HTTP Status Code: " + statusCode);
       }
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
-      throw new DfxException("sendOpenTransactionVerified", e);
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("sendOpenTransactionVerified", e);
     }
   }
 
@@ -294,10 +344,26 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    */
   @Override
   public void sendOpenTransactionInvalidated(
-      String openTransactionId,
-      OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) throws DfxException {
+      @Nonnull String openTransactionId,
+      @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) {
     LOGGER.trace("sendOpenTransactionInvalidated() ...");
-    Objects.requireNonNull(signInDTO, "null signInDTO: first call signIn()");
+
+    if (null != signInDTO) {
+      doSendOpenTransactionInvalidated(openTransactionId, openTransactionInvalidatedDTO);
+    } else {
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("[Invalidated] no SignIn Data found");
+    }
+  }
+
+  /**
+   * 
+   */
+  private void doSendOpenTransactionInvalidated(
+      @Nonnull String openTransactionId,
+      @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) {
+    LOGGER.trace("doSendOpenTransactionInvalidated() ...");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/invalidated";
@@ -317,12 +383,14 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
       if (HttpStatus.SC_OK != statusCode) {
-        throw new DfxException("[Invalidated] HTTP Status Code: " + statusCode);
+        // TODO: Error Handling:
+        // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+        LOGGER.error("[Invalidated] HTTP Status Code: " + statusCode);
       }
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
-      throw new DfxException("sendOpenTransactionInvalidated", e);
+      // TODO: Error Handling:
+      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
+      LOGGER.error("sendOpenTransactionInvalidated", e);
     }
   }
 

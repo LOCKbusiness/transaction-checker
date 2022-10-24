@@ -27,7 +27,7 @@ public class ConfigPropertyProvider {
    */
   public static void setup(@Nonnull Properties properties) {
     if (null != instance) {
-      String errorString = "Setup darf nur einmal aufgerufen werden ...";
+      String errorString = "setup() can only be called once ...";
       LOGGER.error(errorString);
       throw new RuntimeException(errorString);
     }
@@ -36,6 +36,21 @@ public class ConfigPropertyProvider {
 
     for (PropertyEnum property : PropertyEnum.values()) {
       instance.propertyMap.put(property, properties.getProperty(property.name().toLowerCase(), ""));
+    }
+  }
+
+  /**
+   * 
+   */
+  public static void testSetup(@Nonnull Properties testProperties) {
+    if (null == instance) {
+      String errorString = "Call setup() before ...";
+      LOGGER.error(errorString);
+      throw new RuntimeException(errorString);
+    }
+
+    for (PropertyEnum property : PropertyEnum.values()) {
+      instance.propertyMap.put(property, testProperties.getProperty(property.name().toLowerCase(), ""));
     }
   }
 

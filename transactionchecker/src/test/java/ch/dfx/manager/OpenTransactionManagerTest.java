@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Properties;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,7 +23,9 @@ import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
+import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 
@@ -53,6 +56,13 @@ public class OpenTransactionManagerTest {
     // ...
     TransactionCheckerUtils.loadConfigProperties(network, environment);
 
+    Properties testProperties = new Properties();
+    testProperties.put(PropertyEnum.H2_DB_DIR, "");
+    testProperties.put(PropertyEnum.H2_DB_NAME, "");
+    testProperties.put(PropertyEnum.H2_PASSWORD, "");
+
+    ConfigPropertyProvider.testSetup(testProperties);
+
     // ...
     gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -64,8 +74,8 @@ public class OpenTransactionManagerTest {
   @Test
   public void dataMissingTest() {
     try {
-      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(new PendingWithdrawalDTOList());
       when(apiAccessHandler.getOpenTransactionDTOList()).thenReturn(new OpenTransactionDTOList());
+      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(new PendingWithdrawalDTOList());
 
       transactionManager.execute();
     } catch (Exception e) {
@@ -76,14 +86,14 @@ public class OpenTransactionManagerTest {
   @Test
   public void dataEmptyTest() {
     try {
-      PendingWithdrawalDTOList pendingWithdrawalDTOList = new PendingWithdrawalDTOList();
-      pendingWithdrawalDTOList.add(new PendingWithdrawalDTO());
-
       OpenTransactionDTOList openTransactionDTOList = new OpenTransactionDTOList();
       openTransactionDTOList.add(new OpenTransactionDTO());
 
-      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(pendingWithdrawalDTOList);
+      PendingWithdrawalDTOList pendingWithdrawalDTOList = new PendingWithdrawalDTOList();
+      pendingWithdrawalDTOList.add(new PendingWithdrawalDTO());
+
       when(apiAccessHandler.getOpenTransactionDTOList()).thenReturn(openTransactionDTOList);
+      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(pendingWithdrawalDTOList);
 
       transactionManager.execute();
     } catch (Exception e) {
@@ -97,20 +107,20 @@ public class OpenTransactionManagerTest {
       ClassLoader classLoader = this.getClass().getClassLoader();
 
       // ...
-      File jsonWithdrawalFile = new File(classLoader.getResource("json/test-1-withdrawal-good.json").getFile());
-
-      PendingWithdrawalDTOList pendingWithdrawalDTOList =
-          gson.fromJson(Files.readString(jsonWithdrawalFile.toPath()), PendingWithdrawalDTOList.class);
-
-      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(pendingWithdrawalDTOList);
-
-      // ...
       File jsonTransactionFile = new File(classLoader.getResource("json/test-1-transaction-good.json").getFile());
 
       OpenTransactionDTOList openTransactionDTOList =
           gson.fromJson(Files.readString(jsonTransactionFile.toPath()), OpenTransactionDTOList.class);
 
       when(apiAccessHandler.getOpenTransactionDTOList()).thenReturn(openTransactionDTOList);
+
+      // ...
+      File jsonWithdrawalFile = new File(classLoader.getResource("json/test-1-withdrawal-good.json").getFile());
+
+      PendingWithdrawalDTOList pendingWithdrawalDTOList =
+          gson.fromJson(Files.readString(jsonWithdrawalFile.toPath()), PendingWithdrawalDTOList.class);
+
+      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(pendingWithdrawalDTOList);
 
       // ...
       File jsonChainDataFile = new File(classLoader.getResource("json/test-1-chaindata-good.json").getFile());

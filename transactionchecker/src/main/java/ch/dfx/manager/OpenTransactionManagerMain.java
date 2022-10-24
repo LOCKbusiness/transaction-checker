@@ -49,9 +49,7 @@ public class OpenTransactionManagerMain {
       ApiAccessHandler apiAccessHandler = new ApiAccessHandlerImpl();
 
       // ...
-      // TODO: ONLY FOR TESTING PURPOSES! ...
-      apiAccessHandler.fakeForTest();
-      // apiAccessHandler.signIn();
+      apiAccessHandler.signIn();
 
       // ...
       OpenTransactionManager transactionManager = new OpenTransactionManager(apiAccessHandler, dataProvider);

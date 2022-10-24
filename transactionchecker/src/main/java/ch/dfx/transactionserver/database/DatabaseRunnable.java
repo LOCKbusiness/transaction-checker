@@ -56,13 +56,18 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   public void run() {
     LOGGER.trace("run() ...");
 
-    if (!isServerOnly) {
-      doRun();
+    try {
+      if (!isServerOnly) {
+        doRun();
 
-      checkErrorCounter();
+        checkErrorCounter();
+      }
+
+      checkLockFile();
+    } catch (Throwable t) {
+      databaseErrorCounter++;
+      LOGGER.error("run", t);
     }
-
-    checkLockFile();
   }
 
   /**

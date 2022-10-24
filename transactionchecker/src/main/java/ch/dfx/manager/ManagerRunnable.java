@@ -50,10 +50,15 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   public void run() {
     LOGGER.trace("run() ...");
 
-    if (!isServerOnly) {
-      doRun();
+    try {
+      if (!isServerOnly) {
+        doRun();
 
-      checkErrorCounter();
+        checkErrorCounter();
+      }
+    } catch (Throwable t) {
+      openTransactionErrorCounter++;
+      LOGGER.error("run", t);
     }
   }
 

@@ -412,7 +412,10 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
               .toString();
 
       Path jsonLogFilePath = Path.of("", "logs", "json", type, fileName);
-      String jsonPrettyPrinted = gson.toJson(JsonParser.parseString(jsonString));
+
+      // ...
+      int jsonStringLengthMB = jsonString.length() / 1024 / 1024;
+      String jsonPrettyPrinted = 10 < jsonStringLengthMB ? jsonString : gson.toJson(JsonParser.parseString(jsonString));
 
       // ...
       String sha256Hex = DigestUtils.sha256Hex(jsonPrettyPrinted);

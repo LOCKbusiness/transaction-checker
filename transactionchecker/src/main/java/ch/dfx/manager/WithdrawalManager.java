@@ -61,6 +61,7 @@ public class WithdrawalManager {
   public WithdrawalManager(
       @Nonnull String network,
       @Nonnull DefiDataProvider dataProvider) {
+    Objects.requireNonNull(network, "null 'network' not allowed");
     this.jsonSignatureCheckFile = Path.of("", "data", "javascript", network, "message-verification.json");
 
     this.dataProvider = dataProvider;

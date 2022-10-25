@@ -38,7 +38,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
       @Nonnull String network,
       boolean isServerOnly) {
     this.network = network;
-    this.apiAccessHandler = new ApiAccessHandlerImpl();
+    this.apiAccessHandler = new ApiAccessHandlerImpl(network);
 
     this.isServerOnly = isServerOnly;
   }

@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -49,6 +50,9 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   private static final Logger LOGGER = LogManager.getLogger(ApiAccessHandlerImpl.class);
 
   // ...
+  private final String network;
+
+  // ...
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS");
   private int logCounter = 1;
   private final Set<String> uniqueLogSet;
@@ -66,7 +70,10 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   /**
    * 
    */
-  public ApiAccessHandlerImpl() {
+  public ApiAccessHandlerImpl(@Nonnull String network) {
+    Objects.requireNonNull(network, "null 'network' not allowed");
+    this.network = network;
+
     this.uniqueLogSet = new HashSet<>();
 
     this.urlDecoder = Base64.getUrlDecoder();
@@ -411,7 +418,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
               .append(".json")
               .toString();
 
-      Path jsonLogFilePath = Path.of("", "logs", "json", type, fileName);
+      Path jsonLogFilePath = Path.of("", "logs", "json", network, type, fileName);
 
       // ...
       int jsonStringLengthMB = jsonString.length() / 1024 / 1024;

@@ -46,7 +46,7 @@ public class OpenTransactionManagerMain {
       walletHandler.loadWallet(wallet);
 
       // ...
-      ApiAccessHandler apiAccessHandler = new ApiAccessHandlerImpl();
+      ApiAccessHandler apiAccessHandler = new ApiAccessHandlerImpl(network);
 
       // ...
       apiAccessHandler.signIn();

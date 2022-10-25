@@ -14,7 +14,7 @@ public class TransactionWithdrawalDTO {
   private PendingWithdrawalDTO pendingWithdrawalDTO = null;
 
   // ...
-  private String address = null;
+  private String customerAddress = null;
 
   private String stateReason = null;
   private TransactionWithdrawalStateEnum state = TransactionWithdrawalStateEnum.OPEN;
@@ -49,12 +49,12 @@ public class TransactionWithdrawalDTO {
     this.pendingWithdrawalDTO = pendingWithdrawalDTO;
   }
 
-  public String getAddress() {
-    return address;
+  public String getCustomerAddress() {
+    return customerAddress;
   }
 
-  public void setAddress(String address) {
-    this.address = address;
+  public void setCustomerAddress(String customerAddress) {
+    this.customerAddress = customerAddress;
   }
 
   public String getStateReason() {

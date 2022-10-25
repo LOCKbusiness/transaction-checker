@@ -8,7 +8,7 @@ public enum TransactionWithdrawalStateEnum {
 
   SIGN_MESSAGE_FORMAT_CHECKED,
   SIGNATURE_CHECKED,
+  BALANCE_CHECKED,
 
-  VALID,
   INVALID
 }

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -46,7 +45,7 @@ public class BalanceBuilder {
   /**
    * 
    */
-  public List<BalanceDTO> build() throws DfxException {
+  public void build() throws DfxException {
     LOGGER.trace("build() ...");
 
     Connection connection = null;
@@ -57,15 +56,13 @@ public class BalanceBuilder {
       databaseHelper.openStatements(connection);
       openStatements(connection);
 
-      List<BalanceDTO> balanceDTOList = calcLiquidityBalance(connection);
-      balanceDTOList.addAll(calcDepositBalance(connection));
+      calcLiquidityBalance(connection);
+      calcDepositBalance(connection);
 
       closeStatements();
       databaseHelper.closeStatements();
 
       connection.commit();
-
-      return balanceDTOList;
     } catch (DfxException e) {
       DatabaseUtils.rollback(connection);
       throw e;
@@ -128,47 +125,33 @@ public class BalanceBuilder {
   /**
    * 
    */
-  private List<BalanceDTO> calcLiquidityBalance(@Nonnull Connection connection) throws DfxException {
+  private void calcLiquidityBalance(@Nonnull Connection connection) throws DfxException {
     LOGGER.debug("calcLiquidityBalance() ...");
-
-    List<BalanceDTO> balanceDTOList = new ArrayList<>();
 
     List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
 
     for (LiquidityDTO liquidityDTO : liquidityDTOList) {
-      BalanceDTO balanceDTO = calcBalance(connection, liquidityDTO.getAddressNumber());
-      balanceDTO.setLiquidityDTO(liquidityDTO);
-
-      balanceDTOList.add(balanceDTO);
+      calcBalance(connection, liquidityDTO.getAddressNumber());
     }
-
-    return balanceDTOList;
   }
 
   /**
    * 
    */
-  private List<BalanceDTO> calcDepositBalance(@Nonnull Connection connection) throws DfxException {
+  private void calcDepositBalance(@Nonnull Connection connection) throws DfxException {
     LOGGER.debug("calcDepositBalance() ...");
-
-    List<BalanceDTO> balanceDTOList = new ArrayList<>();
 
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
 
     for (DepositDTO depositDTO : depositDTOList) {
-      BalanceDTO balanceDTO = calcBalance(connection, depositDTO.getDepositAddressNumber());
-      balanceDTO.setDepositDTO(depositDTO);
-
-      balanceDTOList.add(balanceDTO);
+      calcBalance(connection, depositDTO.getDepositAddressNumber());
     }
-
-    return balanceDTOList;
   }
 
   /**
    * 
    */
-  private BalanceDTO calcBalance(
+  private void calcBalance(
       @Nonnull Connection connection,
       int addressNumber) throws DfxException {
     LOGGER.trace("calcBalance() ...");
@@ -201,8 +184,6 @@ public class BalanceBuilder {
       } else if (maxBalanceBlockNumber > balanceBlockNumber) {
         updateBalance(balanceDTO);
       }
-
-      return balanceDTO;
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {

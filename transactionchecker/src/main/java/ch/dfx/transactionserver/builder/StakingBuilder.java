@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +45,7 @@ public class StakingBuilder {
   /**
    * 
    */
-  public List<StakingDTO> build() throws DfxException {
+  public void build() throws DfxException {
     LOGGER.trace("build() ...");
 
     Connection connection = null;
@@ -57,15 +56,12 @@ public class StakingBuilder {
       databaseHelper.openStatements(connection);
       openStatements(connection);
 
-      List<StakingDTO> stakingDTOList = calcStakingBalance(connection);
+      calcStakingBalance(connection);
 
       closeStatements();
       databaseHelper.closeStatements();
 
-      // DatabaseUtils.rollback(connection);
       connection.commit();
-
-      return stakingDTOList;
     } catch (DfxException e) {
       DatabaseUtils.rollback(connection);
       throw e;
@@ -165,32 +161,21 @@ public class StakingBuilder {
   /**
    * 
    */
-  private List<StakingDTO> calcStakingBalance(@Nonnull Connection connection) throws DfxException {
+  private void calcStakingBalance(@Nonnull Connection connection) throws DfxException {
     LOGGER.debug("calcStakingBalance() ...");
-
-    List<StakingDTO> stakingDTOList = new ArrayList<>();
 
     // ...
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
 
     for (DepositDTO depositDTO : depositDTOList) {
-      LOGGER.debug("Calc Staking Balance: " + depositDTO.getDepositAddress());
-
-//      if (36038 == depositDTO.getCustomerAddressNumber()) {
-      StakingDTO stakingDTO = calcBalance(connection, depositDTO);
-      stakingDTO.setDepositDTO(depositDTO);
-
-      stakingDTOList.add(stakingDTO);
-//      }
+      calcBalance(connection, depositDTO);
     }
-
-    return stakingDTOList;
   }
 
   /**
    * 
    */
-  private StakingDTO calcBalance(
+  private void calcBalance(
       @Nonnull Connection connection,
       @Nonnull DepositDTO depositDTO) throws DfxException {
     LOGGER.trace("calcBalance() ...");
@@ -200,8 +185,6 @@ public class StakingBuilder {
       int depositAddressNumber = depositDTO.getDepositAddressNumber();
       int customerAddressNumber = depositDTO.getCustomerAddressNumber();
 
-      int depositStartBlockNumber = depositDTO.getStartBlockNumber();
-
       // ...
       StakingDTO stakingDTO = getStakingDTO(liquidityAddressNumber, depositAddressNumber, customerAddressNumber);
 
@@ -210,8 +193,8 @@ public class StakingBuilder {
       int stakingLastOutBlockNumber = stakingDTO.getLastOutBlockNumber();
 
       // ...
-      StakingDTO vinStakingDTO = calcVin(depositStartBlockNumber, stakingLastInBlockNumber, liquidityAddressNumber, depositAddressNumber);
-      StakingDTO voutStakingDTO = calcVout(depositStartBlockNumber, stakingLastOutBlockNumber, liquidityAddressNumber, customerAddressNumber);
+      StakingDTO vinStakingDTO = calcVin(stakingLastInBlockNumber, liquidityAddressNumber, depositAddressNumber);
+      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, vinStakingDTO.getLastInBlockNumber(), liquidityAddressNumber, customerAddressNumber);
 
       // ...
       int maxStakingLastInBlockNumber = stakingLastInBlockNumber;
@@ -234,8 +217,6 @@ public class StakingBuilder {
           || maxStakingLastOutBlockNumber > stakingLastOutBlockNumber) {
         updateStaking(stakingDTO);
       }
-
-      return stakingDTO;
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
@@ -281,16 +262,13 @@ public class StakingBuilder {
    * 
    */
   private StakingDTO calcVin(
-      int depositStartBlockNumber,
       int lastInBlockNumber,
       int liquidityAddressNumber,
       int depositAddressNumber) throws DfxException {
     LOGGER.trace("calcVin() ...");
 
     try {
-      int useBlockNumber = -1 == lastInBlockNumber ? depositStartBlockNumber : lastInBlockNumber;
-
-      stakingVinSelectStatement.setInt(1, useBlockNumber);
+      stakingVinSelectStatement.setInt(1, lastInBlockNumber);
       stakingVinSelectStatement.setInt(2, liquidityAddressNumber);
       stakingVinSelectStatement.setInt(3, depositAddressNumber);
 
@@ -317,14 +295,14 @@ public class StakingBuilder {
    * 
    */
   private StakingDTO calcVout(
-      int depositStartBlockNumber,
       int lastOutBlockNumber,
+      int lastInBlockNumber,
       int liquidityAddressNumber,
       int customerAddressNumber) throws DfxException {
     LOGGER.trace("calcVout() ...");
 
     try {
-      int useBlockNumber = -1 == lastOutBlockNumber ? depositStartBlockNumber : lastOutBlockNumber;
+      int useBlockNumber = -1 == lastOutBlockNumber ? lastInBlockNumber - 1 : lastOutBlockNumber;
 
       stakingVoutSelectStatement.setInt(1, useBlockNumber);
       stakingVoutSelectStatement.setInt(2, liquidityAddressNumber);

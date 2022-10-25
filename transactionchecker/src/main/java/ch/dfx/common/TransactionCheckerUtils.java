@@ -47,6 +47,7 @@ public class TransactionCheckerUtils {
   private static final boolean DEBUG_SECRET = false;
 
   public static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("0.00000000");
+  public static final DecimalFormat GERMAN_DECIMAL_FORMAT = new DecimalFormat("#,##0.00000000");
 
   // ...
   private static final Gson GSON =
@@ -206,6 +207,13 @@ public class TransactionCheckerUtils {
    */
   public static String toNumberFormatString(@Nullable BigDecimal value) {
     return null == value ? NUMBER_FORMAT.format(0) : NUMBER_FORMAT.format(value.doubleValue());
+  }
+
+  /**
+   * 
+   */
+  public static String toGermanDecimalFormatString(@Nullable BigDecimal value) {
+    return null == value ? GERMAN_DECIMAL_FORMAT.format(0) : GERMAN_DECIMAL_FORMAT.format(value.doubleValue());
   }
 
   /**

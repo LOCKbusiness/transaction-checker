@@ -12,6 +12,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.builder.BalanceBuilder;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
 import ch.dfx.transactionserver.builder.DepositBuilder;
+import ch.dfx.transactionserver.builder.StakingBuilder;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
@@ -30,6 +31,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private int databaseErrorCounter = 0;
   private int depositErrorCounter = 0;
   private int balanceErrorCounter = 0;
+  private int stakingErrorCounter = 0;
 
   /**
    * 
@@ -84,6 +86,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
 
       executeDeposit();
       executeBalance();
+      executeStaking();
     } finally {
       isProcessing = false;
     }
@@ -160,7 +163,24 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       LOGGER.error("executeBalance: balanceErrorCounter=" + balanceErrorCounter, e.getMessage());
     } catch (Exception e) {
       balanceErrorCounter++;
-      LOGGER.error("executeBalance: balanceErrorCounter=" + balanceErrorCounter, e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void executeStaking() {
+    LOGGER.trace("executeStaking() ...");
+
+    try {
+      StakingBuilder stakingBuilder = new StakingBuilder();
+      stakingBuilder.build();
+    } catch (DfxException e) {
+      stakingErrorCounter++;
+      LOGGER.error("executeStaking: stakingErrorCounter=" + stakingErrorCounter, e.getMessage());
+    } catch (Exception e) {
+      stakingErrorCounter++;
+      LOGGER.error("executeStaking: stakingErrorCounter=" + stakingErrorCounter, e);
     }
   }
 
@@ -172,7 +192,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
 
     if (2 < databaseErrorCounter
         || 2 < depositErrorCounter
-        || 2 < balanceErrorCounter) {
+        || 2 < balanceErrorCounter
+        || 2 < stakingErrorCounter) {
       LOGGER.error("Too many errors, will exit now");
       SchedulerProvider.getInstance().exit(-1);
     }

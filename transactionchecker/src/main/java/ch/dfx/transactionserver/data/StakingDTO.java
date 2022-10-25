@@ -23,6 +23,10 @@ public class StakingDTO {
 
   private DepositDTO depositDTO = null;
 
+  private String liquidityAddress = null;
+  private String depositAddress = null;
+  private String customerAddress = null;
+
   /**
    * 
    */
@@ -93,6 +97,30 @@ public class StakingDTO {
 
   public void setDepositDTO(@Nullable DepositDTO depositDTO) {
     this.depositDTO = depositDTO;
+  }
+
+  public String getLiquidityAddress() {
+    return liquidityAddress;
+  }
+
+  public void setLiquidityAddress(String liquidityAddress) {
+    this.liquidityAddress = liquidityAddress;
+  }
+
+  public @Nullable String getDepositAddress() {
+    return depositAddress;
+  }
+
+  public void setDepositAddress(@Nullable String depositAddress) {
+    this.depositAddress = depositAddress;
+  }
+
+  public @Nullable String getCustomerAddress() {
+    return customerAddress;
+  }
+
+  public void setCustomerAddress(@Nullable String customerAddress) {
+    this.customerAddress = customerAddress;
   }
 
   @Override

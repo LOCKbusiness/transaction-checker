@@ -1,19 +1,11 @@
 package ch.dfx.transactionserver.builder;
 
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.util.List;
 import java.util.stream.Stream;
-
-import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
-import ch.dfx.transactionserver.data.BalanceDTO;
-import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.data.LiquidityDTO;
 
 /**
  * Mainnet Check Address:
@@ -27,8 +19,6 @@ import ch.dfx.transactionserver.data.LiquidityDTO;
  */
 public class BalanceBuilderMain {
   private static final Logger LOGGER = LogManager.getLogger(BalanceBuilderMain.class);
-
-  private static final DecimalFormat germanDecimalFormat = new DecimalFormat("#,##0.00000000");
 
   /**
    * 
@@ -59,47 +49,10 @@ public class BalanceBuilderMain {
 
       // ...
       BalanceBuilder balanceBuilder = new BalanceBuilder();
-      List<BalanceDTO> balanceDTOList = balanceBuilder.build();
-
-      StringBuilder checkBuilder = new StringBuilder();
-
-      for (BalanceDTO balanceDTO : balanceDTOList) {
-        LiquidityDTO liquidityDTO = balanceDTO.getLiquidityDTO();
-        DepositDTO depositDTO = balanceDTO.getDepositDTO();
-
-        if (null != liquidityDTO) {
-          checkBuilder.append("");
-          checkBuilder.append("\t").append(liquidityDTO.getAddress());
-          checkBuilder.append("\t").append(format(balanceDTO.getVout().subtract(balanceDTO.getVin())));
-          checkBuilder.append("\t").append(format(balanceDTO.getVout()));
-          checkBuilder.append("\t").append(format(balanceDTO.getVin()));
-          checkBuilder.append("\t").append(balanceDTO.getTransactionCount());
-          checkBuilder.append("\n");
-          checkBuilder.append("\n");
-        }
-
-        if (null != depositDTO) {
-          checkBuilder.append(depositDTO.getCustomerAddress());
-          checkBuilder.append("\t").append(depositDTO.getDepositAddress());
-          checkBuilder.append("\t").append(format(balanceDTO.getVout().subtract(balanceDTO.getVin())));
-          checkBuilder.append("\t").append(format(balanceDTO.getVout()));
-          checkBuilder.append("\t").append(format(balanceDTO.getVin()));
-          checkBuilder.append("\t").append(balanceDTO.getTransactionCount());
-          checkBuilder.append("\n");
-        }
-      }
-
-      LOGGER.debug("\n" + checkBuilder);
+      balanceBuilder.build();
     } catch (Exception e) {
       LOGGER.error("Fatal Error" + e);
       System.exit(-1);
     }
-  }
-
-  /**
-   * 
-   */
-  private static String format(@Nonnull BigDecimal value) {
-    return germanDecimalFormat.format(value);
   }
 }

@@ -97,13 +97,10 @@ public class OpenTransactionManager {
     workOpenTransactionDTOList.forEach(dto -> transactionIdToOpenTransactionMap.put(dto.getId(), dto));
     transactionWithdrawalDTOList.forEach(dto -> transactionIdToOpenTransactionMap.remove(dto.getOpenTransactionDTO().getId()));
 
-    // TODO: There must be no open transactions anymore available at this point,
-    // TODO: if implementation is finished ...
+    // ...
     OpenTransactionDTOList openTransactionDTOList =
         new OpenTransactionDTOList(transactionIdToOpenTransactionMap.values());
 
-    // TODO: Onyl shortcut,
-    // TODO: until further implementation is tested and ready ...
     justSendVerified(openTransactionDTOList);
   }
 
@@ -252,6 +249,33 @@ public class OpenTransactionManager {
   /**
    * 
    */
+  private void openStatements(@Nonnull Connection connection) throws DfxException {
+    LOGGER.trace("openStatements() ...");
+
+    try {
+      String apiDuplicateCheckInsertSql = "INSERT INTO public.api_duplicate_check (withdrawal_id, transaction_id) VALUES (?, ?)";
+      apiDuplicateCheckInsertStatement = connection.prepareStatement(apiDuplicateCheckInsertSql);
+    } catch (Exception e) {
+      throw new DfxException("openStatements", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void closeStatements() throws DfxException {
+    LOGGER.trace("closeStatements() ...");
+
+    try {
+      apiDuplicateCheckInsertStatement.close();
+    } catch (Exception e) {
+      throw new DfxException("closeStatements", e);
+    }
+  }
+
+  /**
+   * 
+   */
   private boolean doCheckInsertApiDuplicate(@Nonnull OpenTransactionDTO apiOpenTransactionDTO) {
     LOGGER.trace("doCheckInsertApiDuplicate() ...");
 
@@ -300,33 +324,6 @@ public class OpenTransactionManager {
     }
 
     return isValid;
-  }
-
-  /**
-   * 
-   */
-  private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
-
-    try {
-      String apiDuplicateCheckInsertSql = "INSERT INTO public.api_duplicate_check (withdrawal_id, transaction_id) VALUES (?, ?)";
-      apiDuplicateCheckInsertStatement = connection.prepareStatement(apiDuplicateCheckInsertSql);
-    } catch (Exception e) {
-      throw new DfxException("openStatements", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
-
-    try {
-      apiDuplicateCheckInsertStatement.close();
-    } catch (Exception e) {
-      throw new DfxException("closeStatements", e);
-    }
   }
 
   /**
@@ -472,27 +469,21 @@ public class OpenTransactionManager {
   }
 
   /**
-   * 
+   * Check 1: Check the sign message format
+   * Check 2: Check the message signature
+   * Check 3: Check staking balance
    */
   private void processPendingWithdrawal(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
     LOGGER.trace("processPendingWithdrawal() ...");
 
-    TransactionWithdrawalDTOList checkWithdrawalMessage = checkWithdrawalMessage(transactionWithdrawalDTOList);
-
-//   checkWithdrawalBalance(checkedtransactionWithdrawalDTOList);
-  }
-
-  /**
-   * 
-   */
-  private TransactionWithdrawalDTOList checkWithdrawalMessage(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkWithdrawalMessage() ...");
-
     // Check 1: Check the sign message format ...
-    TransactionWithdrawalDTOList checktransactionWithdrawalDTOList = withdrawalManager.checkSignMessageFormat(transactionWithdrawalDTOList);
+    TransactionWithdrawalDTOList checkTransactionWithdrawalDTOList = withdrawalManager.checkSignMessageFormat(transactionWithdrawalDTOList);
 
     // Check 2: Check the message signature ...
-    return withdrawalManager.checkSignMessageSignature(checktransactionWithdrawalDTOList);
+    checkTransactionWithdrawalDTOList = withdrawalManager.checkSignMessageSignature(checkTransactionWithdrawalDTOList);
+
+    // Check 3: Check staking balance ...
+    withdrawalManager.checkStakingBalance(checkTransactionWithdrawalDTOList);
   }
 
   /**
@@ -504,9 +495,7 @@ public class OpenTransactionManager {
     for (TransactionWithdrawalDTO transactionWithdrawalDTO : transactionWithdrawalDTOList) {
       OpenTransactionDTO openTransactionDTO = transactionWithdrawalDTO.getOpenTransactionDTO();
 
-      // TODO: End state must be: VALID
-      // TODO: in final implementation ...
-      if (TransactionWithdrawalStateEnum.SIGNATURE_CHECKED == transactionWithdrawalDTO.getState()) {
+      if (TransactionWithdrawalStateEnum.BALANCE_CHECKED == transactionWithdrawalDTO.getState()) {
         sendVerified(openTransactionDTO);
       } else {
         openTransactionDTO.setInvalidatedReason(transactionWithdrawalDTO.getStateReason());

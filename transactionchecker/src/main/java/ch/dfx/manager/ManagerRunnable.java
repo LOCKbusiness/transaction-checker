@@ -1,5 +1,7 @@
 package ch.dfx.manager;
 
+import javax.annotation.Nonnull;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,6 +20,8 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   private static final Logger LOGGER = LogManager.getLogger(ManagerRunnable.class);
 
   // ...
+  private final String network;
+
   private final ApiAccessHandler apiAccessHandler;
 
   // ...
@@ -30,7 +34,10 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  public ManagerRunnable(boolean isServerOnly) {
+  public ManagerRunnable(
+      @Nonnull String network,
+      boolean isServerOnly) {
+    this.network = network;
     this.apiAccessHandler = new ApiAccessHandlerImpl();
 
     this.isServerOnly = isServerOnly;
@@ -90,7 +97,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
       // ...
       DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-      OpenTransactionManager openTransactionManager = new OpenTransactionManager(apiAccessHandler, dataProvider);
+      OpenTransactionManager openTransactionManager = new OpenTransactionManager(network, apiAccessHandler, dataProvider);
       openTransactionManager.execute();
     } catch (DfxException e) {
       openTransactionErrorCounter++;

@@ -53,12 +53,13 @@ public class OpenTransactionManager {
    * 
    */
   public OpenTransactionManager(
+      @Nonnull String network,
       @Nonnull ApiAccessHandler apiAccessHandler,
       @Nonnull DefiDataProvider dataProvider) {
     this.apiAccessHandler = apiAccessHandler;
 
     this.messageHandler = new MessageHandler(dataProvider);
-    this.withdrawalManager = new WithdrawalManager(dataProvider);
+    this.withdrawalManager = new WithdrawalManager(network, dataProvider);
   }
 
   /**

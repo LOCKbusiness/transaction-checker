@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.impl.Log4jContextFactory;
@@ -74,7 +76,7 @@ public class TransactionServerMain {
       } else if (isInitialSetup) {
         initialSetup();
       } else {
-        execute(isMainnet, isServerOnly);
+        execute(network, isMainnet, isServerOnly);
       }
     } catch (Exception e) {
       LOGGER.error("Fatal Error" + e);
@@ -116,7 +118,10 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void execute(boolean isMainnet, boolean isServerOnly) throws DfxException {
+  private static void execute(
+      @Nonnull String network,
+      boolean isMainnet,
+      boolean isServerOnly) throws DfxException {
     LOGGER.debug("execute");
 
     if (createLockFile()) {
@@ -143,7 +148,7 @@ public class TransactionServerMain {
       }
 
       if (10 <= runPeriodAPI) {
-        ManagerRunnable managerRunnable = new ManagerRunnable(isServerOnly);
+        ManagerRunnable managerRunnable = new ManagerRunnable(network, isServerOnly);
         SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
       }
     }

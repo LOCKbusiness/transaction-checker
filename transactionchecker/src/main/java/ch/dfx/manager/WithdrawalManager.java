@@ -50,8 +50,7 @@ public class WithdrawalManager {
   private static final Matcher SIGN_MESSAGE_MATCHER = SIGN_MESSAGE_PATTERN.matcher("");
 
   // ...
-  private static final String FILE_NAME = "message-verification.json";
-  private static final Path JSON_SIGNATURE_CHECK_FILE = Path.of("", "data", "javascript", FILE_NAME);
+  private final Path jsonSignatureCheckFile;
 
   // ...
   private final DefiDataProvider dataProvider;
@@ -59,7 +58,11 @@ public class WithdrawalManager {
   /**
    * 
    */
-  public WithdrawalManager(@Nonnull DefiDataProvider dataProvider) {
+  public WithdrawalManager(
+      @Nonnull String network,
+      @Nonnull DefiDataProvider dataProvider) {
+    this.jsonSignatureCheckFile = Path.of("", "data", "javascript", network, "message-verification.json");
+
     this.dataProvider = dataProvider;
   }
 
@@ -315,7 +318,7 @@ public class WithdrawalManager {
    */
   private SignedMessageCheckDTOList readSignatureCheckFile() throws DfxException {
     LOGGER.trace("readSignatureCheckFile() ...");
-    return TransactionCheckerUtils.fromJson(JSON_SIGNATURE_CHECK_FILE.toFile(), SignedMessageCheckDTOList.class);
+    return TransactionCheckerUtils.fromJson(jsonSignatureCheckFile.toFile(), SignedMessageCheckDTOList.class);
   }
 
   /**
@@ -326,8 +329,8 @@ public class WithdrawalManager {
 
     try {
       if (!signedMessageCheckDTOList.isEmpty()) {
-        Files.createDirectories(JSON_SIGNATURE_CHECK_FILE.getParent());
-        Files.writeString(JSON_SIGNATURE_CHECK_FILE, signedMessageCheckDTOList.toString());
+        Files.createDirectories(jsonSignatureCheckFile.getParent());
+        Files.writeString(jsonSignatureCheckFile, signedMessageCheckDTOList.toString());
       }
     } catch (Exception e) {
       throw new DfxException("writeCheckFile", e);
@@ -351,7 +354,7 @@ public class WithdrawalManager {
         javascriptExecutable = new File("javascript", "app-macos");
       }
 
-      File jsonSignatureCheckFilePath = JSON_SIGNATURE_CHECK_FILE.getParent().toFile();
+      File jsonSignatureCheckFilePath = jsonSignatureCheckFile.getParent().toFile();
 
       LOGGER.debug("JavaScript Executable: " + javascriptExecutable.getAbsolutePath());
       LOGGER.debug("JSON Check File Path: " + jsonSignatureCheckFilePath.getAbsolutePath());

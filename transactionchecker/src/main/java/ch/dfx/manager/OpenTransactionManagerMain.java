@@ -52,7 +52,7 @@ public class OpenTransactionManagerMain {
       apiAccessHandler.signIn();
 
       // ...
-      OpenTransactionManager transactionManager = new OpenTransactionManager(apiAccessHandler, dataProvider);
+      OpenTransactionManager transactionManager = new OpenTransactionManager(network, apiAccessHandler, dataProvider);
       transactionManager.execute();
     } catch (Exception e) {
       LOGGER.error("Fatal Error ...", e);

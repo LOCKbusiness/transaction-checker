@@ -68,7 +68,7 @@ public class OpenTransactionManagerTest {
 
     apiAccessHandler = mock(ApiAccessHandler.class);
     dataProvider = mock(DefiDataProvider.class);
-    transactionManager = new OpenTransactionManager(apiAccessHandler, dataProvider);
+    transactionManager = new OpenTransactionManager(network, apiAccessHandler, dataProvider);
   }
 
   @Test

@@ -5,7 +5,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -29,7 +31,8 @@ public class StakingBuilder {
   private PreparedStatement stakingInsertStatement = null;
   private PreparedStatement stakingUpdateStatement = null;
 
-  private PreparedStatement stakingVinVoutSelectStatement = null;
+  private PreparedStatement stakingVinSelectStatement = null;
+  private PreparedStatement stakingVoutSelectStatement = null;
 
   private final DatabaseHelper databaseHelper;
 
@@ -106,31 +109,36 @@ public class StakingBuilder {
       stakingUpdateStatement = connection.prepareStatement(stakingUpdateSql);
 
       // ...
-      String stakingVinVoutSelectSql =
-          "WITH AT_OUT_1 AS ("
-              + " SELECT at_out.* FROM ADDRESS_TRANSACTION_OUT at_out"
-              + " WHERE at_out.block_number > ? AND at_out.address_number = ?"
-              + "), AT_IN_1 AS ("
-              + " SELECT * FROM ADDRESS_TRANSACTION_IN at_in"
-              + " WHERE at_in.block_number > ? AND at_in.address_number = ?"
-              + "), AT_OUT_2 AS ("
-              + " SELECT at_out.* FROM ADDRESS_TRANSACTION_OUT at_out"
-              + " WHERE at_out.block_number > ? AND at_out.address_number = ?"
-              + ")"
-              + "SELECT"
-              + " at_out_1.vout AS vout_1,"
-              + " at_out_2.block_number,"
-              + " at_out_2.vout AS vout_2"
-              + " FROM"
-              + " AT_OUT_1 at_out_1"
-              + " JOIN AT_IN_1 at_in_1 ON"
-              + " at_out_1.block_number = at_in_1.in_block_number"
-              + " AND at_out_1.transaction_number = at_in_1.in_transaction_number"
-              + " AND at_out_1.address_number = at_in_1.address_number"
-              + " JOIN AT_OUT_2 at_out_2 ON"
-              + " at_in_1.block_number = at_out_2.block_number"
-              + " AND at_in_1.transaction_number = at_out_2.transaction_number";
-      stakingVinVoutSelectStatement = connection.prepareStatement(stakingVinVoutSelectSql);
+      String stakingVinSelectSql =
+          "SELECT"
+              + " at_in.in_block_number,"
+              + " at_in.vin"
+              + " FROM ADDRESS_TRANSACTION_OUT at_out"
+              + " JOIN ADDRESS_TRANSACTION_IN at_in ON"
+              + " at_out.block_number = at_in.block_number"
+              + " AND at_out.transaction_number = at_in.transaction_number"
+              + " WHERE"
+              + " at_out.block_number > ?"
+              + " AND at_out.address_number = ?"
+              + " AND at_in.address_number = ?";
+      stakingVinSelectStatement = connection.prepareStatement(stakingVinSelectSql);
+
+      // ...
+      String stakingVoutSelectSql =
+          "SELECT"
+              + " at_out.block_number,"
+              + " at_out.transaction_number,"
+              + " at_out.vout"
+              + " FROM ADDRESS_TRANSACTION_IN at_in"
+              + " JOIN ADDRESS_TRANSACTION_OUT at_out ON"
+              + " at_in.block_number = at_out .block_number"
+              + " AND at_in.transaction_number = at_out .transaction_number"
+              + " WHERE"
+              + " at_in.block_number > ?"
+              + " AND at_in.address_number = ?"
+              + " AND at_out .address_number = ?";
+      stakingVoutSelectStatement = connection.prepareStatement(stakingVoutSelectSql);
+
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -147,7 +155,8 @@ public class StakingBuilder {
       stakingInsertStatement.close();
       stakingUpdateStatement.close();
 
-      stakingVinVoutSelectStatement.close();
+      stakingVinSelectStatement.close();
+      stakingVoutSelectStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
     }
@@ -161,14 +170,18 @@ public class StakingBuilder {
 
     List<StakingDTO> stakingDTOList = new ArrayList<>();
 
+    // ...
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
 
     for (DepositDTO depositDTO : depositDTOList) {
-      StakingDTO stakingDTO =
-          calcBalance(connection, depositDTO);
+      LOGGER.debug("Calc Staking Balance: " + depositDTO.getDepositAddress());
+
+//      if (36038 == depositDTO.getCustomerAddressNumber()) {
+      StakingDTO stakingDTO = calcBalance(connection, depositDTO);
       stakingDTO.setDepositDTO(depositDTO);
 
       stakingDTOList.add(stakingDTO);
+//      }
     }
 
     return stakingDTOList;
@@ -187,6 +200,8 @@ public class StakingBuilder {
       int depositAddressNumber = depositDTO.getDepositAddressNumber();
       int customerAddressNumber = depositDTO.getCustomerAddressNumber();
 
+      int depositStartBlockNumber = depositDTO.getStartBlockNumber();
+
       // ...
       StakingDTO stakingDTO = getStakingDTO(liquidityAddressNumber, depositAddressNumber, customerAddressNumber);
 
@@ -195,8 +210,8 @@ public class StakingBuilder {
       int stakingLastOutBlockNumber = stakingDTO.getLastOutBlockNumber();
 
       // ...
-      StakingDTO vinStakingDTO = calcVin(stakingLastInBlockNumber, liquidityAddressNumber, depositAddressNumber);
-      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, liquidityAddressNumber, customerAddressNumber);
+      StakingDTO vinStakingDTO = calcVin(depositStartBlockNumber, stakingLastInBlockNumber, liquidityAddressNumber, depositAddressNumber);
+      StakingDTO voutStakingDTO = calcVout(depositStartBlockNumber, stakingLastOutBlockNumber, liquidityAddressNumber, customerAddressNumber);
 
       // ...
       int maxStakingLastInBlockNumber = stakingLastInBlockNumber;
@@ -266,28 +281,26 @@ public class StakingBuilder {
    * 
    */
   private StakingDTO calcVin(
+      int depositStartBlockNumber,
       int lastInBlockNumber,
       int liquidityAddressNumber,
       int depositAddressNumber) throws DfxException {
     LOGGER.trace("calcVin() ...");
 
     try {
-      stakingVinVoutSelectStatement.setInt(1, lastInBlockNumber);
-      stakingVinVoutSelectStatement.setInt(2, depositAddressNumber);
+      int useBlockNumber = -1 == lastInBlockNumber ? depositStartBlockNumber : lastInBlockNumber;
 
-      stakingVinVoutSelectStatement.setInt(3, lastInBlockNumber);
-      stakingVinVoutSelectStatement.setInt(4, depositAddressNumber);
-
-      stakingVinVoutSelectStatement.setInt(5, lastInBlockNumber);
-      stakingVinVoutSelectStatement.setInt(6, liquidityAddressNumber);
+      stakingVinSelectStatement.setInt(1, useBlockNumber);
+      stakingVinSelectStatement.setInt(2, liquidityAddressNumber);
+      stakingVinSelectStatement.setInt(3, depositAddressNumber);
 
       StakingDTO stakingDTO = new StakingDTO(liquidityAddressNumber, depositAddressNumber, -1);
 
-      ResultSet resultSet = stakingVinVoutSelectStatement.executeQuery();
+      ResultSet resultSet = stakingVinSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        stakingDTO.addVin(resultSet.getBigDecimal("vout_1"));
-        lastInBlockNumber = Math.max(lastInBlockNumber, resultSet.getInt(2));
+        stakingDTO.addVin(resultSet.getBigDecimal("vin"));
+        lastInBlockNumber = Math.max(lastInBlockNumber, resultSet.getInt("in_block_number"));
       }
 
       stakingDTO.setLastInBlockNumber(lastInBlockNumber);
@@ -304,28 +317,35 @@ public class StakingBuilder {
    * 
    */
   private StakingDTO calcVout(
+      int depositStartBlockNumber,
       int lastOutBlockNumber,
       int liquidityAddressNumber,
       int customerAddressNumber) throws DfxException {
     LOGGER.trace("calcVout() ...");
 
     try {
-      stakingVinVoutSelectStatement.setInt(1, lastOutBlockNumber);
-      stakingVinVoutSelectStatement.setInt(2, liquidityAddressNumber);
+      int useBlockNumber = -1 == lastOutBlockNumber ? depositStartBlockNumber : lastOutBlockNumber;
 
-      stakingVinVoutSelectStatement.setInt(3, lastOutBlockNumber);
-      stakingVinVoutSelectStatement.setInt(4, liquidityAddressNumber);
-
-      stakingVinVoutSelectStatement.setInt(5, lastOutBlockNumber);
-      stakingVinVoutSelectStatement.setInt(6, customerAddressNumber);
+      stakingVoutSelectStatement.setInt(1, useBlockNumber);
+      stakingVoutSelectStatement.setInt(2, liquidityAddressNumber);
+      stakingVoutSelectStatement.setInt(3, customerAddressNumber);
 
       StakingDTO stakingDTO = new StakingDTO(liquidityAddressNumber, -1, customerAddressNumber);
 
-      ResultSet resultSet = stakingVinVoutSelectStatement.executeQuery();
+      Set<String> unifierSet = new HashSet<>();
+
+      ResultSet resultSet = stakingVoutSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        stakingDTO.addVout(resultSet.getBigDecimal("vout_2"));
-        lastOutBlockNumber = Math.max(lastOutBlockNumber, resultSet.getInt(2));
+        int blockNumber = resultSet.getInt("block_number");
+        int transactionNumber = resultSet.getInt("transaction_number");
+
+        String unifier = Integer.toString(blockNumber) + "/" + Integer.toString(transactionNumber);
+
+        if (unifierSet.add(unifier)) {
+          stakingDTO.addVout(resultSet.getBigDecimal("vout"));
+          lastOutBlockNumber = Math.max(lastOutBlockNumber, blockNumber);
+        }
       }
 
       stakingDTO.setLastOutBlockNumber(lastOutBlockNumber);

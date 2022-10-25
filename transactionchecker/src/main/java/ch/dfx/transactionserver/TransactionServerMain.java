@@ -142,8 +142,7 @@ public class TransactionServerMain {
         SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
       }
 
-      if (!isMainnet
-          && 10 <= runPeriodAPI) {
+      if (10 <= runPeriodAPI) {
         ManagerRunnable managerRunnable = new ManagerRunnable(isServerOnly);
         SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
       }

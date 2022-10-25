@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="all" name="Create Runnable Jars for all projects with libraries in sub-folder">
   <property name="dir.buildfile" value="."/>
+  
+  <property name="executable_directory" value="/Users/bernd/Executables/transactionserver/test"/>
+  <property name="maven_directory" value="/Users/bernd/Development/repository/maven"/>
  
   <target name="all">
-    <ant antfile="ant-transactionserver.xml" target="create_run_jar" />
-    <ant antfile="ant-transactionsupervision.xml" target="create_run_jar" />
+    <ant antfile="ant-transactionserver.xml" target="create_executable">
+      <property name="executable_directory" value="${executable_directory}"/>
+      <property name="maven_directory" value="${maven_directory}"/>
+    </ant>
+   
+    <ant antfile="ant-transactionsupervision.xml" target="create_executable">
+      <property name="executable_directory" value="${executable_directory}"/>
+      <property name="maven_directory" value="${maven_directory}"/>
+    </ant>
   </target>
 </project>

@@ -27,8 +27,9 @@ public class DatabaseHelper {
   private PreparedStatement addressByNumberSelectStatement = null;
   private PreparedStatement addressByAddressSelectStatement = null;
 
-  private PreparedStatement liquidityAddressSelectStatement = null;
-  private PreparedStatement depositAddressSelectStatement = null;
+  private PreparedStatement liquiditySelectStatement = null;
+  private PreparedStatement liquidityByAddressNumberSelectStatement = null;
+  private PreparedStatement depositSelectStatement = null;
 
   private PreparedStatement stakingByLiquidityAddressNumberSelectStatement = null;
   private PreparedStatement stakingByDepositAddressNumberSelectStatement = null;
@@ -48,14 +49,24 @@ public class DatabaseHelper {
 
     try {
       // Address ...
-      String addressByNumberSelectSql = "SELECT * FROM public.address WHERE number=?";
+      String addressByNumberSelectSql = "SELECT * FROM public.address WHERE number = ?";
       addressByNumberSelectStatement = connection.prepareStatement(addressByNumberSelectSql);
 
-      String addressByAddressSelectSql = "SELECT * FROM public.address WHERE address=?";
+      String addressByAddressSelectSql = "SELECT * FROM public.address WHERE address = ?";
       addressByAddressSelectStatement = connection.prepareStatement(addressByAddressSelectSql);
 
       // Liquidity ...
-      String liquidityAddressSelectSql =
+      String liquiditySelectSql =
+          "SELECT"
+              + " l.*,"
+              + " a.address"
+              + " FROM"
+              + " public.liquidity l"
+              + " JOIN public.address a ON"
+              + " l.address_number = a.number";
+      liquiditySelectStatement = connection.prepareStatement(liquiditySelectSql);
+
+      String liquidityByAddressNumberSelectSql =
           "SELECT"
               + " l.*,"
               + " a.address"
@@ -63,11 +74,12 @@ public class DatabaseHelper {
               + " public.liquidity l"
               + " JOIN public.address a ON"
               + " l.address_number = a.number"
-              + "";
-      liquidityAddressSelectStatement = connection.prepareStatement(liquidityAddressSelectSql);
+              + " WHERE l.address_number = ?";
+
+      liquidityByAddressNumberSelectStatement = connection.prepareStatement(liquidityByAddressNumberSelectSql);
 
       // Deposit ...
-      String depositAddressSelectSql =
+      String depositSelectSql =
           "SELECT"
               + " d.*,"
               + " a1.address AS liquidity_address,"
@@ -80,7 +92,7 @@ public class DatabaseHelper {
               + " d.deposit_address_number = a2.number"
               + " JOIN public.address a3 ON"
               + " d.customer_address_number = a3.number";
-      depositAddressSelectStatement = connection.prepareStatement(depositAddressSelectSql);
+      depositSelectStatement = connection.prepareStatement(depositSelectSql);
 
       // Staking ...
       String stakingByLiquidityAddressNumberSelectSql =
@@ -96,7 +108,7 @@ public class DatabaseHelper {
               + " s.deposit_address_number = a2.number"
               + " JOIN public.address a3 ON"
               + " s.customer_address_number = a3.number"
-              + " WHERE liquidity_address_number=?";
+              + " WHERE s.liquidity_address_number = ?";
       stakingByLiquidityAddressNumberSelectStatement = connection.prepareStatement(stakingByLiquidityAddressNumberSelectSql);
 
       String stakingByDepositAddressNumberSelectSql =
@@ -112,7 +124,7 @@ public class DatabaseHelper {
               + " s.deposit_address_number = a2.number"
               + " JOIN public.address a3 ON"
               + " s.customer_address_number = a3.number"
-              + " WHERE deposit_address_number=?";
+              + " WHERE s.deposit_address_number = ?";
       stakingByDepositAddressNumberSelectStatement = connection.prepareStatement(stakingByDepositAddressNumberSelectSql);
 
       String stakingByCustomerAddressNumberSelectSql =
@@ -128,7 +140,7 @@ public class DatabaseHelper {
               + " s.deposit_address_number = a2.number"
               + " JOIN public.address a3 ON"
               + " s.customer_address_number = a3.number"
-              + " WHERE customer_address_number=?";
+              + " WHERE s.customer_address_number = ?";
       stakingByCustomerAddressNumberSelectStatement = connection.prepareStatement(stakingByCustomerAddressNumberSelectSql);
 
     } catch (Exception e) {
@@ -146,8 +158,9 @@ public class DatabaseHelper {
       addressByNumberSelectStatement.close();
       addressByAddressSelectStatement.close();
 
-      liquidityAddressSelectStatement.close();
-      depositAddressSelectStatement.close();
+      liquiditySelectStatement.close();
+      liquidityByAddressNumberSelectStatement.close();
+      depositSelectStatement.close();
 
       stakingByLiquidityAddressNumberSelectStatement.close();
       stakingByDepositAddressNumberSelectStatement.close();
@@ -238,7 +251,7 @@ public class DatabaseHelper {
     try {
       List<LiquidityDTO> liquidityDTOList = new ArrayList<>();
 
-      ResultSet resultSet = liquidityAddressSelectStatement.executeQuery();
+      ResultSet resultSet = liquiditySelectStatement.executeQuery();
 
       while (resultSet.next()) {
         LiquidityDTO liquidityDTO = new LiquidityDTO();
@@ -259,13 +272,49 @@ public class DatabaseHelper {
   /**
    * 
    */
+  public LiquidityDTO getLiquidityDTOByAddressNumber(int addressNumber) throws DfxException {
+    LOGGER.trace("getLiquidityDTOByAddressNumber() ...");
+
+    try {
+      liquidityByAddressNumberSelectStatement.setInt(1, addressNumber);
+
+      LiquidityDTO liquidityDTO = null;
+
+      ResultSet resultSet = liquidityByAddressNumberSelectStatement.executeQuery();
+
+      if (resultSet.next()) {
+        liquidityDTO = new LiquidityDTO();
+
+        liquidityDTO.setAddressNumber(resultSet.getInt("address_number"));
+        liquidityDTO.setAddress(resultSet.getString("address"));
+        liquidityDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
+        liquidityDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
+      }
+
+      if (null == liquidityDTO) {
+        throw new DfxException("Liquidity not found by address " + addressNumber);
+      }
+
+      resultSet.close();
+
+      return liquidityDTO;
+    } catch (DfxException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new DfxException("getLiquidityDTOByAddressNumber", e);
+    }
+  }
+
+  /**
+   * 
+   */
   public List<DepositDTO> getDepositDTOList() throws DfxException {
     LOGGER.trace("getDepositDTOList() ...");
 
     try {
       List<DepositDTO> depositDTOList = new ArrayList<>();
 
-      ResultSet resultSet = depositAddressSelectStatement.executeQuery();
+      ResultSet resultSet = depositSelectStatement.executeQuery();
 
       while (resultSet.next()) {
         DepositDTO depositDTO = new DepositDTO();
@@ -345,6 +394,8 @@ public class DatabaseHelper {
       }
 
       return stakingDTO;
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
       throw new DfxException("getStakingDTOByDepositAddressNumber", e);
     }
@@ -366,6 +417,8 @@ public class DatabaseHelper {
       }
 
       return stakingDTO;
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
       throw new DfxException("getStakingDTOByCustomerAddressNumber", e);
     }

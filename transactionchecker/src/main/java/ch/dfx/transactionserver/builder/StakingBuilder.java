@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.DepositDTO;
+import ch.dfx.transactionserver.data.LiquidityDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
@@ -168,7 +169,10 @@ public class StakingBuilder {
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
 
     for (DepositDTO depositDTO : depositDTOList) {
-      calcBalance(connection, depositDTO);
+      int liquidityAddressNumber = depositDTO.getLiquidityAddressNumber();
+      LiquidityDTO liquidityDTO = databaseHelper.getLiquidityDTOByAddressNumber(liquidityAddressNumber);
+
+      calcBalance(connection, liquidityDTO, depositDTO);
     }
   }
 
@@ -177,6 +181,7 @@ public class StakingBuilder {
    */
   private void calcBalance(
       @Nonnull Connection connection,
+      @Nonnull LiquidityDTO liquidityDTO,
       @Nonnull DepositDTO depositDTO) throws DfxException {
     LOGGER.trace("calcBalance() ...");
 
@@ -194,7 +199,7 @@ public class StakingBuilder {
 
       // ...
       StakingDTO vinStakingDTO = calcVin(stakingLastInBlockNumber, liquidityAddressNumber, depositAddressNumber);
-      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, vinStakingDTO.getLastInBlockNumber(), liquidityAddressNumber, customerAddressNumber);
+      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, liquidityDTO.getStartBlockNumber(), liquidityAddressNumber, customerAddressNumber);
 
       // ...
       int maxStakingLastInBlockNumber = stakingLastInBlockNumber;
@@ -296,13 +301,13 @@ public class StakingBuilder {
    */
   private StakingDTO calcVout(
       int lastOutBlockNumber,
-      int lastInBlockNumber,
+      int liquidityStartBlockNumber,
       int liquidityAddressNumber,
       int customerAddressNumber) throws DfxException {
     LOGGER.trace("calcVout() ...");
 
     try {
-      int useBlockNumber = -1 == lastOutBlockNumber ? lastInBlockNumber - 1 : lastOutBlockNumber;
+      int useBlockNumber = -1 == lastOutBlockNumber ? liquidityStartBlockNumber - 1 : lastOutBlockNumber;
 
       stakingVoutSelectStatement.setInt(1, useBlockNumber);
       stakingVoutSelectStatement.setInt(2, liquidityAddressNumber);
@@ -402,5 +407,4 @@ public class StakingBuilder {
       throw new DfxException("updateStaking", e);
     }
   }
-
 }

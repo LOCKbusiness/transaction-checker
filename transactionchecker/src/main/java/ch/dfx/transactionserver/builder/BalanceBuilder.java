@@ -33,12 +33,15 @@ public class BalanceBuilder {
   private PreparedStatement balanceInsertStatement = null;
   private PreparedStatement balanceUpdateStatement = null;
 
+  // ...
+  private final H2DBManager databaseManager;
   private final DatabaseHelper databaseHelper;
 
   /**
    * 
    */
-  public BalanceBuilder() {
+  public BalanceBuilder(@Nonnull H2DBManager databaseManager) {
+    this.databaseManager = databaseManager;
     this.databaseHelper = new DatabaseHelper();
   }
 
@@ -51,7 +54,7 @@ public class BalanceBuilder {
     Connection connection = null;
 
     try {
-      connection = H2DBManager.getInstance().openConnection();
+      connection = databaseManager.openConnection();
 
       databaseHelper.openStatements(connection);
       openStatements(connection);
@@ -70,7 +73,7 @@ public class BalanceBuilder {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      H2DBManager.getInstance().closeConnection(connection);
+      databaseManager.closeConnection(connection);
     }
   }
 

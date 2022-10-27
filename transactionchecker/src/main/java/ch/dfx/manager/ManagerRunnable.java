@@ -1,5 +1,7 @@
 package ch.dfx.manager;
 
+import java.util.Objects;
+
 import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +12,7 @@ import ch.dfx.api.ApiAccessHandlerImpl;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
@@ -20,27 +23,33 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   private static final Logger LOGGER = LogManager.getLogger(ManagerRunnable.class);
 
   // ...
-  private final String network;
-
+  private final H2DBManager databaseManager;
   private final ApiAccessHandler apiAccessHandler;
 
   // ...
-  private boolean isProcessing = false;
-
+  private final String network;
   private final boolean isServerOnly;
 
+  private boolean isProcessing = false;
+
+  // ...
   private int openTransactionErrorCounter = 0;
 
   /**
    * 
    */
   public ManagerRunnable(
+      @Nonnull H2DBManager databaseManager,
       @Nonnull String network,
       boolean isServerOnly) {
+    Objects.requireNonNull(databaseManager, "null databaseManager is not allowed");
+
+    this.databaseManager = databaseManager;
     this.network = network;
+    this.isServerOnly = isServerOnly;
+
     this.apiAccessHandler = new ApiAccessHandlerImpl(network);
 
-    this.isServerOnly = isServerOnly;
   }
 
   @Override
@@ -97,7 +106,8 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
       // ...
       DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-      OpenTransactionManager openTransactionManager = new OpenTransactionManager(network, apiAccessHandler, dataProvider);
+      OpenTransactionManager openTransactionManager =
+          new OpenTransactionManager(network, apiAccessHandler, databaseManager, dataProvider);
       openTransactionManager.execute();
     } catch (DfxException e) {
       openTransactionErrorCounter++;

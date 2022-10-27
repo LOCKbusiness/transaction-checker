@@ -22,12 +22,17 @@ import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 public class DatabaseRunnable implements SchedulerProviderRunnable {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseRunnable.class);
 
-  private boolean isProcessing = false;
+  // ...
+  private final H2DBManager databaseManager;
 
+  // ...
   private final File lockFile;
 
   private final boolean isServerOnly;
 
+  private boolean isProcessing = false;
+
+  // ...
   private int databaseErrorCounter = 0;
   private int depositErrorCounter = 0;
   private int balanceErrorCounter = 0;
@@ -37,9 +42,13 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   public DatabaseRunnable(
+      @Nonnull H2DBManager databaseManager,
       @Nonnull File lockFile,
       boolean isServerOnly) {
+    Objects.requireNonNull(databaseManager, "null databaseManager is not allowed");
     Objects.requireNonNull(lockFile, "null lockFile is not allowed");
+
+    this.databaseManager = databaseManager;
     this.lockFile = lockFile;
     this.isServerOnly = isServerOnly;
   }
@@ -99,7 +108,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeDatabase() ...");
 
     try {
-      DatabaseBuilder databaseBuilder = new DatabaseBuilder();
+      DatabaseBuilder databaseBuilder = new DatabaseBuilder(databaseManager);
       databaseBuilder.build();
     } catch (DfxException e) {
       databaseErrorCounter++;
@@ -117,7 +126,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("checkDatabase() ...");
 
     try {
-      DatabaseChecker databaseChecker = new DatabaseChecker();
+      DatabaseChecker databaseChecker = new DatabaseChecker(databaseManager);
 
       if (databaseChecker.check()) {
         databaseErrorCounter = 0;
@@ -138,7 +147,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeDeposit() ...");
 
     try {
-      DepositBuilder depositBuilder = new DepositBuilder();
+      DepositBuilder depositBuilder = new DepositBuilder(databaseManager);
       depositBuilder.build();
     } catch (DfxException e) {
       depositErrorCounter++;
@@ -156,7 +165,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeBalance() ...");
 
     try {
-      BalanceBuilder balanceBuilder = new BalanceBuilder();
+      BalanceBuilder balanceBuilder = new BalanceBuilder(databaseManager);
       balanceBuilder.build();
     } catch (DfxException e) {
       balanceErrorCounter++;
@@ -173,7 +182,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeStaking() ...");
 
     try {
-      StakingBuilder stakingBuilder = new StakingBuilder();
+      StakingBuilder stakingBuilder = new StakingBuilder(databaseManager);
       stakingBuilder.build();
     } catch (DfxException e) {
       stakingErrorCounter++;

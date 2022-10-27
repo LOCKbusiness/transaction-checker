@@ -41,8 +41,6 @@ import ch.dfx.transactionserver.database.H2DBManager;
 public class DatabaseBuilder {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseBuilder.class);
 
-  private final DefiDataProvider dataProvider;
-
   private PreparedStatement blockInsertStatement = null;
   private PreparedStatement transactionInsertStatement = null;
   private PreparedStatement addressInsertStatement = null;
@@ -54,6 +52,10 @@ public class DatabaseBuilder {
   private PreparedStatement transactionOutSelectStatement = null;
   private PreparedStatement addressTransactionOutSelectStatement = null;
 
+  // ...
+  private final H2DBManager databaseManager;
+  private final DefiDataProvider dataProvider;
+
   private final Map<String, AddressDTO> newAddressMap;
 
   private int nextBlockNumber = 0;
@@ -62,7 +64,8 @@ public class DatabaseBuilder {
   /**
    * 
    */
-  public DatabaseBuilder() {
+  public DatabaseBuilder(@Nonnull H2DBManager databaseManager) {
+    this.databaseManager = databaseManager;
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
     this.newAddressMap = new LinkedHashMap<>();
@@ -80,7 +83,7 @@ public class DatabaseBuilder {
     Connection connection = null;
 
     try {
-      connection = H2DBManager.getInstance().openConnection();
+      connection = databaseManager.openConnection();
       openStatements(connection);
 
       // ...
@@ -119,7 +122,7 @@ public class DatabaseBuilder {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      H2DBManager.getInstance().closeConnection(connection);
+      databaseManager.closeConnection(connection);
     }
   }
 

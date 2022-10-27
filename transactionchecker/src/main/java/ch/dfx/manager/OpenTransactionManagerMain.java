@@ -12,6 +12,8 @@ import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.handler.DefiWalletHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
 /**
  * 
@@ -47,12 +49,14 @@ public class OpenTransactionManagerMain {
 
       // ...
       ApiAccessHandler apiAccessHandler = new ApiAccessHandlerImpl(network);
-
-      // ...
       apiAccessHandler.signIn();
 
       // ...
-      OpenTransactionManager transactionManager = new OpenTransactionManager(network, apiAccessHandler, dataProvider);
+      H2DBManager databaseManager = new H2DBManagerImpl();
+
+      // ...
+      OpenTransactionManager transactionManager =
+          new OpenTransactionManager(network, apiAccessHandler, databaseManager, dataProvider);
       transactionManager.execute();
     } catch (Exception e) {
       LOGGER.error("Fatal Error ...", e);

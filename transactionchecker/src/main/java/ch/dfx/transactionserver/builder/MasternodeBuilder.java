@@ -28,10 +28,14 @@ public class MasternodeBuilder {
   private PreparedStatement masternodeInsertStatement = null;
   private PreparedStatement masternodeUpdateStatement = null;
 
+  // ...
+  private final H2DBManager databaseManager;
+
   /**
    * 
    */
-  public MasternodeBuilder() {
+  public MasternodeBuilder(@Nonnull H2DBManager databaseManager) {
+    this.databaseManager = databaseManager;
   }
 
   /**
@@ -43,7 +47,7 @@ public class MasternodeBuilder {
     Connection connection = null;
 
     try {
-      connection = H2DBManager.getInstance().openConnection();
+      connection = databaseManager.openConnection();
 
       openStatements(connection);
 
@@ -59,7 +63,7 @@ public class MasternodeBuilder {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      H2DBManager.getInstance().closeConnection(connection);
+      databaseManager.closeConnection(connection);
     }
   }
 

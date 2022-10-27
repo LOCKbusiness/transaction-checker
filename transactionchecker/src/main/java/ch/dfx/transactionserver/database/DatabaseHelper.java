@@ -16,6 +16,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.LiquidityDTO;
+import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 
 /**
@@ -34,6 +35,8 @@ public class DatabaseHelper {
   private PreparedStatement stakingByLiquidityAddressNumberSelectStatement = null;
   private PreparedStatement stakingByDepositAddressNumberSelectStatement = null;
   private PreparedStatement stakingByCustomerAddressNumberSelectStatement = null;
+
+  private PreparedStatement masternodeWhitelistByOwnerAddressSelectStatement = null;
 
   /**
    * 
@@ -143,6 +146,10 @@ public class DatabaseHelper {
               + " WHERE s.customer_address_number = ?";
       stakingByCustomerAddressNumberSelectStatement = connection.prepareStatement(stakingByCustomerAddressNumberSelectSql);
 
+      // Masternode ...
+      String masternodeWhitelistByOwnerAddressSelectSql = "SELECT * FROM public.masternode_whitelist WHERE owner_address=?";
+      masternodeWhitelistByOwnerAddressSelectStatement = connection.prepareStatement(masternodeWhitelistByOwnerAddressSelectSql);
+
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -165,6 +172,8 @@ public class DatabaseHelper {
       stakingByLiquidityAddressNumberSelectStatement.close();
       stakingByDepositAddressNumberSelectStatement.close();
       stakingByCustomerAddressNumberSelectStatement.close();
+
+      masternodeWhitelistByOwnerAddressSelectStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
     }
@@ -173,7 +182,7 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public AddressDTO getAddressDTOByNumber(int addressNumber) throws DfxException {
+  public @Nonnull AddressDTO getAddressDTOByNumber(int addressNumber) throws DfxException {
     LOGGER.trace("getAddressDTOByNumber() ...");
 
     try {
@@ -245,7 +254,7 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public List<LiquidityDTO> getLiquidityDTOList() throws DfxException {
+  public @Nonnull List<LiquidityDTO> getLiquidityDTOList() throws DfxException {
     LOGGER.trace("getLiquidityDTOList() ...");
 
     try {
@@ -272,13 +281,13 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public LiquidityDTO getLiquidityDTOByAddressNumber(int addressNumber) throws DfxException {
+  public @Nonnull LiquidityDTO getLiquidityDTOByAddressNumber(int addressNumber) throws DfxException {
     LOGGER.trace("getLiquidityDTOByAddressNumber() ...");
 
     try {
-      liquidityByAddressNumberSelectStatement.setInt(1, addressNumber);
-
       LiquidityDTO liquidityDTO = null;
+
+      liquidityByAddressNumberSelectStatement.setInt(1, addressNumber);
 
       ResultSet resultSet = liquidityByAddressNumberSelectStatement.executeQuery();
 
@@ -308,7 +317,7 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public List<DepositDTO> getDepositDTOList() throws DfxException {
+  public @Nonnull List<DepositDTO> getDepositDTOList() throws DfxException {
     LOGGER.trace("getDepositDTOList() ...");
 
     try {
@@ -343,7 +352,7 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public List<StakingDTO> getStakingDTOList(int liquidityAddressNumber) throws DfxException {
+  public @Nonnull List<StakingDTO> getStakingDTOList(int liquidityAddressNumber) throws DfxException {
     LOGGER.trace("getStakingDTOList() ...");
 
     try {
@@ -456,6 +465,35 @@ public class DatabaseHelper {
       return stakingDTO;
     } catch (Exception e) {
       throw new DfxException("getStakingDTO", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nullable MasternodeWhitelistDTO getMasternodeWhitelistDTOByOwnerAddress(@Nonnull String ownerAddress) throws DfxException {
+    LOGGER.trace("getMasternodeWhitelistDTOByOwnerAddress() ...");
+
+    try {
+      MasternodeWhitelistDTO masternodeWhitelistDTO = null;
+
+      masternodeWhitelistByOwnerAddressSelectStatement.setString(1, ownerAddress);
+
+      ResultSet resultSet = masternodeWhitelistByOwnerAddressSelectStatement.executeQuery();
+
+      if (resultSet.next()) {
+        masternodeWhitelistDTO = new MasternodeWhitelistDTO();
+
+        masternodeWhitelistDTO.setWalletId(resultSet.getInt("wallet_id"));
+        masternodeWhitelistDTO.setIdx(resultSet.getInt("idx"));
+        masternodeWhitelistDTO.setOwnerAddress(resultSet.getString("owner_address"));
+      }
+
+      resultSet.close();
+
+      return masternodeWhitelistDTO;
+    } catch (Exception e) {
+      throw new DfxException("getMasternodeWhitelistDTOByOwnerAddress", e);
     }
   }
 }

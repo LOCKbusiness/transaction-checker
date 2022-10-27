@@ -22,6 +22,7 @@ import ch.dfx.manager.ManagerRunnable;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
 import ch.dfx.transactionserver.database.DatabaseRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.H2DBManagerImpl;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 
 /**
@@ -32,7 +33,11 @@ public class TransactionServerMain {
 
   private static File LOCK_FILE = null;
 
-  private static Server tcpServer = null;
+  // ...
+  private Server tcpServer = null;
+
+  // ...
+  private final H2DBManager databaseManager;
 
   /**
    * 
@@ -71,12 +76,15 @@ public class TransactionServerMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
+      TransactionServerMain transactionServer = new TransactionServerMain();
+
+      // ...
       if (isCompact) {
-        compact();
+        transactionServer.compact();
       } else if (isInitialSetup) {
-        initialSetup();
+        transactionServer.initialSetup();
       } else {
-        execute(network, isMainnet, isServerOnly);
+        transactionServer.execute(network, isMainnet, isServerOnly);
       }
     } catch (Exception e) {
       LOGGER.error("Fatal Error" + e);
@@ -87,12 +95,19 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void compact() throws DfxException {
+  public TransactionServerMain() {
+    this.databaseManager = new H2DBManagerImpl();
+  }
+
+  /**
+   * 
+   */
+  private void compact() throws DfxException {
     LOGGER.debug("compact");
 
     try {
       if (createLockFile()) {
-        H2DBManager.getInstance().compact();
+        databaseManager.compact();
       }
     } finally {
       deleteLockFile();
@@ -102,13 +117,13 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void initialSetup() throws DfxException {
+  private void initialSetup() throws DfxException {
     LOGGER.debug("initialSetup");
 
     if (createLockFile()) {
       startServer();
 
-      DatabaseBuilder databaseBuilder = new DatabaseBuilder();
+      DatabaseBuilder databaseBuilder = new DatabaseBuilder(databaseManager);
       databaseBuilder.build();
 
       shutdown();
@@ -118,7 +133,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void execute(
+  private void execute(
       @Nonnull String network,
       boolean isMainnet,
       boolean isServerOnly) throws DfxException {
@@ -143,12 +158,12 @@ public class TransactionServerMain {
       int runPeriodAPI = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_API, 60);
 
       if (30 <= runPeriodDatabase) {
-        DatabaseRunnable databaseRunnable = new DatabaseRunnable(LOCK_FILE, isServerOnly);
+        DatabaseRunnable databaseRunnable = new DatabaseRunnable(databaseManager, LOCK_FILE, isServerOnly);
         SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
       }
 
       if (10 <= runPeriodAPI) {
-        ManagerRunnable managerRunnable = new ManagerRunnable(network, isServerOnly);
+        ManagerRunnable managerRunnable = new ManagerRunnable(databaseManager, network, isServerOnly);
         SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
       }
     }
@@ -157,7 +172,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void shutdown() {
+  private void shutdown() {
     LOGGER.debug("shutdown()");
 
     unloadWallet();
@@ -176,7 +191,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void loadWallet() throws DfxException {
+  private void loadWallet() throws DfxException {
     LOGGER.debug("loadWallet()");
 
     String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
@@ -189,7 +204,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void unloadWallet() {
+  private void unloadWallet() {
     LOGGER.debug("unloadWallet()");
 
     try {
@@ -206,7 +221,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static boolean createLockFile() throws DfxException {
+  private boolean createLockFile() throws DfxException {
     LOGGER.debug("createLockFile()");
 
     boolean lockFileCreated;
@@ -230,7 +245,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void deleteLockFile() {
+  private void deleteLockFile() {
     LOGGER.debug("deleteLockFile()");
 
     if (LOCK_FILE.exists()) {
@@ -241,7 +256,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void startServer() throws DfxException {
+  private void startServer() throws DfxException {
     LOGGER.debug("startServer()");
 
     try {
@@ -264,7 +279,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private static void stopServer() {
+  private void stopServer() {
     LOGGER.debug("stopServer()");
 
     tcpServer.stop();

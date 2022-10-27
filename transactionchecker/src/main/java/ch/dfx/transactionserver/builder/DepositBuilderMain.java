@@ -4,6 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
 /**
  * 
@@ -33,7 +35,10 @@ public class DepositBuilderMain {
       TransactionCheckerUtils.loadConfigProperties(network, environment);
 
       // ...
-      DepositBuilder depositBuilder = new DepositBuilder();
+      H2DBManager databaseManager = new H2DBManagerImpl();
+
+      // ...
+      DepositBuilder depositBuilder = new DepositBuilder(databaseManager);
       depositBuilder.build();
     } catch (Exception e) {
       LOGGER.error("Fatal Error" + e);

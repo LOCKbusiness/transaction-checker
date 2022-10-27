@@ -58,6 +58,7 @@ public class WithdrawalManager {
   private final Path jsonSignatureCheckFile;
 
   // ...
+  private final H2DBManager databaseManager;
   private final DefiDataProvider dataProvider;
   private final DatabaseHelper databaseHelper;
 
@@ -66,10 +67,12 @@ public class WithdrawalManager {
    */
   public WithdrawalManager(
       @Nonnull String network,
+      @Nonnull H2DBManager databaseManager,
       @Nonnull DefiDataProvider dataProvider) {
     Objects.requireNonNull(network, "null 'network' not allowed");
     this.jsonSignatureCheckFile = Path.of("", "data", "javascript", network, "message-verification.json");
 
+    this.databaseManager = databaseManager;
     this.dataProvider = dataProvider;
     this.databaseHelper = new DatabaseHelper();
   }
@@ -399,7 +402,7 @@ public class WithdrawalManager {
       Connection connection = null;
 
       try {
-        connection = H2DBManager.getInstance().openConnection();
+        connection = databaseManager.openConnection();
 
         databaseHelper.openStatements(connection);
 
@@ -413,7 +416,7 @@ public class WithdrawalManager {
       } catch (Exception e) {
         LOGGER.error("checkStakingBalance", e);
       } finally {
-        H2DBManager.getInstance().closeConnection(connection);
+        databaseManager.closeConnection(connection);
       }
     }
 

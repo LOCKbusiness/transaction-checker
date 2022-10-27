@@ -23,6 +23,7 @@ import ch.dfx.defichain.provider.DefiDataProvider;
 public class DatabaseChecker {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseChecker.class);
 
+  private final H2DBManager databaseManager;
   private final DefiDataProvider dataProvider;
 
   private PreparedStatement transactionSelectStatement = null;
@@ -30,7 +31,8 @@ public class DatabaseChecker {
   /**
    * 
    */
-  public DatabaseChecker() {
+  public DatabaseChecker(@Nonnull H2DBManager databaseManager) {
+    this.databaseManager = databaseManager;
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
 
@@ -43,7 +45,7 @@ public class DatabaseChecker {
     Connection connection = null;
 
     try {
-      connection = H2DBManager.getInstance().openConnection();
+      connection = databaseManager.openConnection();
       openStatements(connection);
 
       long maxBlockNumber = getMaxBlockNumber(connection);
@@ -76,7 +78,7 @@ public class DatabaseChecker {
       DatabaseUtils.rollback(connection);
       throw new DfxException("check", e);
     } finally {
-      H2DBManager.getInstance().closeConnection(connection);
+      databaseManager.closeConnection(connection);
     }
   }
 

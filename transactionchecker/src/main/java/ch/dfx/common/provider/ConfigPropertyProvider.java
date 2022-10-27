@@ -42,21 +42,6 @@ public class ConfigPropertyProvider {
   /**
    * 
    */
-  public static void testSetup(@Nonnull Properties testProperties) {
-    if (null == instance) {
-      String errorString = "Call setup() before ...";
-      LOGGER.error(errorString);
-      throw new RuntimeException(errorString);
-    }
-
-    for (PropertyEnum property : PropertyEnum.values()) {
-      instance.propertyMap.put(property, testProperties.getProperty(property.name().toLowerCase(), ""));
-    }
-  }
-
-  /**
-   * 
-   */
   public static ConfigPropertyProvider getInstance() {
     return instance;
   }

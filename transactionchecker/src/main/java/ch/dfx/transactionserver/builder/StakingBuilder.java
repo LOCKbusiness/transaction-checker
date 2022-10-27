@@ -34,12 +34,15 @@ public class StakingBuilder {
   private PreparedStatement stakingVinSelectStatement = null;
   private PreparedStatement stakingVoutSelectStatement = null;
 
+  // ...
+  private final H2DBManager databaseManager;
   private final DatabaseHelper databaseHelper;
 
   /**
    * 
    */
-  public StakingBuilder() {
+  public StakingBuilder(@Nonnull H2DBManager databaseManager) {
+    this.databaseManager = databaseManager;
     this.databaseHelper = new DatabaseHelper();
   }
 
@@ -52,7 +55,7 @@ public class StakingBuilder {
     Connection connection = null;
 
     try {
-      connection = H2DBManager.getInstance().openConnection();
+      connection = databaseManager.openConnection();
 
       databaseHelper.openStatements(connection);
       openStatements(connection);
@@ -70,7 +73,7 @@ public class StakingBuilder {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      H2DBManager.getInstance().closeConnection(connection);
+      databaseManager.closeConnection(connection);
     }
   }
 

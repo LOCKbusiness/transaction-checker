@@ -39,12 +39,15 @@ public class DepositBuilder {
 
   private PreparedStatement depositInsertStatement = null;
 
+  // ...
+  private final H2DBManager databaseManager;
   private final DatabaseHelper databaseHelper;
 
   /**
    * Test: tf1q4w2vk08ewe38vqwa3p62ndjw72589fkzzruvzr
    */
-  public DepositBuilder() {
+  public DepositBuilder(@Nonnull H2DBManager databaseManager) {
+    this.databaseManager = databaseManager;
     this.databaseHelper = new DatabaseHelper();
   }
 
@@ -57,7 +60,7 @@ public class DepositBuilder {
     Connection connection = null;
 
     try {
-      connection = H2DBManager.getInstance().openConnection();
+      connection = databaseManager.openConnection();
 
       databaseHelper.openStatements(connection);
       openStatements(connection);
@@ -93,7 +96,7 @@ public class DepositBuilder {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      H2DBManager.getInstance().closeConnection(connection);
+      databaseManager.closeConnection(connection);
     }
   }
 

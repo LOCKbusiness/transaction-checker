@@ -8,9 +8,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.FileReader;
 import java.nio.file.Files;
-import java.util.Properties;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
+import org.h2.tools.RunScript;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,11 +26,9 @@ import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
 import ch.dfx.common.TransactionCheckerUtils;
-import ch.dfx.common.enumeration.PropertyEnum;
-import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.transactionserver.database.H2DBManager;
 
 /**
  * 
@@ -36,15 +37,18 @@ public class OpenTransactionManagerTest {
 
   private static Gson gson = null;
 
+  private static H2DBManager databaseManager = null;
   private static ApiAccessHandler apiAccessHandler = null;
   private static DefiDataProvider dataProvider = null;
   private static OpenTransactionManager transactionManager = null;
+
+  private static Connection connection;
 
   /**
    * 
    */
   @BeforeClass
-  public static void globalSetup() throws DfxException {
+  public static void globalSetup() throws Exception {
     // ...
     String network = "testnet";
     String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
@@ -56,19 +60,34 @@ public class OpenTransactionManagerTest {
     // ...
     TransactionCheckerUtils.loadConfigProperties(network, environment);
 
-    Properties testProperties = new Properties();
-    testProperties.put(PropertyEnum.H2_DB_DIR, "");
-    testProperties.put(PropertyEnum.H2_DB_NAME, "");
-    testProperties.put(PropertyEnum.H2_PASSWORD, "");
-
-    ConfigPropertyProvider.testSetup(testProperties);
-
     // ...
     gson = new GsonBuilder().setPrettyPrinting().create();
 
+    databaseManager = mock(H2DBManager.class);
     apiAccessHandler = mock(ApiAccessHandler.class);
     dataProvider = mock(DefiDataProvider.class);
-    transactionManager = new OpenTransactionManager(network, apiAccessHandler, dataProvider);
+    transactionManager = new OpenTransactionManager(network, apiAccessHandler, databaseManager, dataProvider);
+
+    // ...
+    setupDatabase();
+  }
+
+  /**
+   * 
+   */
+  private static void setupDatabase() throws Exception {
+    connection = DriverManager.getConnection("jdbc:h2:mem:testdb", "sa", "");
+    connection.setAutoCommit(false);
+
+    when(databaseManager.openConnection()).thenReturn(connection);
+
+    ClassLoader classLoader = OpenTransactionManagerTest.class.getClassLoader();
+
+    File initialSetupSqlFile = new File(classLoader.getResource("sql/initialSetup.sql").getFile());
+    File openTransactionManagerTestSqlFile = new File(classLoader.getResource("sql/openTransactionManagerTest.sql").getFile());
+
+    RunScript.execute(connection, new FileReader(initialSetupSqlFile));
+    RunScript.execute(connection, new FileReader(openTransactionManagerTestSqlFile));
   }
 
   @Test

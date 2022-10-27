@@ -45,6 +45,7 @@ public class OpenTransactionManager {
 
   // ...
   private final ApiAccessHandler apiAccessHandler;
+  private final H2DBManager databaseManager;
 
   private final MessageHandler messageHandler;
   private final WithdrawalManager withdrawalManager;
@@ -55,11 +56,13 @@ public class OpenTransactionManager {
   public OpenTransactionManager(
       @Nonnull String network,
       @Nonnull ApiAccessHandler apiAccessHandler,
+      @Nonnull H2DBManager databaseManager,
       @Nonnull DefiDataProvider dataProvider) {
     this.apiAccessHandler = apiAccessHandler;
+    this.databaseManager = databaseManager;
 
     this.messageHandler = new MessageHandler(dataProvider);
-    this.withdrawalManager = new WithdrawalManager(network, dataProvider);
+    this.withdrawalManager = new WithdrawalManager(network, databaseManager, dataProvider);
   }
 
   /**
@@ -222,7 +225,7 @@ public class OpenTransactionManager {
       Connection connection = null;
 
       try {
-        connection = H2DBManager.getInstance().openConnection();
+        connection = databaseManager.openConnection();
 
         openStatements(connection);
 
@@ -239,7 +242,7 @@ public class OpenTransactionManager {
         DatabaseUtils.rollback(connection);
         LOGGER.error("checkDuplicated", e);
       } finally {
-        H2DBManager.getInstance().closeConnection(connection);
+        databaseManager.closeConnection(connection);
       }
     }
 

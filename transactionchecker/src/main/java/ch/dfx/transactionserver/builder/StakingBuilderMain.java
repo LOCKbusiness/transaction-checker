@@ -6,6 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
 /**
  * 
@@ -41,7 +43,10 @@ public class StakingBuilderMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      StakingBuilder stakingBuilder = new StakingBuilder();
+      H2DBManager databaseManager = new H2DBManagerImpl();
+
+      // ...
+      StakingBuilder stakingBuilder = new StakingBuilder(databaseManager);
       stakingBuilder.build();
     } catch (Exception e) {
       LOGGER.error("Fatal Error" + e);

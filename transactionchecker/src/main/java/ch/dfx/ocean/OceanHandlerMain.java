@@ -22,6 +22,7 @@ import ch.dfx.ocean.data.TransactionsDetailDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
 /**
  * The application is used to check the stored deposit balances.
@@ -43,7 +44,8 @@ import ch.dfx.transactionserver.database.H2DBManager;
 public class OceanHandlerMain {
   private static final Logger LOGGER = LogManager.getLogger(OceanHandlerMain.class);
 
-  private final static DatabaseHelper databaseHelper = new DatabaseHelper();
+  private final H2DBManager databaseManager;
+  private final DatabaseHelper databaseHelper;
 
   /**
    * 
@@ -73,7 +75,10 @@ public class OceanHandlerMain {
     TransactionCheckerUtils.loadConfigProperties(network, environment);
 
     // ...
-    List<DepositDTO> depositDTOList = getDepositDTOList();
+    OceanHandlerMain oceanHandler = new OceanHandlerMain();
+
+    // ...
+    List<DepositDTO> depositDTOList = oceanHandler.getDepositDTOList();
 
     for (DepositDTO depositDTO : depositDTOList) {
       String depositAddress = depositDTO.getDepositAddress();
@@ -82,12 +87,20 @@ public class OceanHandlerMain {
         File jsonFile = new File("logs", "ocean-" + depositAddress + ".json");
 
         if (isFromOcean) {
-          readFromOcean(network, depositAddress, jsonFile);
+          oceanHandler.readFromOcean(network, depositAddress, jsonFile);
         } else if (isFromFile) {
-          readFromFile(network, depositAddress, jsonFile);
+          oceanHandler.readFromFile(network, depositAddress, jsonFile);
         }
       }
     }
+  }
+
+  /**
+   * 
+   */
+  public OceanHandlerMain() {
+    this.databaseManager = new H2DBManagerImpl();
+    this.databaseHelper = new DatabaseHelper();
   }
 
   /**
@@ -118,13 +131,13 @@ public class OceanHandlerMain {
   /**
    * 
    */
-  private static List<DepositDTO> getDepositDTOList() throws DfxException {
+  private List<DepositDTO> getDepositDTOList() throws DfxException {
     LOGGER.debug("getDepositDTOList() ...");
 
     Connection connection = null;
 
     try {
-      connection = H2DBManager.getInstance().openConnection();
+      connection = databaseManager.openConnection();
       databaseHelper.openStatements(connection);
 
       List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
@@ -135,14 +148,14 @@ public class OceanHandlerMain {
     } catch (Exception e) {
       throw new DfxException("getDepositDTOList", e);
     } finally {
-      H2DBManager.getInstance().closeConnection(connection);
+      databaseManager.closeConnection(connection);
     }
   }
 
   /**
    * 
    */
-  private static void readFromOcean(
+  private void readFromOcean(
       @Nonnull String network,
       @Nonnull String testAddress,
       @Nonnull File jsonFile) throws DfxException {
@@ -174,7 +187,7 @@ public class OceanHandlerMain {
   /**
    * 
    */
-  private static void readFromFile(
+  private void readFromFile(
       @Nonnull String network,
       @Nonnull String testAddress,
       @Nonnull File jsonFile) throws DfxException {
@@ -199,7 +212,7 @@ public class OceanHandlerMain {
   /**
    * 
    */
-  private static void analyze(ListTransactionsDTO transactionsDTOList) throws DfxException {
+  private void analyze(ListTransactionsDTO transactionsDTOList) throws DfxException {
     LOGGER.debug("analyze() ...");
 
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File("logs", "ocean-transactions.txt")))) {

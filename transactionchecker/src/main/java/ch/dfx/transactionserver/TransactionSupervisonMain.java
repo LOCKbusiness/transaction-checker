@@ -18,6 +18,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.block.DefiBlockData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
 /**
  * 
@@ -26,6 +27,9 @@ public class TransactionSupervisonMain {
   private static final Logger LOGGER = LogManager.getLogger(TransactionSupervisonMain.class);
 
   private PreparedStatement transactionSelectStatement = null;
+
+  // ...
+  private final H2DBManager databaseManager;
 
   private int diffCounter = 0;
 
@@ -93,6 +97,13 @@ public class TransactionSupervisonMain {
   /**
    * 
    */
+  public TransactionSupervisonMain() {
+    this.databaseManager = new H2DBManagerImpl();
+  }
+
+  /**
+   * 
+   */
   private void checkTransaction(
       long startblock,
       long endblock) throws DfxException {
@@ -101,7 +112,7 @@ public class TransactionSupervisonMain {
     Connection connection = null;
 
     try {
-      connection = H2DBManager.getInstance().openConnection();
+      connection = databaseManager.openConnection();
       openStatements(connection);
 
       DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
@@ -133,7 +144,7 @@ public class TransactionSupervisonMain {
         LOGGER.error(diffText);
       }
     } finally {
-      H2DBManager.getInstance().closeConnection(connection);
+      databaseManager.closeConnection(connection);
     }
   }
 

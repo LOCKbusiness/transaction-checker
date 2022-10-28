@@ -1,0 +1,33 @@
+[
+  {
+    "id": "440a351c87bb030c774c4b822504bc954188dde6321b05bb5b52af357098f688",
+    "issuerSignature": "H/sGSY593EuR6DvO75ov94rMMKMzrNcVzVIefxrCQ6zPDcXAHhWY0LQJw+rpazmtPQlHCgxWkvHenbhH5R+mS8E\u003d",
+    "rawTx": {
+      "hex": "04000000000101e3d536f74912d45a335530c33c507466e17e66b0b07dd7043985bbe4604337a90100000000ffffffff020065cd1d000000001600147713cba47625c239c09f36254d6bfd37a6b98bb1002d12229e8b040000160014010873a25e0b1341ccf0d2b64938a16d6803ea99000114010873a25e0b1341ccf0d2b64938a16d6803ea9900000000",
+      "scriptHex": "0014010873a25e0b1341ccf0d2b64938a16d6803ea99",
+      "prevouts": [
+        {
+          "txid": "a9374360e4bb853904d77db0b0667ee16674503cc33055335ad41249f736d5e3",
+          "vout": 1,
+          "value": "49981.99998396",
+          "script": {
+            "stack": [
+              {
+                "type": "OP_0",
+                "code": 0
+              },
+              {
+                "type": "OP_PUSHDATA",
+                "hex": "010873a25e0b1341ccf0d2b64938a16d6803ea99"
+              }
+            ]
+          },
+          "tokenId": 0
+        }
+      ]
+    },
+    "payload": {
+      "id": 103
+    }
+  }
+]

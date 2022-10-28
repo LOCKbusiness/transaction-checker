@@ -1,5 +1,7 @@
 package ch.dfx.httpserver;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import org.apache.http.impl.bootstrap.HttpServer;
@@ -50,13 +52,30 @@ public class HttpServerMain {
       Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
 
       // ...
+      APISignInHandler apiSignInHandler = new APISignInHandler();
+      APITransactionRequestHandler apiTransactionRequestHandler = new APITransactionRequestHandler();
+      APIWithdrawalRequestHandler apiWithdrawalRequestHandler = new APIWithdrawalRequestHandler();
+
+      // ...
+      File[] transactionFileNameArray = new File[] {
+          Path.of("data", "httpserver", "get", "transaction-20221028-145601-825128.json").toFile()
+      };
+
+      File[] withdrawalFileNameArray = new File[] {
+          Path.of("data", "httpserver", "get", "withdrawal-20221028-145601-847129.json").toFile()
+      };
+
+      apiTransactionRequestHandler.setJSONFileArray(transactionFileNameArray);
+      apiWithdrawalRequestHandler.setJSONFileArray(withdrawalFileNameArray);
+
+      // ...
       httpServer =
           ServerBootstrap.bootstrap()
               .setListenerPort(PORT)
               .setServerInfo("My HTTP Testserver")
-              .registerHandler("/v1/auth/sign-in", new APISignInHandler())
-              .registerHandler("/v1/withdrawal/*", new APIWithdrawalRequestHandler())
-              .registerHandler("/v1/transaction/*", new APITransactionRequestHandler())
+              .registerHandler("/v1/auth/sign-in", apiSignInHandler)
+              .registerHandler("/v1/transaction/*", apiTransactionRequestHandler)
+              .registerHandler("/v1/withdrawal/*", apiWithdrawalRequestHandler)
               .create();
 
       httpServer.start();

@@ -1,31 +1,29 @@
 package ch.dfx.manager;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
-import java.io.FileReader;
 import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.DriverManager;
 
-import org.h2.tools.RunScript;
+import javax.annotation.Nonnull;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import ch.dfx.TestUtils;
 import ch.dfx.api.ApiAccessHandler;
-import ch.dfx.api.data.transaction.OpenTransactionDTO;
-import ch.dfx.api.data.transaction.OpenTransactionDTOList;
-import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
-import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.api.ApiAccessHandlerImpl;
+import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
+import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -34,67 +32,60 @@ import ch.dfx.transactionserver.database.H2DBManager;
  * 
  */
 public class OpenTransactionManagerTest {
+  private static final Logger LOGGER = LogManager.getLogger(OpenTransactionManagerTest.class);
 
+  // ...
+  public static boolean isSuiteContext = false;
+
+  // ...
+  private static H2DBManager databaseManagerMock = null;
+  private static DefiDataProvider dataProviderMock = null;
+
+  // ...
   private static Gson gson = null;
 
-  private static H2DBManager databaseManager = null;
   private static ApiAccessHandler apiAccessHandler = null;
-  private static DefiDataProvider dataProvider = null;
   private static OpenTransactionManager transactionManager = null;
-
-  private static Connection connection;
 
   /**
    * 
    */
   @BeforeClass
   public static void globalSetup() throws Exception {
-    // ...
-    String network = "testnet";
-    String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+    if (!isSuiteContext) {
+      TestUtils.globalSetup("opentransactionmanager");
+    }
 
-    // ...
-    System.setProperty("logFilename", "opentransactionmanager-test-" + network + "-" + environment);
-    TransactionCheckerUtils.initLog4j("log4j2.xml");
-
-    // ...
-    TransactionCheckerUtils.loadConfigProperties(network, environment);
+    databaseManagerMock = TestUtils.databaseManagerMock;
+    dataProviderMock = TestUtils.dataProviderMock;
 
     // ...
     gson = new GsonBuilder().setPrettyPrinting().create();
 
-    databaseManager = mock(H2DBManager.class);
-    apiAccessHandler = mock(ApiAccessHandler.class);
-    dataProvider = mock(DefiDataProvider.class);
-    transactionManager = new OpenTransactionManager(network, apiAccessHandler, databaseManager, dataProvider);
+    apiAccessHandler = new ApiAccessHandlerImpl(TestUtils.NETWORK);
+    apiAccessHandler.signIn();
 
-    // ...
-    setupDatabase();
+    transactionManager =
+        new OpenTransactionManager(TestUtils.NETWORK, apiAccessHandler, databaseManagerMock, dataProviderMock);
   }
 
   /**
    * 
    */
-  private static void setupDatabase() throws Exception {
-    connection = DriverManager.getConnection("jdbc:h2:mem:testdb", "sa", "");
-    connection.setAutoCommit(false);
-
-    when(databaseManager.openConnection()).thenReturn(connection);
-
-    ClassLoader classLoader = OpenTransactionManagerTest.class.getClassLoader();
-
-    File initialSetupSqlFile = new File(classLoader.getResource("sql/initialSetup.sql").getFile());
-    File openTransactionManagerTestSqlFile = new File(classLoader.getResource("sql/openTransactionManagerTest.sql").getFile());
-
-    RunScript.execute(connection, new FileReader(initialSetupSqlFile));
-    RunScript.execute(connection, new FileReader(openTransactionManagerTestSqlFile));
+  @AfterClass
+  public static void globalCleanup() {
+    if (!isSuiteContext) {
+      TestUtils.globalCleanup();
+    }
   }
 
   @Test
-  public void dataMissingTest() {
+  public void missingDataTest() {
+    LOGGER.debug("missingDataTest()");
+
     try {
-      when(apiAccessHandler.getOpenTransactionDTOList()).thenReturn(new OpenTransactionDTOList());
-      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(new PendingWithdrawalDTOList());
+      TestUtils.apiTransactionRequestHandler.setJSONFileArray(new File[] {});
+      TestUtils.apiWithdrawalRequestHandler.setJSONFileArray(new File[] {});
 
       transactionManager.execute();
     } catch (Exception e) {
@@ -103,16 +94,13 @@ public class OpenTransactionManagerTest {
   }
 
   @Test
-  public void dataEmptyTest() {
+  public void emptyDataTest() {
+    LOGGER.debug("emptyDataTest()");
+
     try {
-      OpenTransactionDTOList openTransactionDTOList = new OpenTransactionDTOList();
-      openTransactionDTOList.add(new OpenTransactionDTO());
-
-      PendingWithdrawalDTOList pendingWithdrawalDTOList = new PendingWithdrawalDTOList();
-      pendingWithdrawalDTOList.add(new PendingWithdrawalDTO());
-
-      when(apiAccessHandler.getOpenTransactionDTOList()).thenReturn(openTransactionDTOList);
-      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(pendingWithdrawalDTOList);
+      setJSONResoureFiles(
+          "json/withdrawal/empty/01-transaction-empty.json",
+          "json/withdrawal/empty/01-withdrawal-empty.json");
 
       transactionManager.execute();
     } catch (Exception e) {
@@ -121,42 +109,288 @@ public class OpenTransactionManagerTest {
   }
 
   @Test
-  public void dataValidTest() {
+  public void validTransactionTest() {
+    LOGGER.debug("validTransactionTest()");
+
     try {
-      ClassLoader classLoader = this.getClass().getClassLoader();
+      setJSONResoureFiles(
+          "json/withdrawal/good/01-transaction.json",
+          "json/withdrawal/good/01-withdrawal.json");
 
       // ...
-      File jsonTransactionFile = new File(classLoader.getResource("json/test-1-transaction-good.json").getFile());
+      OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
+      verifiedDTO.setSignature("dataValidTest-signature");
 
-      OpenTransactionDTOList openTransactionDTOList =
-          gson.fromJson(Files.readString(jsonTransactionFile.toPath()), OpenTransactionDTOList.class);
-
-      when(apiAccessHandler.getOpenTransactionDTOList()).thenReturn(openTransactionDTOList);
-
-      // ...
-      File jsonWithdrawalFile = new File(classLoader.getResource("json/test-1-withdrawal-good.json").getFile());
-
-      PendingWithdrawalDTOList pendingWithdrawalDTOList =
-          gson.fromJson(Files.readString(jsonWithdrawalFile.toPath()), PendingWithdrawalDTOList.class);
-
-      when(apiAccessHandler.getPendingWithdrawalDTOList()).thenReturn(pendingWithdrawalDTOList);
-
-      // ...
-      File jsonChainDataFile = new File(classLoader.getResource("json/test-1-chaindata-good.json").getFile());
-
-      DefiTransactionData transactionData =
-          gson.fromJson(Files.readString(jsonChainDataFile.toPath()), DefiTransactionData.class);
-
-      when(dataProvider.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
-      when(dataProvider.decodeRawTransaction(anyString())).thenReturn(transactionData);
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
 
       // ...
       transactionManager.execute();
 
-      verify(apiAccessHandler).sendOpenTransactionVerified(anyString(), any());
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
 
+      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponse);
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
+  }
+
+  @Test
+  public void invalidAmountTest() {
+    LOGGER.debug("dataInvalidAmountTest()");
+
+    try {
+      setJSONResoureFiles(
+          "json/withdrawal/invalid/01-transaction-wrong-message.json",
+          "json/withdrawal/invalid/01-withdrawal-wrong-message.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("dataInvalidAmountTest-signature");
+      invalidatedDTO.setReason("[Withdrawal] ID: 102 - invalid amount");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void signMessageMismatchTest() {
+    LOGGER.debug("signMessageMismatchTest()");
+
+    try {
+      setJSONResoureFiles(
+          "json/withdrawal/invalid/02-transaction-wrong-message.json",
+          "json/withdrawal/invalid/02-withdrawal-wrong-message.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("signMessageMismatchTest-signature");
+      invalidatedDTO.setReason("[Withdrawal] ID: 103 - sign message mismatch");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void invalidWithdrawalSignatureTest1() {
+    LOGGER.debug("invalidWithdrawalSignatureTest1()");
+
+    try {
+      setJSONResoureFiles(
+          "json/withdrawal/invalid/03-transaction-wrong-message-signature.json",
+          "json/withdrawal/invalid/03-withdrawal-wrong-message-signature.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("invalidWithdrawalSignatureTest1-signature");
+      invalidatedDTO.setReason("[Withdrawal] ID: 104 - invalid signature");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void invalidWithdrawalSignatureTest2() {
+    LOGGER.debug("invalidWithdrawalSignatureTest2()");
+
+    try {
+      setJSONResoureFiles(
+          "json/withdrawal/invalid/04-transaction-wrong-raw-transaction.json",
+          "json/withdrawal/invalid/04-withdrawal-wrong-raw-transaction.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("invalidWithdrawalSignatureTest2-signature");
+      invalidatedDTO.setReason("[Withdrawal] ID: 105 - sign message mismatch");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void invalidWithdrawalSignatureTest3() {
+    LOGGER.debug("invalidWithdrawalSignatureTest3()");
+
+    try {
+      setJSONResoureFiles(
+          "json/withdrawal/invalid/05-transaction-wrong-raw-transaction.json",
+          "json/withdrawal/invalid/05-withdrawal-wrong-raw-transaction.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("invalidWithdrawalSignatureTest3-signature");
+      invalidatedDTO.setReason("[Withdrawal] ID: 106 - sign message mismatch");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void invalidWithdrawalSignatureTest4() {
+    LOGGER.debug("invalidWithdrawalSignatureTest4()");
+
+    try {
+      setJSONResoureFiles(
+          "json/withdrawal/invalid/06-transaction-wrong-raw-transaction.json",
+          "json/withdrawal/invalid/06-withdrawal-wrong-raw-transaction.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("invalidWithdrawalSignatureTest4-signature");
+      invalidatedDTO.setReason("[Withdrawal] ID: 110 - sign message mismatch");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void withdrawalIdNotFoundTest() {
+    LOGGER.debug("withdrawalIdNotFoundTest()");
+
+    try {
+      setJSONResoureFiles(
+          "json/withdrawal/invalid/07-transaction-wrong-signmessage-format.json",
+          "json/withdrawal/invalid/07-withdrawal-wrong-signmessage-format.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("withdrawalIdNotFoundTest-signature");
+      invalidatedDTO.setReason("[Transaction] ID: 440a351c87bb030c774c4b822504bc954188dde6321b05bb5b52af357098f688 - withdrawal id not found");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void transactionIdNotMatchTest() {
+    LOGGER.debug("transactionIdNotMatchTest()");
+
+    try {
+      setJSONResoureFiles(
+          "json/withdrawal/invalid/08-transaction-wrong-transactionid.json",
+          "json/withdrawal/invalid/08-withdrawal-wrong-transactionid.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("transactionIdNotMatchTest-signature");
+      invalidatedDTO.setReason("[Withdrawal] ID: 107 - transaction id not matches");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  /**
+   * 
+   */
+  private void setJSONResoureFiles(
+      @Nonnull String transactionFileName,
+      @Nonnull String withdrawalFileName) throws Exception {
+    // ...
+    ClassLoader classLoader = this.getClass().getClassLoader();
+
+    TestUtils.apiTransactionRequestHandler.setJSONFileArray(new File[] {
+        new File(classLoader.getResource(transactionFileName).getFile())
+    });
+
+    TestUtils.apiWithdrawalRequestHandler.setJSONFileArray(new File[] {
+        new File(classLoader.getResource(withdrawalFileName).getFile())
+    });
+
+    // ...
+    File jsonChainDataFile = new File(classLoader.getResource("json/withdrawal/01-chaindata-transaction.json").getFile());
+
+    DefiTransactionData transactionData =
+        gson.fromJson(Files.readString(jsonChainDataFile.toPath()), DefiTransactionData.class);
+
+    when(dataProviderMock.decodeRawTransaction(anyString())).thenReturn(transactionData);
   }
 }

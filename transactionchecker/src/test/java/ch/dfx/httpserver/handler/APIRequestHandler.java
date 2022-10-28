@@ -33,11 +33,43 @@ public abstract class APIRequestHandler {
   // ...
   protected final Gson gson;
 
+  // ...
+  private File[] jsonFileArray = null;
+  private String jsonResponse = null;
+
   /**
    * 
    */
   public APIRequestHandler() {
     this.gson = new GsonBuilder().setPrettyPrinting().create();
+  }
+
+  /**
+   * 
+   */
+  public void setJSONFileArray(File[] jsonFileArray) {
+    this.jsonFileArray = jsonFileArray;
+  }
+
+  /**
+   * 
+   */
+  public File[] getJSONFileArray() {
+    return jsonFileArray;
+  }
+
+  /**
+   * 
+   */
+  public void setJSONResponse(String jsonResponse) {
+    this.jsonResponse = jsonResponse;
+  }
+
+  /**
+   * 
+   */
+  public String getJSONResponse() {
+    return jsonResponse;
   }
 
   /**
@@ -66,7 +98,7 @@ public abstract class APIRequestHandler {
   /**
    * 
    */
-  protected File[] readJSONFiles(String type) {
+  protected File[] readJSONFilesx(String type) {
     LOGGER.debug("readJSONFiles() ...");
 
     // ...
@@ -88,7 +120,7 @@ public abstract class APIRequestHandler {
   /**
    * 
    */
-  protected void writeJSONFile(String jsonString) throws IOException {
+  protected void writeJSONFilex(String jsonString) throws IOException {
     LOGGER.debug("writeJSONFile() ...");
 
     File httpServerDataPath = Paths.get("data", "httpserver", "put").toFile();

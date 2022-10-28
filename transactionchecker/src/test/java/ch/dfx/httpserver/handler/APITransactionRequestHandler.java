@@ -78,10 +78,14 @@ public class APITransactionRequestHandler extends APIRequestHandler implements H
 
     OpenTransactionDTOList openTransactionDTOList = new OpenTransactionDTOList();
 
-    File[] jsonFileArray = readJSONFiles("transaction");
+    // File[] jsonFileArray = readJSONFiles("transaction");
 
-    for (File jsonFile : jsonFileArray) {
-      openTransactionDTOList.addAll(gson.fromJson(Files.readString(jsonFile.toPath()), OpenTransactionDTOList.class));
+    File[] jsonFileArray = getJSONFileArray();
+
+    if (null != jsonFileArray) {
+      for (File jsonFile : jsonFileArray) {
+        openTransactionDTOList.addAll(gson.fromJson(Files.readString(jsonFile.toPath()), OpenTransactionDTOList.class));
+      }
     }
 
     return openTransactionDTOList;
@@ -99,6 +103,7 @@ public class APITransactionRequestHandler extends APIRequestHandler implements H
     HttpEntity requestEntity = entityRequest.getEntity();
 
     String jsonRequest = EntityUtils.toString(requestEntity);
-    writeJSONFile(jsonRequest);
+    // writeJSONFile(jsonRequest);
+    setJSONResponse(jsonRequest);
   }
 }

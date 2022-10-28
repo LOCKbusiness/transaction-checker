@@ -438,8 +438,14 @@ public class WithdrawalManager {
       AddressDTO addressDTO = databaseHelper.getAddressDTOByAddress(customerAddress);
       int customerAddressNumber = addressDTO.getNumber();
 
-      StakingDTO stakingDTO = databaseHelper.getStakingDTOByCustomerAddressNumber(customerAddressNumber);
-      BigDecimal stakingBalance = stakingDTO.getVin().subtract(stakingDTO.getVout());
+      // ...
+      BigDecimal stakingBalance = BigDecimal.ZERO;
+
+      List<StakingDTO> stakingDTOList = databaseHelper.getStakingDTOListByCustomerAddressNumber(customerAddressNumber);
+
+      for (StakingDTO stakingDTO : stakingDTOList) {
+        stakingBalance = stakingBalance.add(stakingDTO.getVin().subtract(stakingDTO.getVout()));
+      }
 
       if (-1 == stakingBalance.compareTo(withdrawalAmount)) {
         setCheckSignatureMessage(transactionWithdrawalDTO, "invalid balance");

@@ -1,0 +1,50 @@
+{
+  "txid": "0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140",
+  "hash": "2c7380ff218c18d03bb2f32db5a353d2a576e5e08155f4da3732cabf2e411e5b",
+  "version": 4,
+  "size": 168,
+  "vsize": 135,
+  "weight": 537,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "a79ea5220bf6ec2879e3da1977e2e30495213afd76ef7c834b36f43c515e6031",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "",
+        "hex": ""
+      },
+      "txinwitness": [
+        "dfd72055d6fca2c60c645af2a4be1e9e532bc053",
+        "a6c81b1f7fc24c0fdaea9ae6845bd97b23acfaad"
+      ],
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 10.00000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_RETURN 446654784301dfd72055d6fca2c60c645af2a4be1e9e532bc0530000",
+        "hex": "6a1c446654784301dfd72055d6fca2c60c645af2a4be1e9e532bc0530000",
+        "type": "nulldata"
+      },
+      "tokenId": 0
+    },
+    {
+      "value": 20000.00000000,
+      "n": 1,
+      "scriptPubKey": {
+        "asm": "0 a6c81b1f7fc24c0fdaea9ae6845bd97b23acfaad",
+        "hex": "0014a6c81b1f7fc24c0fdaea9ae6845bd97b23acfaad",
+        "reqSigs": 1,
+        "type": "witness_v0_keyhash",
+        "addresses": [
+          "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z"
+        ]
+      },
+      "tokenId": 0
+    }
+  ]
+}

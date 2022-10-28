@@ -1,11 +1,15 @@
 package ch.dfx.api.data.transaction;
 
+import javax.annotation.Nonnull;
+
 import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
  */
 public class OpenTransactionDTO {
+  private OpenTransactionTypeEnum type = null;
+
   private String id = null;
   private String issuerSignature = null;
 
@@ -18,6 +22,15 @@ public class OpenTransactionDTO {
    * 
    */
   public OpenTransactionDTO() {
+    this.type = OpenTransactionTypeEnum.UNKNOWN;
+  }
+
+  public OpenTransactionTypeEnum getType() {
+    return type;
+  }
+
+  public void setType(@Nonnull OpenTransactionTypeEnum type) {
+    this.type = type;
   }
 
   public String getId() {

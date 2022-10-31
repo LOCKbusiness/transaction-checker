@@ -26,7 +26,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private final H2DBManager databaseManager;
 
   // ...
-  private final File lockFile;
+  private final File processLockfile;
 
   private final boolean isServerOnly;
 
@@ -43,13 +43,13 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    */
   public DatabaseRunnable(
       @Nonnull H2DBManager databaseManager,
-      @Nonnull File lockFile,
+      @Nonnull File processLockfile,
       boolean isServerOnly) {
     Objects.requireNonNull(databaseManager, "null databaseManager is not allowed");
-    Objects.requireNonNull(lockFile, "null lockFile is not allowed");
+    Objects.requireNonNull(processLockfile, "null processLockfile is not allowed");
 
     this.databaseManager = databaseManager;
-    this.lockFile = lockFile;
+    this.processLockfile = processLockfile;
     this.isServerOnly = isServerOnly;
   }
 
@@ -59,7 +59,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   }
 
   @Override
-  public boolean isProcesing() {
+  public boolean isProcessing() {
     return isProcessing;
   }
 
@@ -214,8 +214,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private void checkLockFile() {
     LOGGER.trace("checkLockFile() ...");
 
-    if (!lockFile.exists()) {
-      LOGGER.error("Lockfile missing, will exit now");
+    if (!processLockfile.exists()) {
+      LOGGER.error("Process lockfile missing, will exit now");
       SchedulerProvider.getInstance().exit(-1);
     }
   }

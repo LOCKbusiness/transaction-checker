@@ -58,7 +58,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   }
 
   @Override
-  public boolean isProcesing() {
+  public boolean isProcessing() {
     return isProcessing;
   }
 

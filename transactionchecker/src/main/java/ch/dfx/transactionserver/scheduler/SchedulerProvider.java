@@ -116,7 +116,7 @@ public class SchedulerProvider {
 
       int timeout = 0;
 
-      while (runnable.isProcesing()
+      while (runnable.isProcessing()
           && 5 > timeout++) {
         try {
           Thread.sleep(timeout * 1000);

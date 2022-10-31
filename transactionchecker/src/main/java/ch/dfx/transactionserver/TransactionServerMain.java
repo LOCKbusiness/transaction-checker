@@ -1,6 +1,13 @@
 package ch.dfx.transactionserver;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -19,6 +26,8 @@ import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.handler.DefiWalletHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.manager.ManagerRunnable;
+import ch.dfx.process.data.ProcessInfoDTO;
+import ch.dfx.process.stub.ProcessInfoService;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
 import ch.dfx.transactionserver.database.DatabaseRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -28,16 +37,18 @@ import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 /**
  * 
  */
-public class TransactionServerMain {
+public class TransactionServerMain implements ProcessInfoService {
   private static final Logger LOGGER = LogManager.getLogger(TransactionServerMain.class);
 
-  private static File LOCK_FILE = null;
+  public static final String IDENTIFIER = "transactionserver";
+
+  // ...
+  private final String network;
+
+  private final H2DBManager databaseManager;
 
   // ...
   private Server tcpServer = null;
-
-  // ...
-  private final H2DBManager databaseManager;
 
   /**
    * 
@@ -57,14 +68,7 @@ public class TransactionServerMain {
       String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
-      LOCK_FILE = new File(
-          "transactionserver"
-              + "." + network
-              + "." + TransactionCheckerUtils.getEnvironment().name().toLowerCase()
-              + ".lock");
-
-      // ...
-      System.setProperty("logFilename", "transactionserver-" + network + "-" + environment);
+      System.setProperty("logFilename", TransactionCheckerUtils.getLog4jFilename(IDENTIFIER, network));
       TransactionCheckerUtils.initLog4j("log4j2-transactionserver.xml");
 
       // ...
@@ -76,7 +80,7 @@ public class TransactionServerMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      TransactionServerMain transactionServer = new TransactionServerMain();
+      TransactionServerMain transactionServer = new TransactionServerMain(network);
 
       // ...
       if (isCompact) {
@@ -86,8 +90,9 @@ public class TransactionServerMain {
       } else {
         transactionServer.execute(network, isMainnet, isServerOnly);
       }
-    } catch (Exception e) {
-      LOGGER.error("Fatal Error" + e);
+    } catch (Throwable t) {
+      // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
+      LOGGER.error("Fatal Error", t);
       System.exit(-1);
     }
   }
@@ -95,7 +100,9 @@ public class TransactionServerMain {
   /**
    * 
    */
-  public TransactionServerMain() {
+  public TransactionServerMain(@Nonnull String network) {
+    this.network = network;
+
     this.databaseManager = new H2DBManagerImpl();
   }
 
@@ -106,11 +113,11 @@ public class TransactionServerMain {
     LOGGER.debug("compact");
 
     try {
-      if (createLockFile()) {
+      if (createProcessLockfile()) {
         databaseManager.compact();
       }
     } finally {
-      deleteLockFile();
+      deleteProcessLockfile();
     }
   }
 
@@ -120,7 +127,7 @@ public class TransactionServerMain {
   private void initialSetup() throws DfxException {
     LOGGER.debug("initialSetup");
 
-    if (createLockFile()) {
+    if (createProcessLockfile()) {
       startServer();
 
       DatabaseBuilder databaseBuilder = new DatabaseBuilder(databaseManager);
@@ -139,7 +146,7 @@ public class TransactionServerMain {
       boolean isServerOnly) throws DfxException {
     LOGGER.debug("execute");
 
-    if (createLockFile()) {
+    if (createProcessLockfile()) {
       // ...
       Log4jContextFactory factory = (Log4jContextFactory) LogManager.getFactory();
       ((DefaultShutdownCallbackRegistry) factory.getShutdownCallbackRegistry()).stop();
@@ -148,6 +155,7 @@ public class TransactionServerMain {
       Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
 
       // ...
+      startRMI();
       startServer();
 
       // ...
@@ -157,8 +165,13 @@ public class TransactionServerMain {
       int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
       int runPeriodAPI = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_API, 60);
 
+      LOGGER.debug("run period database: " + runPeriodDatabase);
+      LOGGER.debug("run period api:      " + runPeriodAPI);
+
       if (30 <= runPeriodDatabase) {
-        DatabaseRunnable databaseRunnable = new DatabaseRunnable(databaseManager, LOCK_FILE, isServerOnly);
+        String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
+
+        DatabaseRunnable databaseRunnable = new DatabaseRunnable(databaseManager, new File(processLockFilename), isServerOnly);
         SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
       }
 
@@ -180,8 +193,9 @@ public class TransactionServerMain {
     SchedulerProvider.getInstance().shutdown();
 
     stopServer();
+    stopRMI();
 
-    deleteLockFile();
+    deleteProcessLockfile();
 
     LOGGER.debug("finish");
 
@@ -221,35 +235,82 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private boolean createLockFile() throws DfxException {
-    LOGGER.debug("createLockFile()");
+  private boolean createProcessLockfile() throws DfxException {
+    LOGGER.debug("createProcessLockfile()");
 
     boolean lockFileCreated;
 
     try {
-      LOGGER.debug("Lockfile: " + LOCK_FILE.getAbsolutePath());
+      String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
+      File processLockFile = new File(processLockFilename);
 
-      if (LOCK_FILE.exists()) {
+      LOGGER.debug("Process lockfile: " + processLockFile.getAbsolutePath());
+
+      if (processLockFile.exists()) {
         lockFileCreated = false;
-        LOGGER.error("Another Server still running: " + LOCK_FILE.getAbsolutePath());
+        LOGGER.error("Another Server still running: " + processLockFile.getAbsolutePath());
       } else {
-        lockFileCreated = LOCK_FILE.createNewFile();
+        lockFileCreated = processLockFile.createNewFile();
       }
 
       return lockFileCreated;
     } catch (Exception e) {
-      throw new DfxException("createLockFile", e);
+      throw new DfxException("createProcessLockfile", e);
     }
   }
 
   /**
    * 
    */
-  private void deleteLockFile() {
-    LOGGER.debug("deleteLockFile()");
+  private void deleteProcessLockfile() {
+    LOGGER.debug("deleteProcessLockfile()");
 
-    if (LOCK_FILE.exists()) {
-      LOCK_FILE.delete();
+    String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
+    File processLockFile = new File(processLockFilename);
+
+    if (processLockFile.exists()) {
+      processLockFile.delete();
+    }
+  }
+
+  /**
+   * 
+   */
+  private void startRMI() throws DfxException {
+    LOGGER.debug("startRMI()");
+
+    try {
+      ProcessInfoService processInfoServiceStub = (ProcessInfoService) UnicastRemoteObject.exportObject(this, 0);
+      int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
+
+      Registry registry = LocateRegistry.createRegistry(rmiPort);
+      registry.bind(ProcessInfoService.class.getSimpleName(), processInfoServiceStub);
+
+      LOGGER.info("================================");
+      LOGGER.info("RMI started: RMI Port " + rmiPort);
+      LOGGER.info("================================");
+    } catch (Exception e) {
+      throw new DfxException("startRMI", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void stopRMI() {
+    LOGGER.debug("stopRMI()");
+
+    try {
+      int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
+
+      Registry registry = LocateRegistry.getRegistry(rmiPort);
+      registry.unbind(ProcessInfoService.class.getSimpleName());
+
+      LOGGER.info("===========");
+      LOGGER.info("RMI stopped");
+      LOGGER.info("===========");
+    } catch (Exception e) {
+      LOGGER.error("stopRMI", e);
     }
   }
 
@@ -287,5 +348,31 @@ public class TransactionServerMain {
     LOGGER.info("==========================");
     LOGGER.info("Transaction Server stopped");
     LOGGER.info("==========================");
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public ProcessInfoDTO getProcessInfoDTO() throws RemoteException {
+    ProcessInfoDTO processInfoDTO = new ProcessInfoDTO();
+
+    // Memory ...
+    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+
+    MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
+
+    processInfoDTO.setHeapInitSize(heapMemoryUsage.getInit());
+    processInfoDTO.setHeapMaxSize(heapMemoryUsage.getMax());
+    processInfoDTO.setHeapUsedSize(heapMemoryUsage.getUsed());
+    processInfoDTO.setHeapCommittedSize(heapMemoryUsage.getCommitted());
+
+    // Disk ...
+    File file = new File(".");
+    processInfoDTO.setDiskTotalSpace(file.getTotalSpace());
+    processInfoDTO.setDiskUsableSpace(file.getUsableSpace());
+    processInfoDTO.setDiskFreeSpace(file.getFreeSpace());
+
+    return processInfoDTO;
   }
 }

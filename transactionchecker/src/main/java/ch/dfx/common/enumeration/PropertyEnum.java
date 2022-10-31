@@ -7,6 +7,15 @@ public enum PropertyEnum {
   // General ...
   RAW_TRANSACTION_MAX_SIZE,
 
+  // RMI ...
+  RMI_HOST,
+  RMI_PORT,
+
+  // Watchdog ...
+  WATCHDOG_JAVA,
+  WATCHDOG_EXECUTABLE_JAR,
+  WATCHDOG_EXECUTABLE_PARAMS,
+
   // DefiChain ...
   DFI_RPC_USERNAME,
   DFI_RPC_PASSWORD,

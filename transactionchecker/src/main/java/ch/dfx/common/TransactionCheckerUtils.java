@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
@@ -45,6 +47,8 @@ public class TransactionCheckerUtils {
   private static final Logger LOGGER = LogManager.getLogger(TransactionCheckerUtils.class);
 
   private static final boolean DEBUG_SECRET = false;
+
+  public static final SimpleDateFormat LOGFILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
 
   public static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("0.00000000");
   public static final DecimalFormat GERMAN_DECIMAL_FORMAT = new DecimalFormat("#,##0.00000000");
@@ -89,6 +93,20 @@ public class TransactionCheckerUtils {
    */
   public static boolean isMacOs() {
     return EnvironmentEnum.MACOS == ENVIRONMENT;
+  }
+
+  /**
+   * 
+   */
+  public static String getLog4jFilename(
+      @Nonnull String name,
+      @Nonnull String network) {
+    return new StringBuilder()
+        .append(name)
+        .append("-").append(network)
+        .append("-").append(getEnvironment().name().toLowerCase())
+        .append("-").append(TransactionCheckerUtils.LOGFILE_DATE_FORMAT.format(new Date()))
+        .toString();
   }
 
   /**
@@ -160,6 +178,20 @@ public class TransactionCheckerUtils {
     }
 
     ConfigPropertyProvider.setup(properties);
+  }
+
+  /**
+   * 
+   */
+  public static String getProcessLockFilename(
+      @Nonnull String name,
+      @Nonnull String network) {
+    return new StringBuilder()
+        .append(name)
+        .append(".").append(network)
+        .append(".").append(getEnvironment().name().toLowerCase())
+        .append(".lock")
+        .toString();
   }
 
   /**

@@ -46,6 +46,7 @@ public enum PropertyEnum {
   LOCK_API_TEST_TOKEN,
 
   // Run Period für Scheduler ...
+  RUN_PERIOD_WATCHDOG,
   RUN_PERIOD_DATABASE,
   RUN_PERIOD_API;
 }

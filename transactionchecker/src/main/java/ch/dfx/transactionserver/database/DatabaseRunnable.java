@@ -74,7 +74,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
         checkErrorCounter();
       }
 
-      checkLockFile();
+      checkProcessLockfile();
     } catch (Throwable t) {
       databaseErrorCounter++;
       LOGGER.error("run", t);
@@ -211,8 +211,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  private void checkLockFile() {
-    LOGGER.trace("checkLockFile() ...");
+  private void checkProcessLockfile() {
+    LOGGER.trace("checkProcessLockfile() ...");
 
     if (!processLockfile.exists()) {
       LOGGER.error("Process lockfile missing, will exit now");

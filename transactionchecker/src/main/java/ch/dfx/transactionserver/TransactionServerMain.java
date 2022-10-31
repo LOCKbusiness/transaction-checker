@@ -169,9 +169,7 @@ public class TransactionServerMain implements ProcessInfoService {
       LOGGER.debug("run period api:      " + runPeriodAPI);
 
       if (30 <= runPeriodDatabase) {
-        String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
-
-        DatabaseRunnable databaseRunnable = new DatabaseRunnable(databaseManager, new File(processLockFilename), isServerOnly);
+        DatabaseRunnable databaseRunnable = new DatabaseRunnable(databaseManager, getProcessLockfile(), isServerOnly);
         SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
       }
 
@@ -241,8 +239,7 @@ public class TransactionServerMain implements ProcessInfoService {
     boolean lockFileCreated;
 
     try {
-      String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
-      File processLockFile = new File(processLockFilename);
+      File processLockFile = getProcessLockfile();
 
       LOGGER.debug("Process lockfile: " + processLockFile.getAbsolutePath());
 
@@ -265,12 +262,19 @@ public class TransactionServerMain implements ProcessInfoService {
   private void deleteProcessLockfile() {
     LOGGER.debug("deleteProcessLockfile()");
 
-    String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
-    File processLockFile = new File(processLockFilename);
+    File processLockFile = getProcessLockfile();
 
     if (processLockFile.exists()) {
       processLockFile.delete();
     }
+  }
+
+  /**
+   * 
+   */
+  private File getProcessLockfile() {
+    String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
+    return new File(processLockFilename);
   }
 
   /**

@@ -13,6 +13,8 @@ import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.impl.Log4jContextFactory;
+import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
@@ -65,6 +67,9 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
       System.setProperty("logFilename", TransactionCheckerUtils.getLog4jFilename(IDENTIFIER, network));
       TransactionCheckerUtils.initLog4j("log4j2-transactionserver.xml");
 
+      Log4jContextFactory factory = (Log4jContextFactory) LogManager.getFactory();
+      ((DefaultShutdownCallbackRegistry) factory.getShutdownCallbackRegistry()).stop();
+
       // ...
       TransactionCheckerUtils.loadConfigProperties(network, environment);
 
@@ -99,19 +104,49 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
     LOGGER.debug("watchdog");
 
     try {
-      String rmiHost = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.RMI_HOST);
-      int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
+      if (createProcessLockfile()) {
+        // ...
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
 
-      registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
+        // ...
+        String rmiHost = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.RMI_HOST);
+        int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
 
-      SchedulerProvider.getInstance().add(this, 30, 10, TimeUnit.SECONDS);
+        registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
 
-      LOGGER.info("================================");
-      LOGGER.info("RMI started: RMI Port " + rmiPort);
-      LOGGER.info("================================");
+        LOGGER.info("================================");
+        LOGGER.info("RMI started: RMI Port " + rmiPort);
+        LOGGER.info("================================");
+
+        // ...
+        int runPeriodWatchdog = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_WATCHDOG, 300);
+
+        LOGGER.debug("run period watchdog: " + runPeriodWatchdog);
+
+        if (30 <= runPeriodWatchdog) {
+          SchedulerProvider.getInstance().add(this, 30, runPeriodWatchdog, TimeUnit.SECONDS);
+        }
+      }
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
       throw new DfxException("watchdog", e);
     }
+  }
+
+  /**
+   * 
+   */
+  private void shutdown() {
+    LOGGER.debug("shutdown()");
+
+    SchedulerProvider.getInstance().shutdown();
+
+    deleteProcessLockfile();
+
+    LOGGER.debug("finish");
+
+    LogManager.shutdown();
   }
 
   /**
@@ -145,7 +180,7 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
       int exitCode = process.waitFor();
       LOGGER.debug("PROCESS EXIT CODE: " + exitCode);
 
-      deleteTransactionServerLockFile();
+      deleteTransactionServerProcessLockfile();
 
       // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
     } catch (Throwable t) {
@@ -160,15 +195,62 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
   /**
    * 
    */
-  private void deleteTransactionServerLockFile() {
-    LOGGER.debug("deleteTransactionServerLockFile()");
+  private void deleteTransactionServerProcessLockfile() {
+    LOGGER.debug("deleteTransactionServerLockfile()");
 
-    String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(TransactionServerMain.IDENTIFIER, network);
-    File transactionServerProcessLockfile = new File(processLockFilename);
+    String transactionServerProcessLockFilename = TransactionCheckerUtils.getProcessLockFilename(TransactionServerMain.IDENTIFIER, network);
+    File transactionServerProcessLockfile = new File(transactionServerProcessLockFilename);
 
     if (transactionServerProcessLockfile.exists()) {
       transactionServerProcessLockfile.delete();
     }
+  }
+
+  /**
+   * 
+   */
+  private boolean createProcessLockfile() throws DfxException {
+    LOGGER.debug("createProcessLockfile()");
+
+    boolean lockFileCreated;
+
+    try {
+      File processLockFile = getProcessLockfile();
+
+      LOGGER.debug("Process lockfile: " + processLockFile.getAbsolutePath());
+
+      if (processLockFile.exists()) {
+        lockFileCreated = false;
+        LOGGER.error("Another Watchdog still running: " + processLockFile.getAbsolutePath());
+      } else {
+        lockFileCreated = processLockFile.createNewFile();
+      }
+
+      return lockFileCreated;
+    } catch (Exception e) {
+      throw new DfxException("createProcessLockfile", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void deleteProcessLockfile() {
+    LOGGER.debug("deleteProcessLockfile()");
+
+    File processLockfile = getProcessLockfile();
+
+    if (processLockfile.exists()) {
+      processLockfile.delete();
+    }
+  }
+
+  /**
+   * 
+   */
+  private File getProcessLockfile() {
+    String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
+    return new File(processLockFilename);
   }
 
   @Override

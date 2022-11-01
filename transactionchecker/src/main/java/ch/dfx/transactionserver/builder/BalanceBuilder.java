@@ -1,6 +1,5 @@
 package ch.dfx.transactionserver.builder;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,8 +23,6 @@ import ch.dfx.transactionserver.database.H2DBManager;
  */
 public class BalanceBuilder {
   private static final Logger LOGGER = LogManager.getLogger(BalanceBuilder.class);
-
-  private PreparedStatement balanceSelectStatement = null;
 
   private PreparedStatement voutSelectStatement = null;
   private PreparedStatement vinSelectStatement = null;
@@ -85,9 +82,6 @@ public class BalanceBuilder {
 
     try {
       // Balance ...
-      String balanceSelectSql = "SELECT * FROM public.balance WHERE address_number=?";
-      balanceSelectStatement = connection.prepareStatement(balanceSelectSql);
-
       String balanceInsertSql = "INSERT INTO public.balance (address_number, block_number, transaction_count, vout, vin) VALUES(?, ?, ?, ?, ?)";
       balanceInsertStatement = connection.prepareStatement(balanceInsertSql);
 
@@ -113,8 +107,6 @@ public class BalanceBuilder {
     LOGGER.trace("closeStatements() ...");
 
     try {
-      balanceSelectStatement.close();
-
       balanceInsertStatement.close();
       balanceUpdateStatement.close();
 
@@ -160,7 +152,7 @@ public class BalanceBuilder {
     LOGGER.trace("calcBalance() ...");
 
     try {
-      BalanceDTO balanceDTO = getBalanceDTO(addressNumber);
+      BalanceDTO balanceDTO = databaseHelper.getBalanceDTOByAddressNumber(addressNumber);
 
       // ...
       int balanceBlockNumber = balanceDTO.getBlockNumber();
@@ -197,34 +189,6 @@ public class BalanceBuilder {
   /**
    * 
    */
-  private BalanceDTO getBalanceDTO(int addressNumber) throws DfxException {
-    LOGGER.trace("getBalanceDTO() ...");
-
-    try {
-      BalanceDTO balanceDTO = new BalanceDTO(addressNumber);
-
-      balanceSelectStatement.setInt(1, addressNumber);
-
-      ResultSet resultSet = balanceSelectStatement.executeQuery();
-
-      if (resultSet.next()) {
-        balanceDTO.setBlockNumber(DatabaseUtils.getIntOrDefault(resultSet, "block_number", -1));
-        balanceDTO.setTransactionCount(DatabaseUtils.getIntOrDefault(resultSet, "transaction_count", 0));
-        balanceDTO.setVout(DatabaseUtils.getBigDecimalOrDefault(resultSet, "vout", BigDecimal.ZERO));
-        balanceDTO.setVin(DatabaseUtils.getBigDecimalOrDefault(resultSet, "vin", BigDecimal.ZERO));
-      }
-
-      resultSet.close();
-
-      return balanceDTO;
-    } catch (Exception e) {
-      throw new DfxException("getBalanceDTO", e);
-    }
-  }
-
-  /**
-   * 
-   */
   private BalanceDTO calcVout(
       int balanceBlockNumber,
       int addressNumber) throws DfxException {
@@ -236,13 +200,18 @@ public class BalanceBuilder {
 
       BalanceDTO balanceDTO = new BalanceDTO(addressNumber);
 
+      int maxBlockNumber = -1;
+
       ResultSet resultSet = voutSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        balanceDTO.setBlockNumber(resultSet.getInt(1));
-        balanceDTO.addVout(resultSet.getBigDecimal(2));
+        balanceDTO.addVout(resultSet.getBigDecimal("vout"));
         balanceDTO.addTransactionCount(1);
+
+        maxBlockNumber = Math.max(maxBlockNumber, resultSet.getInt("block_number"));
       }
+
+      balanceDTO.setBlockNumber(maxBlockNumber);
 
       resultSet.close();
 
@@ -266,13 +235,18 @@ public class BalanceBuilder {
 
       BalanceDTO balanceDTO = new BalanceDTO(addressNumber);
 
+      int maxBlockNumber = -1;
+
       ResultSet resultSet = vinSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        balanceDTO.setBlockNumber(resultSet.getInt(1));
-        balanceDTO.addVin(resultSet.getBigDecimal(2));
+        balanceDTO.addVin(resultSet.getBigDecimal("vin"));
         balanceDTO.addTransactionCount(1);
+
+        maxBlockNumber = Math.max(maxBlockNumber, resultSet.getInt("block_number"));
       }
+
+      balanceDTO.setBlockNumber(maxBlockNumber);
 
       resultSet.close();
 

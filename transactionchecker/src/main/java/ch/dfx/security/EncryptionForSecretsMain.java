@@ -80,12 +80,12 @@ public class EncryptionForSecretsMain {
       List<File> fileList = new ArrayList<>();
 
       fileList.add(new File(testnetRootDirectory, "config.secret.properties"));
-      fileList.add(new File(testnetRootDirectory, "macos\\config.secret.properties"));
-      fileList.add(new File(testnetRootDirectory, "windows\\config.secret.properties"));
+      fileList.add(new File(testnetRootDirectory, "macos/config.secret.properties"));
+      fileList.add(new File(testnetRootDirectory, "windows/config.secret.properties"));
 
       fileList.add(new File(mainnetRootDirectory, "config.secret.properties"));
-      fileList.add(new File(mainnetRootDirectory, "macos\\config.secret.properties"));
-      fileList.add(new File(mainnetRootDirectory, "windows\\config.secret.properties"));
+      fileList.add(new File(mainnetRootDirectory, "macos/config.secret.properties"));
+      fileList.add(new File(mainnetRootDirectory, "windows/config.secret.properties"));
 
       String password = optionalPasswordArgument.get().split("=")[1];
 

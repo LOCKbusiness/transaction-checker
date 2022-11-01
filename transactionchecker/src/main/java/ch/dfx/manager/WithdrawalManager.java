@@ -436,6 +436,11 @@ public class WithdrawalManager {
       BigDecimal withdrawalAmount = pendingWithdrawalDTO.getAmount();
 
       AddressDTO addressDTO = databaseHelper.getAddressDTOByAddress(customerAddress);
+
+      if (null == addressDTO) {
+        return false;
+      }
+
       int customerAddressNumber = addressDTO.getNumber();
 
       // ...

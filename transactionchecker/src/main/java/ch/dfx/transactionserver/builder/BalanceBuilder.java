@@ -154,6 +154,10 @@ public class BalanceBuilder {
     try {
       BalanceDTO balanceDTO = databaseHelper.getBalanceDTOByAddressNumber(addressNumber);
 
+      if (null == balanceDTO) {
+        balanceDTO = new BalanceDTO(addressNumber);
+      }
+
       // ...
       int balanceBlockNumber = balanceDTO.getBlockNumber();
 

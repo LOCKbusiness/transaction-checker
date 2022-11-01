@@ -202,19 +202,13 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public @Nonnull AddressDTO getAddressDTOByNumber(int addressNumber) throws DfxException {
+  public @Nullable AddressDTO getAddressDTOByNumber(int addressNumber) throws DfxException {
     LOGGER.trace("getAddressDTOByNumber() ...");
 
     try {
       addressByNumberSelectStatement.setInt(1, addressNumber);
 
-      AddressDTO addressDTO = getAddressDTO(addressByNumberSelectStatement);
-
-      if (null == addressDTO) {
-        throw new DfxException("Address not found by number " + addressNumber);
-      }
-
-      return addressDTO;
+      return getAddressDTO(addressByNumberSelectStatement);
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
@@ -225,19 +219,13 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public @Nonnull AddressDTO getAddressDTOByAddress(@Nonnull String address) throws DfxException {
+  public @Nullable AddressDTO getAddressDTOByAddress(@Nonnull String address) throws DfxException {
     LOGGER.trace("getAddressDTOByAddress() ...");
 
     try {
       addressByAddressSelectStatement.setString(1, address);
 
-      AddressDTO addressDTO = getAddressDTO(addressByAddressSelectStatement);
-
-      if (null == addressDTO) {
-        throw new DfxException("Address not found by address " + address);
-      }
-
-      return addressDTO;
+      return getAddressDTO(addressByAddressSelectStatement);
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
@@ -431,7 +419,7 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public @Nonnull BalanceDTO getBalanceDTOByAddressNumber(int addressNumber) throws DfxException {
+  public @Nullable BalanceDTO getBalanceDTOByAddressNumber(int addressNumber) throws DfxException {
     LOGGER.trace("getBalanceDTOByAddressNumber() ...");
 
     try {
@@ -453,13 +441,7 @@ public class DatabaseHelper {
 
       resultSet.close();
 
-      if (null == balanceDTO) {
-        throw new DfxException("Balance not found by address number " + addressNumber);
-      }
-
       return balanceDTO;
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
       throw new DfxException("getBalanceDTOByAddressNumber", e);
     }

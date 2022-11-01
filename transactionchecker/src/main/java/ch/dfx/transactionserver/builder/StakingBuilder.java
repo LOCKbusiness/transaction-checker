@@ -118,9 +118,9 @@ public class StakingBuilder {
               + " at_out.block_number = at_in.block_number"
               + " AND at_out.transaction_number = at_in.transaction_number"
               + " WHERE"
-              + " at_out.block_number > ?"
-              + " AND at_out.address_number = ?"
-              + " AND at_in.address_number = ?";
+              + " at_in.in_block_number>?"
+              + " AND at_out.address_number=?"
+              + " AND at_in.address_number=?";
       stakingVinSelectStatement = connection.prepareStatement(stakingVinSelectSql);
 
       // ...
@@ -134,9 +134,9 @@ public class StakingBuilder {
               + " at_in.block_number = at_out .block_number"
               + " AND at_in.transaction_number = at_out .transaction_number"
               + " WHERE"
-              + " at_in.block_number > ?"
-              + " AND at_in.address_number = ?"
-              + " AND at_out .address_number = ?";
+              + " at_out.block_number>?"
+              + " AND at_in.address_number=?"
+              + " AND at_out .address_number=?";
       stakingVoutSelectStatement = connection.prepareStatement(stakingVoutSelectSql);
 
     } catch (Exception e) {

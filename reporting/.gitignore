@@ -1,0 +1,23 @@
+# Apple specific files
+.DS_Store
+
+# Log directory and Log files
+/logs/
+*.log
+
+# Backup files
+*~
+#*#
+*.bak
+*Kopie*
+
+# Maven build directories
+/target/
+
+# Data directories
+/data/
+
+# Secrets
+config.secret.properties
+config.secret.enc
+

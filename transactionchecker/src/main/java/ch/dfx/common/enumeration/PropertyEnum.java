@@ -48,5 +48,10 @@ public enum PropertyEnum {
   // Run Period für Scheduler ...
   RUN_PERIOD_WATCHDOG,
   RUN_PERIOD_DATABASE,
-  RUN_PERIOD_API;
+  RUN_PERIOD_API,
+  RUN_PERIOD_REPORT,
+
+  // Reporting ...
+  GOOGLE_ROOT_PATH,
+  GOOGLE_STAKING_BALANCE_SHEET;
 }

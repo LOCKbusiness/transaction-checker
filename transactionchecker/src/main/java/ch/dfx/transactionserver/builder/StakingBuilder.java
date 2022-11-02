@@ -112,6 +112,7 @@ public class StakingBuilder {
       String stakingVinSelectSql =
           "SELECT"
               + " at_in.in_block_number,"
+              + " at_in.in_transaction_number,"
               + " at_in.vin"
               + " FROM ADDRESS_TRANSACTION_OUT at_out"
               + " JOIN ADDRESS_TRANSACTION_IN at_in ON"
@@ -282,11 +283,20 @@ public class StakingBuilder {
 
       StakingDTO stakingDTO = new StakingDTO(liquidityAddressNumber, depositAddressNumber, -1);
 
+      Set<String> unifierSet = new HashSet<>();
+
       ResultSet resultSet = stakingVinSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        stakingDTO.addVin(resultSet.getBigDecimal("vin"));
-        lastInBlockNumber = Math.max(lastInBlockNumber, resultSet.getInt("in_block_number"));
+        int inBlockNumber = resultSet.getInt("in_block_number");
+        int inTransactionNumber = resultSet.getInt("in_transaction_number");
+
+        String unifier = Integer.toString(inBlockNumber) + "/" + Integer.toString(inTransactionNumber);
+
+        if (unifierSet.add(unifier)) {
+          stakingDTO.addVin(resultSet.getBigDecimal("vin"));
+          lastInBlockNumber = Math.max(lastInBlockNumber, inBlockNumber);
+        }
       }
 
       stakingDTO.setLastInBlockNumber(lastInBlockNumber);

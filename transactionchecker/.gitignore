@@ -1,9 +1,10 @@
 # Apple specific files
 .DS_Store
 
-# Log directory and Log files
+# Log directory, Log files and Lock files
 /logs/
 *.log
+*.lock
 
 # Backup files
 *~

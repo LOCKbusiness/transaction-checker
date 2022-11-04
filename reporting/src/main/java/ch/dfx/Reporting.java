@@ -36,6 +36,8 @@ public class Reporting implements SchedulerProviderRunnable {
   private final H2DBManager databaseManager;
   private final DatabaseHelper databaseHelper;
 
+  private boolean isProcessing = false;
+
   /**
    * 
    */
@@ -45,24 +47,24 @@ public class Reporting implements SchedulerProviderRunnable {
   }
 
   @Override
-  public String getName() {
-    return Reporting.class.getSimpleName();
-  }
-
-  @Override
   public boolean isProcessing() {
-    return true;
+    return isProcessing;
   }
 
   @Override
   public void run() {
     LOGGER.trace("run()");
 
+    isProcessing = true;
+
     try {
       fillExcel();
+
       LOGGER.debug("Reporting updated");
     } catch (Throwable t) {
       LOGGER.error("run", t);
+    } finally {
+      isProcessing = false;
     }
   }
 

@@ -28,7 +28,6 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
 
   // ...
   private final String network;
-  private final boolean isServerOnly;
 
   private boolean isProcessing = false;
 
@@ -40,21 +39,14 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
    */
   public ManagerRunnable(
       @Nonnull H2DBManager databaseManager,
-      @Nonnull String network,
-      boolean isServerOnly) {
+      @Nonnull String network) {
     Objects.requireNonNull(databaseManager, "null databaseManager is not allowed");
 
     this.databaseManager = databaseManager;
     this.network = network;
-    this.isServerOnly = isServerOnly;
 
     this.apiAccessHandler = new ApiAccessHandlerImpl(network);
 
-  }
-
-  @Override
-  public String getName() {
-    return ManagerRunnable.class.getSimpleName();
   }
 
   @Override
@@ -66,15 +58,17 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   public void run() {
     LOGGER.trace("run() ...");
 
-    try {
-      if (!isServerOnly) {
-        doRun();
+    isProcessing = true;
 
-        checkErrorCounter();
-      }
+    try {
+      doRun();
+
+      checkErrorCounter();
     } catch (Throwable t) {
       openTransactionErrorCounter++;
       LOGGER.error("run", t);
+    } finally {
+      isProcessing = false;
     }
   }
 
@@ -84,13 +78,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   private void doRun() {
     LOGGER.trace("doRun() ...");
 
-    isProcessing = true;
-
-    try {
-      executeOpenTransaction();
-    } finally {
-      isProcessing = false;
-    }
+    executeOpenTransaction();
   }
 
   /**

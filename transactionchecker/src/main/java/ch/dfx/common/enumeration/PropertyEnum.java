@@ -12,9 +12,7 @@ public enum PropertyEnum {
   RMI_PORT,
 
   // Watchdog ...
-  WATCHDOG_JAVA,
-  WATCHDOG_EXECUTABLE_JAR,
-  WATCHDOG_EXECUTABLE_PARAMS,
+  WATCHDOG_EXECUTABLE,
 
   // DefiChain ...
   DFI_RPC_USERNAME,

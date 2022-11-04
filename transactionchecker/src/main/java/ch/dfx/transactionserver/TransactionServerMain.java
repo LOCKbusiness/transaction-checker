@@ -1,13 +1,6 @@
 package ch.dfx.transactionserver;
 
 import java.io.File;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryUsage;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -26,8 +19,7 @@ import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.handler.DefiWalletHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.manager.ManagerRunnable;
-import ch.dfx.process.data.ProcessInfoDTO;
-import ch.dfx.process.stub.ProcessInfoService;
+import ch.dfx.process.ProcessInfoProvider;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
 import ch.dfx.transactionserver.database.DatabaseRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -37,7 +29,7 @@ import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 /**
  * 
  */
-public class TransactionServerMain implements ProcessInfoService {
+public class TransactionServerMain {
   private static final Logger LOGGER = LogManager.getLogger(TransactionServerMain.class);
 
   public static final String IDENTIFIER = "transactionserver";
@@ -128,7 +120,7 @@ public class TransactionServerMain implements ProcessInfoService {
     LOGGER.debug("initialSetup");
 
     if (createProcessLockfile()) {
-      startServer();
+      startDatabaseServer();
 
       DatabaseBuilder databaseBuilder = new DatabaseBuilder(databaseManager);
       databaseBuilder.build();
@@ -155,8 +147,7 @@ public class TransactionServerMain implements ProcessInfoService {
       Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
 
       // ...
-      startRMI();
-      startServer();
+      startDatabaseServer();
 
       // ...
       loadWallet();
@@ -164,18 +155,27 @@ public class TransactionServerMain implements ProcessInfoService {
       // ...
       int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
       int runPeriodAPI = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_API, 60);
+      int runPeriodWatchdog = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_WATCHDOG, 600);
 
       LOGGER.debug("run period database: " + runPeriodDatabase);
       LOGGER.debug("run period api:      " + runPeriodAPI);
+      LOGGER.debug("run period watchdog: " + runPeriodWatchdog);
 
       if (30 <= runPeriodDatabase) {
         DatabaseRunnable databaseRunnable = new DatabaseRunnable(databaseManager, getProcessLockfile(), isServerOnly);
         SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
       }
 
-      if (10 <= runPeriodAPI) {
-        ManagerRunnable managerRunnable = new ManagerRunnable(databaseManager, network, isServerOnly);
-        SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
+      if (!isServerOnly) {
+        if (10 <= runPeriodAPI) {
+          ManagerRunnable managerRunnable = new ManagerRunnable(databaseManager, network);
+          SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
+        }
+
+        if (60 <= runPeriodWatchdog) {
+          ProcessInfoProvider processInfoProvider = new ProcessInfoProvider();
+          SchedulerProvider.getInstance().add(processInfoProvider, 10, runPeriodWatchdog, TimeUnit.SECONDS);
+        }
       }
     }
   }
@@ -186,12 +186,11 @@ public class TransactionServerMain implements ProcessInfoService {
   private void shutdown() {
     LOGGER.debug("shutdown()");
 
-    unloadWallet();
-
     SchedulerProvider.getInstance().shutdown();
 
-    stopServer();
-    stopRMI();
+    unloadWallet();
+
+    stopDatabaseServer();
 
     deleteProcessLockfile();
 
@@ -280,49 +279,8 @@ public class TransactionServerMain implements ProcessInfoService {
   /**
    * 
    */
-  private void startRMI() throws DfxException {
-    LOGGER.debug("startRMI()");
-
-    try {
-      ProcessInfoService processInfoServiceStub = (ProcessInfoService) UnicastRemoteObject.exportObject(this, 0);
-      int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
-
-      Registry registry = LocateRegistry.createRegistry(rmiPort);
-      registry.bind(ProcessInfoService.class.getSimpleName(), processInfoServiceStub);
-
-      LOGGER.info("================================");
-      LOGGER.info("RMI started: RMI Port " + rmiPort);
-      LOGGER.info("================================");
-    } catch (Exception e) {
-      throw new DfxException("startRMI", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void stopRMI() {
-    LOGGER.debug("stopRMI()");
-
-    try {
-      int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
-
-      Registry registry = LocateRegistry.getRegistry(rmiPort);
-      registry.unbind(ProcessInfoService.class.getSimpleName());
-
-      LOGGER.info("===========");
-      LOGGER.info("RMI stopped");
-      LOGGER.info("===========");
-    } catch (Exception e) {
-      LOGGER.error("stopRMI", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void startServer() throws DfxException {
-    LOGGER.debug("startServer()");
+  private void startDatabaseServer() throws DfxException {
+    LOGGER.debug("startDatabaseServer()");
 
     try {
       String tcpPort = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SERVER_TCP_PORT);
@@ -333,50 +291,26 @@ public class TransactionServerMain implements ProcessInfoService {
       tcpServer = Server.createTcpServer("-tcpPort", tcpPort, "-baseDir", databaseDirectory, "-tcpAllowOthers");
       tcpServer.start();
 
-      LOGGER.info("=========================================");
-      LOGGER.info("Transaction Server started: TCP Port " + tcpPort);
-      LOGGER.info("=========================================");
+      LOGGER.info("=====================================");
+      LOGGER.info("Transaction Server started: Port " + tcpPort);
+      LOGGER.info("=====================================");
     } catch (Exception e) {
-      throw new DfxException("startServer", e);
+      throw new DfxException("startDatabaseServer", e);
     }
   }
 
   /**
    * 
    */
-  private void stopServer() {
-    LOGGER.debug("stopServer()");
+  private void stopDatabaseServer() {
+    LOGGER.debug("stopDatabaseServer()");
 
-    tcpServer.stop();
+    if (null != tcpServer) {
+      tcpServer.stop();
+    }
 
     LOGGER.info("==========================");
     LOGGER.info("Transaction Server stopped");
     LOGGER.info("==========================");
-  }
-
-  /**
-   * 
-   */
-  @Override
-  public ProcessInfoDTO getProcessInfoDTO() throws RemoteException {
-    ProcessInfoDTO processInfoDTO = new ProcessInfoDTO();
-
-    // Memory ...
-    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-
-    MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
-
-    processInfoDTO.setHeapInitSize(heapMemoryUsage.getInit());
-    processInfoDTO.setHeapMaxSize(heapMemoryUsage.getMax());
-    processInfoDTO.setHeapUsedSize(heapMemoryUsage.getUsed());
-    processInfoDTO.setHeapCommittedSize(heapMemoryUsage.getCommitted());
-
-    // Disk ...
-    File file = new File(".");
-    processInfoDTO.setDiskTotalSpace(file.getTotalSpace());
-    processInfoDTO.setDiskUsableSpace(file.getUsableSpace());
-    processInfoDTO.setDiskFreeSpace(file.getFreeSpace());
-
-    return processInfoDTO;
   }
 }

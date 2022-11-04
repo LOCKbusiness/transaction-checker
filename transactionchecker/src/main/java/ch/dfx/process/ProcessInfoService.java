@@ -1,7 +1,9 @@
-package ch.dfx.process.stub;
+package ch.dfx.process;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+
+import javax.annotation.Nonnull;
 
 import ch.dfx.process.data.ProcessInfoDTO;
 
@@ -9,5 +11,5 @@ import ch.dfx.process.data.ProcessInfoDTO;
  * 
  */
 public interface ProcessInfoService extends Remote {
-  ProcessInfoDTO getProcessInfoDTO() throws RemoteException;
+  void sendProcessInfo(@Nonnull ProcessInfoDTO processInfoDTO) throws RemoteException;
 }

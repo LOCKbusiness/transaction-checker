@@ -22,8 +22,6 @@ import org.apache.logging.log4j.Logger;
 public class SchedulerProvider {
   private static final Logger LOGGER = LogManager.getLogger(SchedulerProvider.class);
 
-  private static final int MAX_EXECUTOR = 2;
-
   private static SchedulerProvider instance = null;
 
   private final ScheduledExecutorService executorService;
@@ -43,57 +41,22 @@ public class SchedulerProvider {
   }
 
   /**
-   * 
-   */
-  public synchronized void exit(int exitCode) {
-    LOGGER.trace("exit() ...");
-
-    try {
-      Set<UUID> executorUuidSet = new HashSet<>(scheduledFutureMap.keySet());
-
-      for (UUID uuid : executorUuidSet) {
-        remove(uuid);
-      }
-    } finally {
-      System.exit(exitCode);
-    }
-  }
-
-  /**
    *
    */
-  public void shutdown() {
-    LOGGER.trace("shutdown() ...");
-
-    Set<UUID> executorUuidSet = new HashSet<>(scheduledFutureMap.keySet());
-
-    for (UUID uuid : executorUuidSet) {
-      remove(uuid);
-    }
-
-    executorService.shutdown();
-  }
-
-  /**
-   *
-   */
-  public @Nullable UUID add(
+  public synchronized @Nullable UUID add(
       @Nonnull SchedulerProviderRunnable runnable,
       int initialDelay,
       long period,
       @Nonnull TimeUnit timeUnit) {
     LOGGER.trace("add() ...");
 
-    UUID uuid = null;
+    UUID uuid = UUID.randomUUID();
 
-    if (MAX_EXECUTOR > scheduledFutureMap.size()) {
-      uuid = UUID.randomUUID();
-      ScheduledFuture<?> scheduledFuture =
-          executorService.scheduleAtFixedRate(runnable, initialDelay, period, timeUnit);
+    ScheduledFuture<?> scheduledFuture =
+        executorService.scheduleAtFixedRate(runnable, initialDelay, period, timeUnit);
 
-      scheduledFutureMap.put(uuid, scheduledFuture);
-      schedulerProviderRunnableMap.put(uuid, runnable);
-    }
+    scheduledFutureMap.put(uuid, scheduledFuture);
+    schedulerProviderRunnableMap.put(uuid, runnable);
 
     LOGGER.debug("Add Runnable: " + runnable.getClass().getSimpleName());
     LOGGER.debug("Add UUID:     " + uuid);
@@ -104,8 +67,8 @@ public class SchedulerProvider {
   /**
    *
    */
-  public void remove(@Nonnull UUID uuid) {
-    LOGGER.trace("remove(): UUID = '" + uuid + "' ...");
+  public synchronized void remove(@Nonnull UUID uuid) {
+    LOGGER.debug("remove(): UUID = '" + uuid + "' ...");
 
     ScheduledFuture<?> scheduledFuture = scheduledFutureMap.remove(uuid);
     SchedulerProviderRunnable runnable = schedulerProviderRunnableMap.remove(uuid);
@@ -131,10 +94,42 @@ public class SchedulerProvider {
   }
 
   /**
+   * 
+   */
+  public void exit(int exitCode) {
+    LOGGER.debug("exit() ...");
+
+    try {
+      Set<UUID> executorUuidSet = new HashSet<>(scheduledFutureMap.keySet());
+
+      for (UUID uuid : executorUuidSet) {
+        remove(uuid);
+      }
+    } finally {
+      System.exit(exitCode);
+    }
+  }
+
+  /**
+   *
+   */
+  public void shutdown() {
+    LOGGER.debug("shutdown() ...");
+
+    Set<UUID> executorUuidSet = new HashSet<>(scheduledFutureMap.keySet());
+
+    for (UUID uuid : executorUuidSet) {
+      remove(uuid);
+    }
+
+    executorService.shutdown();
+  }
+
+  /**
    *
    */
   private SchedulerProvider() {
-    this.executorService = Executors.newScheduledThreadPool(MAX_EXECUTOR);
+    this.executorService = Executors.newScheduledThreadPool(5);
     this.scheduledFutureMap = new HashMap<>();
     this.schedulerProviderRunnableMap = new HashMap<>();
   }

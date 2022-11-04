@@ -3,10 +3,7 @@ package ch.dfx.transactionserver;
 import java.io.File;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -20,36 +17,25 @@ import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
-import ch.dfx.process.data.ProcessInfoDTO;
-import ch.dfx.process.stub.ProcessInfoService;
+import ch.dfx.process.ProcessInfoService;
+import ch.dfx.process.ProcessInfoServiceImpl;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
-import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
 /**
  * 
  */
-public class TransactionServerWatchdogMain implements SchedulerProviderRunnable {
+public class TransactionServerWatchdogMain {
   private static final Logger LOGGER = LogManager.getLogger(TransactionServerWatchdogMain.class);
 
   public static final String IDENTIFIER = "transactionserver-watchdog";
 
-  // ...
-  private static final long KB = 1024;
-  private static final long MB = KB * 1024;
-  private static final long GB = MB * 1024;
-
-  private static final long MEMORY_WATERMARK_WARNING = 80;
-  private static final long MEMORY_WATERMARK_CRITICAL = 90;
-
-  private static final long DISK_WATERMARK_WARNING = 80;
-  private static final long DISK_WATERMARK_CRITICAL = 90;
+//  private static final int PORT = 8080;
 
   // ...
   private final String network;
 
+//  private HttpServer httpServer = null;
   private Registry registry = null;
-
-  private boolean processIsRunning = false;
 
   /**
    *
@@ -83,7 +69,9 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
         transactionServerWatchdogMain.runProcess(network);
         Thread.sleep(30 * 1000);
       }
-    } catch (Throwable t) {
+    } catch (
+
+    Throwable t) {
       // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
       LOGGER.error("Fatal Error", t);
       System.exit(-1);
@@ -109,28 +97,115 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
 
         // ...
-        String rmiHost = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.RMI_HOST);
-        int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
-
-        registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
-
-        LOGGER.info("================================");
-        LOGGER.info("RMI started: RMI Port " + rmiPort);
-        LOGGER.info("================================");
-
-        // ...
-        int runPeriodWatchdog = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_WATCHDOG, 300);
-
-        LOGGER.debug("run period watchdog: " + runPeriodWatchdog);
-
-        if (30 <= runPeriodWatchdog) {
-          SchedulerProvider.getInstance().add(this, 30, runPeriodWatchdog, TimeUnit.SECONDS);
-        }
+//        startHttpServer();
+        startRMI();
       }
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
       throw new DfxException("watchdog", e);
+    }
+  }
+
+  /**
+   * Maybe for future use: HTTP Server instead of RMI - we will see ...
+   */
+//  private synchronized void startHttpServer() throws DfxException {
+//    LOGGER.debug("startHttpServer");
+//
+//    try {
+//      URL url = TransactionServerWatchdogMain.class.getResource("/my.keystore");
+//
+//      SSLContext sslcontext =
+//          SSLContexts.custom()
+//              .loadKeyMaterial(url, "secret".toCharArray(), "secret".toCharArray())
+//              .build();
+//
+//      SocketConfig socketConfig =
+//          SocketConfig.custom()
+//              .setSoTimeout(15000)
+//              .setTcpNoDelay(true)
+//              .build();
+//
+//      httpServer =
+//          ServerBootstrap.bootstrap()
+//              .setLocalAddress(InetAddress.getByName("localhost"))
+//              .setListenerPort(PORT)
+//              .setSocketConfig(socketConfig)
+//              .setSslContext(sslcontext)
+//              .setServerInfo("HTTP Server/1.0")
+//              .registerHandler("/processinfo", new ProcessInfoHandler())
+//              .create();
+//
+//      httpServer.start();
+//
+//      LOGGER.info("==============================");
+//      LOGGER.info("HTTP Server started: Port " + PORT);
+//      LOGGER.info("==============================");
+//    } catch (Throwable t) {
+//      throw new DfxException("startHttpServer", t);
+//    }
+//  }
+
+  /**
+   * Maybe for future use: HTTP Server instead of RMI - we will see ...
+   */
+//  private synchronized void stopHttpServer() {
+//    LOGGER.debug("stopHttpServer");
+//
+//    try {
+//      if (null != httpServer) {
+//        httpServer.stop();
+//      }
+//
+//      LOGGER.info("===================");
+//      LOGGER.info("HTTP Server stopped");
+//      LOGGER.info("===================");
+//    } catch (Throwable t) {
+//      LOGGER.error("stopHttpServer", t);
+//    }
+//  }
+
+  /**
+   * 
+   */
+  private synchronized void startRMI() throws DfxException {
+    LOGGER.debug("startRMI");
+
+    try {
+      int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
+
+      registry = LocateRegistry.createRegistry(rmiPort);
+
+      ProcessInfoService processInfoService =
+          (ProcessInfoService) UnicastRemoteObject.exportObject(new ProcessInfoServiceImpl(), 0);
+
+      registry.rebind(ProcessInfoService.class.getSimpleName(), processInfoService);
+
+      LOGGER.info("=============================");
+      LOGGER.info("RMI Server started: Port " + rmiPort);
+      LOGGER.info("=============================");
+    } catch (Throwable t) {
+      throw new DfxException("startRMI", t);
+    }
+  }
+
+  /**
+   * 
+   */
+  private synchronized void stopRMI() {
+    LOGGER.debug("stopRMI");
+
+    try {
+      if (null != registry) {
+        registry.unbind(ProcessInfoService.class.getSimpleName());
+      }
+
+      LOGGER.info("===========");
+      LOGGER.info("RMI stopped");
+      LOGGER.info("===========");
+    } catch (Throwable t) {
+      LOGGER.error("stopRMI", t);
     }
   }
 
@@ -141,6 +216,9 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
     LOGGER.debug("shutdown()");
 
     SchedulerProvider.getInstance().shutdown();
+
+//    stopHttpServer();
+    stopRMI();
 
     deleteProcessLockfile();
 
@@ -156,29 +234,20 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
     LOGGER.debug("runProcess");
 
     try {
-      String javaExecutable = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.WATCHDOG_JAVA);
-      String executableJar = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.WATCHDOG_EXECUTABLE_JAR);
-      String executableParams = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.WATCHDOG_EXECUTABLE_PARAMS);
-
-      List<String> processBuilderParameterList = new ArrayList<>();
-
-      processBuilderParameterList.add(javaExecutable);
-      processBuilderParameterList.addAll(Arrays.asList(executableParams.split("\\|")));
-      processBuilderParameterList.add("-jar");
-      processBuilderParameterList.add(executableJar);
-      processBuilderParameterList.add("--" + network);
-
-      ProcessBuilder processBuilder = new ProcessBuilder(processBuilderParameterList);
+      String watchdogExecutable = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.WATCHDOG_EXECUTABLE);
+      LOGGER.debug("Start process: " + watchdogExecutable);
 
       // ...
-      LOGGER.debug("START PROCESS: " + executableJar);
+      ProcessBuilder processBuilder = new ProcessBuilder(watchdogExecutable.split("\\s+"));
+      processBuilder.inheritIO();
+      processBuilder.redirectErrorStream(true);
+
       Process process = processBuilder.start();
 
-      processIsRunning = true;
-      LOGGER.debug("process is running: " + processIsRunning);
+      LOGGER.debug("Process is running ...");
 
       int exitCode = process.waitFor();
-      LOGGER.debug("PROCESS EXIT CODE: " + exitCode);
+      LOGGER.debug("... Process exit code: " + exitCode);
 
       deleteTransactionServerProcessLockfile();
 
@@ -187,9 +256,6 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
       // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
       LOGGER.error("Fatal Error", t);
     }
-
-    processIsRunning = false;
-    LOGGER.debug("process is running: " + processIsRunning);
   }
 
   /**
@@ -251,67 +317,5 @@ public class TransactionServerWatchdogMain implements SchedulerProviderRunnable 
   private File getProcessLockfile() {
     String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
     return new File(processLockFilename);
-  }
-
-  @Override
-  public void run() {
-    LOGGER.debug("run");
-
-    try {
-      if (processIsRunning) {
-        ProcessInfoService processInfoServiceStub = (ProcessInfoService) registry.lookup(ProcessInfoService.class.getSimpleName());
-        ProcessInfoDTO processInfoDTO = processInfoServiceStub.getProcessInfoDTO();
-
-        LOGGER.debug("Process Info: " + processInfoDTO);
-        LOGGER.debug("");
-
-        // ...
-        long heapMaxSize = processInfoDTO.getHeapMaxSize();
-        long heapUsedSize = processInfoDTO.getHeapUsedSize();
-        long heapCapacity = (heapUsedSize * 100 / heapMaxSize);
-
-        LOGGER.debug("Memory Max Size:  " + (heapMaxSize / MB));
-        LOGGER.debug("Memory Used Size: " + (heapUsedSize / MB));
-        LOGGER.debug("Memory Capacity:  " + heapCapacity + "%");
-
-        if (heapCapacity >= MEMORY_WATERMARK_CRITICAL) {
-          // SEND MESSAGE: ...
-          LOGGER.error("[Memory]: consumption is " + heapCapacity + "% (" + (heapUsedSize / MB) + " MB)");
-        } else if (heapCapacity >= MEMORY_WATERMARK_WARNING) {
-          // SEND MESSAGE: ...
-          LOGGER.warn("[Memory]: consumption is " + heapCapacity + "% (" + (heapUsedSize / MB) + " MB)");
-        }
-
-        // ...
-        long diskTotalSpace = processInfoDTO.getDiskTotalSpace();
-        long diskFreeSpace = processInfoDTO.getDiskFreeSpace();
-        long diskUsedSpace = diskTotalSpace - diskFreeSpace;
-        long diskCapacity = (diskUsedSpace * 100 / diskTotalSpace);
-
-        LOGGER.debug("Disk Max Space:  " + (diskTotalSpace / GB));
-        LOGGER.debug("Disk Used Space: " + (diskUsedSpace / GB));
-        LOGGER.debug("Disk Capacity:   " + diskCapacity + "%");
-
-        if (diskCapacity >= DISK_WATERMARK_CRITICAL) {
-          // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
-          LOGGER.error("[Disk]: consumption is " + diskCapacity + "% (" + (diskUsedSpace / GB) + " GB)");
-        } else if (diskCapacity >= DISK_WATERMARK_WARNING) {
-          // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
-          LOGGER.warn("[Disk]: consumption is " + diskCapacity + "% (" + (diskUsedSpace / GB) + " GB)");
-        }
-      }
-    } catch (Throwable t) {
-      LOGGER.error("run", t);
-    }
-  }
-
-  @Override
-  public String getName() {
-    return this.getClass().getSimpleName();
-  }
-
-  @Override
-  public boolean isProcessing() {
-    return true;
   }
 }

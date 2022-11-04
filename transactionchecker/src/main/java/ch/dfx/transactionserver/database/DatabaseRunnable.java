@@ -54,11 +54,6 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   }
 
   @Override
-  public String getName() {
-    return DatabaseRunnable.class.getSimpleName();
-  }
-
-  @Override
   public boolean isProcessing() {
     return isProcessing;
   }
@@ -66,6 +61,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   @Override
   public void run() {
     LOGGER.trace("run() ...");
+
+    isProcessing = true;
 
     try {
       if (!isServerOnly) {
@@ -78,6 +75,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     } catch (Throwable t) {
       databaseErrorCounter++;
       LOGGER.error("run", t);
+    } finally {
+      isProcessing = false;
     }
   }
 
@@ -87,18 +86,12 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private void doRun() {
     LOGGER.trace("doRun() ...");
 
-    isProcessing = true;
+    executeDatabase();
+    checkDatabase();
 
-    try {
-      executeDatabase();
-      checkDatabase();
-
-      executeDeposit();
-      executeBalance();
-      executeStaking();
-    } finally {
-      isProcessing = false;
-    }
+    executeDeposit();
+    executeBalance();
+    executeStaking();
   }
 
   /**

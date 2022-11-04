@@ -60,11 +60,10 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   // ...
   private final Base64.Decoder urlDecoder;
 
-  private final HttpClient httpClient;
-
   private final Gson gson;
 
   // ...
+  private HttpClient httpClient = null;
   private SignInDTO signInDTO = null;
 
   /**
@@ -78,8 +77,6 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
     this.urlDecoder = Base64.getUrlDecoder();
 
-    this.httpClient = HttpClientBuilder.create().build();
-
     this.gson = new GsonBuilder().setPrettyPrinting().create();
   }
 
@@ -88,6 +85,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    */
   @Override
   public void resetSignIn() {
+    httpClient = null;
     signInDTO = null;
   }
 
@@ -111,7 +109,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
         StringEntity stringEntity = new StringEntity(jsonLoginData, ContentType.APPLICATION_JSON);
         httpPost.setEntity(stringEntity);
 
-        HttpResponse httpResponse = httpClient.execute(httpPost);
+        HttpResponse httpResponse = getHttpClient().execute(httpPost);
 
         int statusCode = httpResponse.getStatusLine().getStatusCode();
 
@@ -216,7 +214,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       HttpGet httpGet = new HttpGet(url);
       httpGet.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
 
-      HttpResponse httpResponse = httpClient.execute(httpGet);
+      HttpResponse httpResponse = getHttpClient().execute(httpGet);
 
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
@@ -229,11 +227,13 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
         // TODO: Error Handling:
         // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
         LOGGER.error("[Transaction] HTTP Status Code: " + statusCode);
+        httpClient = null;
       }
     } catch (Exception e) {
       // TODO: Error Handling:
       // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("fillOpenTransactionDTOList", e);
+      resetSignIn();
     }
   }
 
@@ -270,7 +270,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       HttpGet httpGet = new HttpGet(url);
       httpGet.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
 
-      HttpResponse httpResponse = httpClient.execute(httpGet);
+      HttpResponse httpResponse = getHttpClient().execute(httpGet);
 
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
@@ -283,11 +283,13 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
         // TODO: Error Handling:
         // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
         LOGGER.error("[Withdrawal] HTTP Status Code: " + statusCode);
+        httpClient = null;
       }
     } catch (Exception e) {
       // TODO: Error Handling:
       // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("getPendingWithdrawalDTOList", e);
+      resetSignIn();
     }
   }
 
@@ -330,7 +332,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       StringEntity entity = new StringEntity(jsonOpenTransactionVerified, ContentType.APPLICATION_JSON);
       httpPut.setEntity(entity);
 
-      HttpResponse httpResponse = httpClient.execute(httpPut);
+      HttpResponse httpResponse = getHttpClient().execute(httpPut);
 
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
@@ -338,11 +340,13 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
         // TODO: Error Handling:
         // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
         LOGGER.error("[Verified] HTTP Status Code: " + statusCode);
+        httpClient = null;
       }
     } catch (Exception e) {
       // TODO: Error Handling:
       // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("sendOpenTransactionVerified", e);
+      resetSignIn();
     }
   }
 
@@ -385,7 +389,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       StringEntity entity = new StringEntity(jsonOpenTransactionInvalidated, ContentType.APPLICATION_JSON);
       httpPut.setEntity(entity);
 
-      HttpResponse httpResponse = httpClient.execute(httpPut);
+      HttpResponse httpResponse = getHttpClient().execute(httpPut);
 
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
@@ -393,11 +397,13 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
         // TODO: Error Handling:
         // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
         LOGGER.error("[Invalidated] HTTP Status Code: " + statusCode);
+        httpClient = null;
       }
     } catch (Exception e) {
       // TODO: Error Handling:
       // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("sendOpenTransactionInvalidated", e);
+      resetSignIn();
     }
   }
 
@@ -438,6 +444,19 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     } catch (Exception e) {
       LOGGER.error("logJSON", e);
     }
+  }
+
+  /**
+   * 
+   */
+  private HttpClient getHttpClient() {
+    LOGGER.trace("getHttpClient() ...");
+
+    if (null == httpClient) {
+      httpClient = HttpClientBuilder.create().build();
+    }
+
+    return httpClient;
   }
 
   /**

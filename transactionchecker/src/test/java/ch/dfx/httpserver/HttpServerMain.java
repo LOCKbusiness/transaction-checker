@@ -1,8 +1,11 @@
 package ch.dfx.httpserver;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.nio.file.Path;
 import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
 
 import org.apache.http.impl.bootstrap.HttpServer;
 import org.apache.http.impl.bootstrap.ServerBootstrap;
@@ -57,13 +60,8 @@ public class HttpServerMain {
       APIWithdrawalRequestHandler apiWithdrawalRequestHandler = new APIWithdrawalRequestHandler();
 
       // ...
-      File[] transactionFileNameArray = new File[] {
-          Path.of("data", "httpserver", "get", "transaction-20221028-145601-825128.json").toFile()
-      };
-
-      File[] withdrawalFileNameArray = new File[] {
-          Path.of("data", "httpserver", "get", "withdrawal-20221028-145601-847129.json").toFile()
-      };
+      File[] transactionFileNameArray = readAllFiles("transaction");
+      File[] withdrawalFileNameArray = readAllFiles("withdrawal");
 
       apiTransactionRequestHandler.setJSONFileArray(transactionFileNameArray);
       apiWithdrawalRequestHandler.setJSONFileArray(withdrawalFileNameArray);
@@ -86,6 +84,20 @@ public class HttpServerMain {
     } catch (Exception e) {
       LOGGER.error("Fatal Error ...", e);
     }
+  }
+
+  /**
+   * 
+   */
+  private static File[] readAllFiles(@Nonnull String type) {
+    File httpserverGetDirectory = Path.of("data", "httpserver", "get").toFile();
+
+    return httpserverGetDirectory.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.startsWith(type) && name.endsWith(".json");
+      }
+    });
   }
 
   /**

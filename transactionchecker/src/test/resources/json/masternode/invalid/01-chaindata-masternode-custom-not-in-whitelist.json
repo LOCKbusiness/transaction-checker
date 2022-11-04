@@ -1,0 +1,10 @@
+{
+  "txid": "0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140",
+  "type": "CreateMasternode",
+  "valid": true,
+  "results": {
+    "collateralamount": 20000.00000000,
+    "masternodeoperator": "7PUcAeQvhXhVPUKKt67MmNpfZ4um3umozD",
+    "timelock": "NONE"
+  }
+}

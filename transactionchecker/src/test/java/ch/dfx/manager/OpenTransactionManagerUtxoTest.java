@@ -24,6 +24,7 @@ import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.ApiAccessHandlerImpl;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
+import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -134,7 +135,7 @@ public class OpenTransactionManagerUtxoTest {
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("utxoAddressNotInWhitelistTest-signature");
-      invalidatedDTO.setReason("[Transaction] ID: 60dd53580576d8c07e37c9511ea37f7c273712cdcbd42a214b542da069cf6a92 - address not in whitelist");
+      invalidatedDTO.setReason("[UTXO Transaction] ID: 60dd53580576d8c07e37c9511ea37f7c273712cdcbd42a214b542da069cf6a92 - address not in whitelist");
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
@@ -173,5 +174,9 @@ public class OpenTransactionManagerUtxoTest {
         gson.fromJson(Files.readString(jsonChainDataFile.toPath()), DefiTransactionData.class);
 
     when(dataProviderMock.decodeRawTransaction(anyString())).thenReturn(transactionData);
+
+    // ...
+    DefiCustomData customData = new DefiCustomData();
+    when(dataProviderMock.decodeCustomTransaction(anyString())).thenReturn(customData);
   }
 }

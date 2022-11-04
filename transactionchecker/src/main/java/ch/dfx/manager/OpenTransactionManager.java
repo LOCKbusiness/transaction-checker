@@ -22,6 +22,7 @@ import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.join.TransactionWithdrawalDTO;
 import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
 import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
+import ch.dfx.api.data.transaction.OpenTransactionCustomTypeEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
@@ -35,6 +36,7 @@ import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
@@ -97,8 +99,8 @@ public class OpenTransactionManager {
             + apiOpenTransactionDTOList.size() + " / " + apiPendingWithdrawalDTOList.size());
 
     // ...
-    apiOpenTransactionDTOList.forEach(dto -> fillEmptyDataOfReceivedDTO(dto));
-    apiPendingWithdrawalDTOList.forEach(dto -> fillEmptyDataOfReceivedDTO(dto));
+    apiOpenTransactionDTOList.forEach(dto -> fillEmptyDataOfOpenTransactionDTO(dto));
+    apiPendingWithdrawalDTOList.forEach(dto -> fillEmptyDataOfPendingWithdrawalDTO(dto));
 
     // ...
     OpenTransactionDTOList workOpenTransactionDTOList = processOpenTransaction(apiOpenTransactionDTOList);
@@ -110,21 +112,8 @@ public class OpenTransactionManager {
    * Set all used data fields to empty values or default values,
    * if they are not set via the API ...
    */
-  private void fillEmptyDataOfReceivedDTO(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    // Type ...
-    OpenTransactionPayloadDTO openTransactionPayloadDTO = openTransactionDTO.getPayload();
-
-    if (null == openTransactionPayloadDTO) {
-      openTransactionDTO.setType(OpenTransactionTypeEnum.UTXO);
-    } else {
-      if (null != openTransactionPayloadDTO.getOwnerWallet()) {
-        openTransactionDTO.setType(OpenTransactionTypeEnum.MASTERNODE);
-      } else if (null != openTransactionPayloadDTO.getId()) {
-        openTransactionDTO.setType(OpenTransactionTypeEnum.WITHDRAWAL);
-      } else {
-        openTransactionDTO.setType(OpenTransactionTypeEnum.UNKNOWN);
-      }
-    }
+  private void fillEmptyDataOfOpenTransactionDTO(@Nonnull OpenTransactionDTO openTransactionDTO) {
+    LOGGER.trace("fillEmptyDataOfReceivedDTO() ...");
 
     // ID ...
     openTransactionDTO.setId(TransactionCheckerUtils.emptyIfNull(openTransactionDTO.getId()));
@@ -141,13 +130,63 @@ public class OpenTransactionManager {
     }
 
     openTransactionRawTxDTO.setHex(TransactionCheckerUtils.emptyIfNull(openTransactionRawTxDTO.getHex()));
+
+    // Type ...
+    fillTypeOfOpenTransactionDTO(openTransactionDTO);
+  }
+
+  /**
+   * 
+   */
+  private void fillTypeOfOpenTransactionDTO(@Nonnull OpenTransactionDTO openTransactionDTO) {
+    LOGGER.trace("fillTypeOfOpenTransactionDTO() ...");
+
+    // Type ...
+    OpenTransactionPayloadDTO openTransactionPayloadDTO = openTransactionDTO.getPayload();
+
+    if (null == openTransactionPayloadDTO) {
+      openTransactionDTO.setType(OpenTransactionTypeEnum.UTXO);
+    } else {
+      if (null != openTransactionPayloadDTO.getOwnerWallet()) {
+        fillTypeOfOpenTransactionWithOwnerWallet(openTransactionDTO);
+      } else if (null != openTransactionPayloadDTO.getId()) {
+        openTransactionDTO.setType(OpenTransactionTypeEnum.WITHDRAWAL);
+      } else {
+        openTransactionDTO.setType(OpenTransactionTypeEnum.UNKNOWN);
+      }
+    }
+  }
+
+  /**
+   * 
+   */
+  private void fillTypeOfOpenTransactionWithOwnerWallet(@Nonnull OpenTransactionDTO openTransactionDTO) {
+    LOGGER.trace("fillTypeOfOpenTransactionWithOwnerWallet() ...");
+
+    try {
+      String hex = openTransactionDTO.getRawTx().getHex();
+      DefiCustomData decodeCustomTransaction = dataProvider.decodeCustomTransaction(hex);
+
+      OpenTransactionCustomTypeEnum openTransactionCustomType =
+          OpenTransactionCustomTypeEnum.createByChainType(decodeCustomTransaction.getType());
+
+      if (null != openTransactionCustomType) {
+        openTransactionDTO.setType(openTransactionCustomType.getOpenTransactionType());
+      } else {
+        openTransactionDTO.setType(OpenTransactionTypeEnum.UNKNOWN);
+      }
+    } catch (Exception e) {
+      LOGGER.error("fillTypeOfOpenTransactionWithOwnerWallet", e);
+    }
   }
 
   /**
    * Set all used data fields to empty values or default values,
    * if they are not set via the API ...
    */
-  private void fillEmptyDataOfReceivedDTO(@Nonnull PendingWithdrawalDTO pendingWithdrawalDTO) {
+  private void fillEmptyDataOfPendingWithdrawalDTO(@Nonnull PendingWithdrawalDTO pendingWithdrawalDTO) {
+    LOGGER.trace("fillEmptyDataOfPendingWithdrawalDTO() ...");
+
     // ID ...
     pendingWithdrawalDTO.setId(TransactionCheckerUtils.zeroIfNull(pendingWithdrawalDTO.getId()));
 
@@ -177,8 +216,7 @@ public class OpenTransactionManager {
     workOpenTransactionDTOList = checkSize(workOpenTransactionDTOList);
 
     // Check 3: Transaction (Withdrawal) Duplicated ...
-    // TODO: ONLY FOR TESTING PURPOSES!!! ...
-    // workOpenTransactionDTOList = checkDuplicated(workOpenTransactionDTOList);
+    workOpenTransactionDTOList = checkDuplicated(workOpenTransactionDTOList);
 
     // Check 4: Transaction Signature ...
     return checkTransactionSignature(workOpenTransactionDTOList);
@@ -445,6 +483,7 @@ public class OpenTransactionManager {
   /**
    * UTXO
    * MASTERNODE
+   * YIELD_MASCHINE
    * WITHDRAWAL
    */
   private void processOpenTransactionAndWithdrawal(
@@ -455,6 +494,7 @@ public class OpenTransactionManager {
     // ...
     OpenTransactionDTOList utxoOpenTransactionDTOList = new OpenTransactionDTOList();
     OpenTransactionDTOList masternodeOpenTransactionDTOList = new OpenTransactionDTOList();
+    OpenTransactionDTOList yieldMaschineOpenTransactionDTOList = new OpenTransactionDTOList();
     OpenTransactionDTOList withdrawalOpenTransactionDTOList = new OpenTransactionDTOList();
 
     for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
@@ -471,6 +511,11 @@ public class OpenTransactionManager {
           break;
         }
 
+        case YIELD_MASCHINE: {
+          yieldMaschineOpenTransactionDTOList.add(openTransactionDTO);
+          break;
+        }
+
         case WITHDRAWAL: {
           withdrawalOpenTransactionDTOList.add(openTransactionDTO);
           break;
@@ -484,6 +529,7 @@ public class OpenTransactionManager {
     // ...
     processOpenUtxoTransaction(utxoOpenTransactionDTOList);
     processOpenMasternodeTransaction(masternodeOpenTransactionDTOList);
+    processOpenYieldMaschineTransaction(yieldMaschineOpenTransactionDTOList);
     processOpenWithdrawalTransaction(withdrawalOpenTransactionDTOList, apiPendingWithdrawalDTOList);
   }
 
@@ -503,7 +549,7 @@ public class OpenTransactionManager {
       if (checkMasternodeWhitelist(new ArrayList<>(voutAddressSet))) {
         sendVerified(openTransactionDTO);
       } else {
-        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - address not in whitelist");
+        openTransactionDTO.setInvalidatedReason("[UTXO Transaction] ID: " + openTransactionDTO.getId() + " - address not in whitelist");
         sendInvalidated(openTransactionDTO);
       }
     }
@@ -525,7 +571,29 @@ public class OpenTransactionManager {
       if (checkMasternodeWhitelist(new ArrayList<>(voutAddressSet))) {
         sendVerified(openTransactionDTO);
       } else {
-        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - address not in whitelist");
+        openTransactionDTO.setInvalidatedReason("[Masternode Transaction] ID: " + openTransactionDTO.getId() + " - address not in whitelist");
+        sendInvalidated(openTransactionDTO);
+      }
+    }
+  }
+
+  /**
+   * 
+   */
+  private void processOpenYieldMaschineTransaction(@Nonnull OpenTransactionDTOList yieldMaschineOpenTransactionDTOList) throws DfxException {
+    LOGGER.trace("processOpenYieldMaschineTransaction() ...");
+
+    for (OpenTransactionDTO openTransactionDTO : yieldMaschineOpenTransactionDTOList) {
+      String hex = openTransactionDTO.getRawTx().getHex();
+
+      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
+
+      Set<String> voutAddressSet = getVoutAddressSet(transactionData);
+
+      if (checkMasternodeWhitelist(new ArrayList<>(voutAddressSet))) {
+        sendVerified(openTransactionDTO);
+      } else {
+        openTransactionDTO.setInvalidatedReason("[Yield Maschine Transaction] ID: " + openTransactionDTO.getId() + " - address not in whitelist");
         sendInvalidated(openTransactionDTO);
       }
     }
@@ -654,7 +722,7 @@ public class OpenTransactionManager {
 
         transactionWithdrawalDTOList.add(transactionWithdrawalDTO);
       } else {
-        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - withdrawal id not found");
+        openTransactionDTO.setInvalidatedReason("[Withdrawal Transaction] ID: " + openTransactionDTO.getId() + " - withdrawal id not found");
         sendInvalidated(openTransactionDTO);
       }
     }

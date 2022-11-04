@@ -24,6 +24,7 @@ import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.ApiAccessHandlerImpl;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
+import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -100,7 +101,8 @@ public class OpenTransactionManagerMasternodeTest {
     try {
       setJSONResoureFiles(
           "json/masternode/good/01-masternode.json",
-          "json/masternode/good/01-chaindata-masternode.json");
+          "json/masternode/good/01-chaindata-masternode.json",
+          "json/masternode/good/01-chaindata-masternode-custom.json");
 
       // ...
       // ...
@@ -129,12 +131,13 @@ public class OpenTransactionManagerMasternodeTest {
     try {
       setJSONResoureFiles(
           "json/masternode/invalid/01-masternode-not-in-whitelist.json",
-          "json/masternode/invalid/01-chaindata-masternode-not-in-whitelist.json");
+          "json/masternode/invalid/01-chaindata-masternode-not-in-whitelist.json",
+          "json/masternode/invalid/01-chaindata-masternode-custom-not-in-whitelist.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("masternodeAddressNotInWhitelistTest-signature");
-      invalidatedDTO.setReason("[Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - address not in whitelist");
+      invalidatedDTO.setReason("[Masternode Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - address not in whitelist");
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
@@ -156,7 +159,8 @@ public class OpenTransactionManagerMasternodeTest {
    */
   private void setJSONResoureFiles(
       @Nonnull String transactionFileName,
-      @Nonnull String chaindataFileName) throws Exception {
+      @Nonnull String chaindataFileName,
+      @Nonnull String chaindataCustomFileName) throws Exception {
     // ...
     ClassLoader classLoader = this.getClass().getClassLoader();
 
@@ -173,5 +177,13 @@ public class OpenTransactionManagerMasternodeTest {
         gson.fromJson(Files.readString(jsonChainDataFile.toPath()), DefiTransactionData.class);
 
     when(dataProviderMock.decodeRawTransaction(anyString())).thenReturn(transactionData);
+
+    // ...
+    File jsonChainCustomDataFile = new File(classLoader.getResource(chaindataCustomFileName).getFile());
+
+    DefiCustomData customData =
+        gson.fromJson(Files.readString(jsonChainCustomDataFile.toPath()), DefiCustomData.class);
+
+    when(dataProviderMock.decodeCustomTransaction(anyString())).thenReturn(customData);
   }
 }

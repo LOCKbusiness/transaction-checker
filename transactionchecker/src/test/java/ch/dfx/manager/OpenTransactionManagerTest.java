@@ -24,6 +24,7 @@ import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.ApiAccessHandlerImpl;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
+import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -322,7 +323,7 @@ public class OpenTransactionManagerTest {
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("withdrawalIdNotFoundTest-signature");
-      invalidatedDTO.setReason("[Transaction] ID: 440a351c87bb030c774c4b822504bc954188dde6321b05bb5b52af357098f688 - withdrawal id not found");
+      invalidatedDTO.setReason("[Withdrawal Transaction] ID: 440a351c87bb030c774c4b822504bc954188dde6321b05bb5b52af357098f688 - withdrawal id not found");
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
@@ -392,5 +393,10 @@ public class OpenTransactionManagerTest {
         gson.fromJson(Files.readString(jsonChainDataFile.toPath()), DefiTransactionData.class);
 
     when(dataProviderMock.decodeRawTransaction(anyString())).thenReturn(transactionData);
+
+    // ...
+    DefiCustomData customData = new DefiCustomData();
+    when(dataProviderMock.decodeCustomTransaction(anyString())).thenReturn(customData);
+
   }
 }

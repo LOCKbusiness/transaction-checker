@@ -34,7 +34,7 @@ public class OpenTransactionManagerMain {
       String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
-      System.setProperty("logFilename", "masternodemanager-" + network + "-" + environment);
+      System.setProperty("logFilename", "opentransactionmanager-" + network + "-" + environment);
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...

@@ -173,7 +173,7 @@ public class OpenTransactionManager {
       if (null != openTransactionCustomType) {
         openTransactionDTO.setType(openTransactionCustomType.getOpenTransactionType());
       } else {
-        openTransactionDTO.setType(OpenTransactionTypeEnum.UNKNOWN);
+        openTransactionDTO.setType(OpenTransactionTypeEnum.UTXO);
       }
     } catch (Exception e) {
       LOGGER.error("fillTypeOfOpenTransactionWithOwnerWallet", e);

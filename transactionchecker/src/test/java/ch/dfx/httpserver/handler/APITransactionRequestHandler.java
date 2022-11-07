@@ -104,6 +104,6 @@ public class APITransactionRequestHandler extends APIRequestHandler implements H
 
     String jsonRequest = EntityUtils.toString(requestEntity);
     // writeJSONFile(jsonRequest);
-    setJSONResponse(jsonRequest);
+    addJSONResponse(jsonRequest);
   }
 }

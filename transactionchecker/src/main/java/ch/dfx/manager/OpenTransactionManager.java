@@ -2,6 +2,7 @@ package ch.dfx.manager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -56,6 +57,7 @@ public class OpenTransactionManager {
   private static final Logger LOGGER = LogManager.getLogger(OpenTransactionManager.class);
 
   // ...
+  private PreparedStatement apiDuplicateCheckSelectStatement = null;
   private PreparedStatement apiDuplicateCheckInsertStatement = null;
 
   // ...
@@ -369,6 +371,9 @@ public class OpenTransactionManager {
     LOGGER.trace("openStatements() ...");
 
     try {
+      String apiDuplicateCheckSelectSql = "SELECT * FROM public.api_duplicate_check WHERE withdrawal_id=? AND transaction_id=?";
+      apiDuplicateCheckSelectStatement = connection.prepareStatement(apiDuplicateCheckSelectSql);
+
       String apiDuplicateCheckInsertSql = "INSERT INTO public.api_duplicate_check (withdrawal_id, transaction_id) VALUES (?, ?)";
       apiDuplicateCheckInsertStatement = connection.prepareStatement(apiDuplicateCheckInsertSql);
     } catch (Exception e) {
@@ -383,6 +388,7 @@ public class OpenTransactionManager {
     LOGGER.trace("closeStatements() ...");
 
     try {
+      apiDuplicateCheckSelectStatement.close();
       apiDuplicateCheckInsertStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
@@ -398,15 +404,15 @@ public class OpenTransactionManager {
     boolean isValid;
 
     try {
-      Integer payloadId = getPayloadId(apiOpenTransactionDTO);
+      Integer withdrawalId = getWithdrawalId(apiOpenTransactionDTO);
 
-      if (null == payloadId) {
+      if (null == withdrawalId) {
         isValid = true;
       } else {
-        isValid = apiDuplicateCheckInsert(payloadId, apiOpenTransactionDTO.getId());
+        isValid = apiDuplicateCheckInsert(withdrawalId, apiOpenTransactionDTO.getId());
 
         if (!isValid) {
-          apiOpenTransactionDTO.setInvalidatedReason("[Withdrawal] ID: " + payloadId + " - duplicated");
+          apiOpenTransactionDTO.setInvalidatedReason("[Withdrawal] ID: " + withdrawalId + " - duplicated");
           sendInvalidated(apiOpenTransactionDTO);
         }
       }
@@ -419,23 +425,35 @@ public class OpenTransactionManager {
   }
 
   /**
-   * 
+   * Duplicate Check:
+   * withdrawal id x + transaction id y: is allowed to receive multiple times
+   * withdrawal id x + transaction id z: is not allowed to receive multiple times
    */
   private boolean apiDuplicateCheckInsert(
-      @Nonnull Integer payloadId,
+      @Nonnull Integer withdrawalId,
       @Nonnull String transactionId) {
     LOGGER.trace("apiDuplicateCheckInsert() ...");
 
     boolean isValid;
 
     try {
-      apiDuplicateCheckInsertStatement.setInt(1, payloadId);
-      apiDuplicateCheckInsertStatement.setString(2, transactionId);
-      apiDuplicateCheckInsertStatement.execute();
+      apiDuplicateCheckSelectStatement.setInt(1, withdrawalId);
+      apiDuplicateCheckSelectStatement.setString(2, transactionId);
+
+      ResultSet resultSet = apiDuplicateCheckSelectStatement.executeQuery();
+      isValid = resultSet.next();
+      resultSet.close();
+
+      // ...
+      if (!isValid) {
+        apiDuplicateCheckInsertStatement.setInt(1, withdrawalId);
+        apiDuplicateCheckInsertStatement.setString(2, transactionId);
+        apiDuplicateCheckInsertStatement.execute();
+      }
 
       isValid = true;
     } catch (Exception e) {
-      LOGGER.info("apiDuplicateCheckInsert: WithdrawId=" + payloadId + " / TransactionId=" + transactionId);
+      LOGGER.info("apiDuplicateCheckInsert: WithdrawId=" + withdrawalId + " / TransactionId=" + transactionId);
       isValid = false;
     }
 
@@ -758,11 +776,11 @@ public class OpenTransactionManager {
     Map<Integer, OpenTransactionDTO> withdrawalIdToOpenTransactionDTOMap = new HashMap<>();
 
     for (OpenTransactionDTO openTransactionDTO : openTransactionDTOList) {
-      Integer payloadId = getPayloadId(openTransactionDTO);
+      Integer withdrawalId = getWithdrawalId(openTransactionDTO);
 
       if (OpenTransactionTypeEnum.WITHDRAWAL == openTransactionDTO.getType()
-          && null != payloadId) {
-        withdrawalIdToOpenTransactionDTOMap.put(payloadId, openTransactionDTO);
+          && null != withdrawalId) {
+        withdrawalIdToOpenTransactionDTOMap.put(withdrawalId, openTransactionDTO);
       }
     }
 
@@ -791,18 +809,18 @@ public class OpenTransactionManager {
   /**
    * 
    */
-  private @Nullable Integer getPayloadId(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("getPayloadId() ...");
+  private @Nullable Integer getWithdrawalId(@Nonnull OpenTransactionDTO openTransactionDTO) {
+    LOGGER.trace("getWithdrawalId() ...");
 
-    Integer payloadId = null;
+    Integer withdrawalId = null;
 
     OpenTransactionPayloadDTO openTransactionPayloadDTO = openTransactionDTO.getPayload();
 
     if (null != openTransactionPayloadDTO) {
-      payloadId = openTransactionPayloadDTO.getId();
+      withdrawalId = openTransactionPayloadDTO.getId();
     }
 
-    return payloadId;
+    return withdrawalId;
   }
 
   /**

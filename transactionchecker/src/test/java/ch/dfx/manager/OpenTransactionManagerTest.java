@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 
@@ -102,6 +103,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/empty/01-transaction-empty.json",
           "json/withdrawal/empty/01-withdrawal-empty.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       transactionManager.execute();
     } catch (Exception e) {
@@ -117,6 +119,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/good/01-transaction.json",
           "json/withdrawal/good/01-withdrawal.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
@@ -129,9 +132,10 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -145,6 +149,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/invalid/01-transaction-wrong-message.json",
           "json/withdrawal/invalid/01-withdrawal-wrong-message.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
@@ -158,9 +163,10 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -174,6 +180,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/invalid/02-transaction-wrong-message.json",
           "json/withdrawal/invalid/02-withdrawal-wrong-message.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
@@ -187,9 +194,10 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -203,6 +211,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/invalid/03-transaction-wrong-message-signature.json",
           "json/withdrawal/invalid/03-withdrawal-wrong-message-signature.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
@@ -216,9 +225,10 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -232,6 +242,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/invalid/04-transaction-wrong-raw-transaction.json",
           "json/withdrawal/invalid/04-withdrawal-wrong-raw-transaction.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
@@ -245,9 +256,10 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -261,6 +273,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/invalid/05-transaction-wrong-raw-transaction.json",
           "json/withdrawal/invalid/05-withdrawal-wrong-raw-transaction.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
@@ -274,9 +287,10 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -290,6 +304,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/invalid/06-transaction-wrong-raw-transaction.json",
           "json/withdrawal/invalid/06-withdrawal-wrong-raw-transaction.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
@@ -303,9 +318,10 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -319,6 +335,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/invalid/07-transaction-wrong-signmessage-format.json",
           "json/withdrawal/invalid/07-withdrawal-wrong-signmessage-format.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
@@ -332,9 +349,10 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -348,6 +366,7 @@ public class OpenTransactionManagerTest {
       setJSONResoureFiles(
           "json/withdrawal/invalid/08-transaction-wrong-transactionid.json",
           "json/withdrawal/invalid/08-withdrawal-wrong-transactionid.json");
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
@@ -361,9 +380,102 @@ public class OpenTransactionManagerTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void validDuplicateWithdrawalTest() {
+    LOGGER.debug("validDuplicateWithdrawalTest()");
+
+    try {
+      // ...
+      ClassLoader classLoader = this.getClass().getClassLoader();
+
+      TestUtils.apiTransactionRequestHandler.setJSONFileArray(new File[] {
+          new File(classLoader.getResource("json/withdrawal/good/01-transaction.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/good/01-transaction.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/good/01-transaction.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/good/01-transaction.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/good/01-transaction.json").getFile())
+      });
+
+      TestUtils.apiWithdrawalRequestHandler.setJSONFileArray(new File[] {
+          new File(classLoader.getResource("json/withdrawal/good/01-withdrawal.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/good/01-withdrawal.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/good/01-withdrawal.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/good/01-withdrawal.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/good/01-withdrawal.json").getFile())
+      });
+
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
+
+      // ...
+      OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
+      verifiedDTO.setSignature("dataValidTest-signature");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
+
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponseList.get(0));
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void invalidDuplicateWithdrawalTest() {
+    LOGGER.debug("invalidDuplicateWithdrawalTest()");
+
+    try {
+      // ...
+      ClassLoader classLoader = this.getClass().getClassLoader();
+
+      TestUtils.apiTransactionRequestHandler.setJSONFileArray(new File[] {
+          new File(classLoader.getResource("json/withdrawal/good/01-transaction.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/invalid/09-transaction-duplicated.json").getFile())
+      });
+
+      TestUtils.apiWithdrawalRequestHandler.setJSONFileArray(new File[] {
+          new File(classLoader.getResource("json/withdrawal/good/01-withdrawal.json").getFile()),
+          new File(classLoader.getResource("json/withdrawal/invalid/09-withdrawal-duplicated.json").getFile())
+      });
+
+      setJSONChainResoureFile("json/withdrawal/01-chaindata-transaction.json");
+
+      // ...
+      // ...
+      OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
+      verifiedDTO.setSignature("invalidDuplicateWithdrawalTest-signature");
+
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("invalidDuplicateWithdrawalTest-signature");
+      invalidatedDTO.setReason("[Withdrawal] ID: 2 - duplicated");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
+
+      assertEquals("JSON Response List Size", 2, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
+      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponseList.get(1));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -385,9 +497,16 @@ public class OpenTransactionManagerTest {
     TestUtils.apiWithdrawalRequestHandler.setJSONFileArray(new File[] {
         new File(classLoader.getResource(withdrawalFileName).getFile())
     });
+  }
 
+  /**
+   * 
+   */
+  private void setJSONChainResoureFile(@Nonnull String chainTransactionFileName) throws Exception {
     // ...
-    File jsonChainDataFile = new File(classLoader.getResource("json/withdrawal/01-chaindata-transaction.json").getFile());
+    ClassLoader classLoader = this.getClass().getClassLoader();
+
+    File jsonChainDataFile = new File(classLoader.getResource(chainTransactionFileName).getFile());
 
     DefiTransactionData transactionData =
         gson.fromJson(Files.readString(jsonChainDataFile.toPath()), DefiTransactionData.class);
@@ -397,6 +516,5 @@ public class OpenTransactionManagerTest {
     // ...
     DefiCustomData customData = new DefiCustomData();
     when(dataProviderMock.decodeCustomTransaction(anyString())).thenReturn(customData);
-
   }
 }

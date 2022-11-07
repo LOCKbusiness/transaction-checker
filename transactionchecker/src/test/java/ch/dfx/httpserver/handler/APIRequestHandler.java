@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
@@ -35,13 +37,15 @@ public abstract class APIRequestHandler {
 
   // ...
   private File[] jsonFileArray = null;
-  private String jsonResponse = null;
+  private final List<String> jsonResponseList;
 
   /**
    * 
    */
   public APIRequestHandler() {
     this.gson = new GsonBuilder().setPrettyPrinting().create();
+
+    this.jsonResponseList = new ArrayList<>();
   }
 
   /**
@@ -49,6 +53,8 @@ public abstract class APIRequestHandler {
    */
   public void setJSONFileArray(File[] jsonFileArray) {
     this.jsonFileArray = jsonFileArray;
+
+    this.jsonResponseList.clear();
   }
 
   /**
@@ -61,15 +67,15 @@ public abstract class APIRequestHandler {
   /**
    * 
    */
-  public void setJSONResponse(String jsonResponse) {
-    this.jsonResponse = jsonResponse;
+  public void addJSONResponse(String jsonResponse) {
+    this.jsonResponseList.add(jsonResponse);
   }
 
   /**
    * 
    */
-  public String getJSONResponse() {
-    return jsonResponse;
+  public List<String> getJSONResponseList() {
+    return jsonResponseList;
   }
 
   /**

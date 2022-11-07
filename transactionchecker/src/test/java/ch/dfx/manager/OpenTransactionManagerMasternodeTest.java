@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 
@@ -116,9 +117,10 @@ public class OpenTransactionManagerMasternodeTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
@@ -146,9 +148,10 @@ public class OpenTransactionManagerMasternodeTest {
       transactionManager.execute();
 
       // ...
-      String jsonResponse = TestUtils.apiTransactionRequestHandler.getJSONResponse();
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
 
-      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponse);
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }

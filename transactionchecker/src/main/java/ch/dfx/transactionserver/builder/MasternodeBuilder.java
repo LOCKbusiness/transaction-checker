@@ -147,11 +147,11 @@ public class MasternodeBuilder {
         AddressDTO addressDTO = databaseHelper.getAddressDTOByAddress(ownerAddress);
 
         if (null != addressDTO) {
-          LOGGER.debug("Fill New Masternode " + masternodeWhitelistDTO.getIdx() + ": " + ownerAddress);
+          LOGGER.trace("Fill New Masternode " + masternodeWhitelistDTO.getIdx() + ": " + ownerAddress);
           fillNewMasternodeWhitelistDTO(masternodeWhitelistDTO, addressDTO);
         }
       } else {
-        LOGGER.debug("Fill Masternode " + masternodeWhitelistDTO.getIdx() + ": " + ownerAddress);
+        LOGGER.trace("Fill Masternode " + masternodeWhitelistDTO.getIdx() + ": " + ownerAddress);
         fillMasternodeWhitelistDTO(masternodeWhitelistDTO);
       }
     }
@@ -226,7 +226,6 @@ public class MasternodeBuilder {
 
     for (MasternodeWhitelistDTO masternodeWhitelistDTO : masternodeWhitelistDTOList) {
       if (masternodeWhitelistDTO.isInternalStateChanged()) {
-        LOGGER.debug("Update Masternode " + masternodeWhitelistDTO.getIdx() + ": " + masternodeWhitelistDTO.getOwnerAddress());
         updateMasternodeWhitelistDTO(connection, masternodeWhitelistDTO);
       }
     }
@@ -241,6 +240,10 @@ public class MasternodeBuilder {
     LOGGER.trace("updateMasternodeWhitelistDTO() ...");
 
     try {
+      String ownerAddress = masternodeWhitelistDTO.getOwnerAddress();
+
+      LOGGER.debug("[UPDATE] Owner Address: " + ownerAddress);
+
       masternodeUpdateStatement.setString(1, masternodeWhitelistDTO.getTransactionId());
       masternodeUpdateStatement.setString(2, masternodeWhitelistDTO.getOperatorAddress());
       masternodeUpdateStatement.setString(3, masternodeWhitelistDTO.getRewardAddress());
@@ -249,7 +252,7 @@ public class MasternodeBuilder {
       masternodeUpdateStatement.setString(6, masternodeWhitelistDTO.getState());
 
       masternodeUpdateStatement.setInt(7, masternodeWhitelistDTO.getWalletId());
-      masternodeUpdateStatement.setString(8, masternodeWhitelistDTO.getOwnerAddress());
+      masternodeUpdateStatement.setString(8, ownerAddress);
 
       masternodeUpdateStatement.execute();
       connection.commit();

@@ -32,6 +32,7 @@ import ch.dfx.api.data.transaction.OpenTransactionTypeEnum;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
+import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
@@ -142,26 +143,41 @@ public class OpenTransactionManager {
     LOGGER.trace("fillTypeOfOpenTransactionDTO() ...");
 
     // Type ...
+    OpenTransactionTypeEnum openTransactionType = OpenTransactionTypeEnum.UNKNOWN;
+
     OpenTransactionPayloadDTO openTransactionPayloadDTO = openTransactionDTO.getPayload();
 
     if (null == openTransactionPayloadDTO) {
-      openTransactionDTO.setType(OpenTransactionTypeEnum.UTXO);
+      openTransactionType = OpenTransactionTypeEnum.UTXO;
     } else {
-      if (null != openTransactionPayloadDTO.getOwnerWallet()) {
-        fillTypeOfOpenTransactionWithOwnerWallet(openTransactionDTO);
-      } else if (null != openTransactionPayloadDTO.getId()) {
-        openTransactionDTO.setType(OpenTransactionTypeEnum.WITHDRAWAL);
-      } else {
-        openTransactionDTO.setType(OpenTransactionTypeEnum.UNKNOWN);
+      // TODO: New method, if the type is received within the payload ...
+      ApiTransactionTypeEnum apiTransactionType =
+          ApiTransactionTypeEnum.createByApiType(openTransactionPayloadDTO.getType());
+
+      if (null != apiTransactionType) {
+        openTransactionType = apiTransactionType.getOpenTransactionType();
+      }
+
+      // TODO: Old method, will be replaced by the method before ...
+      if (OpenTransactionTypeEnum.UNKNOWN == openTransactionType) {
+        if (null != openTransactionPayloadDTO.getOwnerWallet()) {
+          openTransactionType = getTypeOfOpenTransactionWithOwnerWallet(openTransactionDTO);
+        } else if (null != openTransactionPayloadDTO.getId()) {
+          openTransactionType = OpenTransactionTypeEnum.WITHDRAWAL;
+        }
       }
     }
+
+    openTransactionDTO.setType(openTransactionType);
   }
 
   /**
    * 
    */
-  private void fillTypeOfOpenTransactionWithOwnerWallet(@Nonnull OpenTransactionDTO openTransactionDTO) {
+  private OpenTransactionTypeEnum getTypeOfOpenTransactionWithOwnerWallet(@Nonnull OpenTransactionDTO openTransactionDTO) {
     LOGGER.trace("fillTypeOfOpenTransactionWithOwnerWallet() ...");
+
+    OpenTransactionTypeEnum openTransactionType = OpenTransactionTypeEnum.UNKNOWN;
 
     try {
       String hex = openTransactionDTO.getRawTx().getHex();
@@ -171,13 +187,15 @@ public class OpenTransactionManager {
           OpenTransactionCustomTypeEnum.createByChainType(decodeCustomTransaction.getType());
 
       if (null != openTransactionCustomType) {
-        openTransactionDTO.setType(openTransactionCustomType.getOpenTransactionType());
+        openTransactionType = openTransactionCustomType.getOpenTransactionType();
       } else {
-        openTransactionDTO.setType(OpenTransactionTypeEnum.UTXO);
+        openTransactionType = OpenTransactionTypeEnum.UTXO;
       }
     } catch (Exception e) {
       LOGGER.error("fillTypeOfOpenTransactionWithOwnerWallet", e);
     }
+
+    return openTransactionType;
   }
 
   /**

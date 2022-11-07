@@ -5,12 +5,10 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class BlockDTO {
+public class BlockDTO extends DatabaseDTO {
   private final Integer number;
   private final String hash;
 
@@ -45,10 +43,5 @@ public class BlockDTO {
    */
   public void addTransactionDTO(@Nonnull TransactionDTO transactionDTO) {
     this.transactionDTOList.add(transactionDTO);
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

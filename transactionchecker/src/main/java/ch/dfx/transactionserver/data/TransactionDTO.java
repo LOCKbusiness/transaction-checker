@@ -5,12 +5,10 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class TransactionDTO {
+public class TransactionDTO extends DatabaseDTO {
   private final Integer blockNumber;
 
   private final Integer number;
@@ -66,10 +64,5 @@ public class TransactionDTO {
    */
   public void addAddressTransactionInDTO(@Nonnull AddressTransactionInDTO addressTransactionInDTO) {
     this.addressTransactionInDTOList.add(addressTransactionInDTO);
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

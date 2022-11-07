@@ -5,12 +5,10 @@ import java.math.BigDecimal;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class StakingDTO {
+public class StakingDTO extends DatabaseDTO {
   private final int liquidityAddressNumber;
   private final int depositAddressNumber;
   private final int customerAddressNumber;
@@ -121,10 +119,5 @@ public class StakingDTO {
 
   public void setCustomerAddress(@Nullable String customerAddress) {
     this.customerAddress = customerAddress;
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

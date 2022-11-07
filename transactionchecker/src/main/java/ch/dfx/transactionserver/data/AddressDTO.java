@@ -2,12 +2,10 @@ package ch.dfx.transactionserver.data;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class AddressDTO {
+public class AddressDTO extends DatabaseDTO {
   private final Integer number;
   private final String address;
   private final String hex;
@@ -34,10 +32,5 @@ public class AddressDTO {
 
   public String getHex() {
     return hex;
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

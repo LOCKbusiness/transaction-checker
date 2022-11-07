@@ -1,11 +1,9 @@
 package ch.dfx.transactionserver.data;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class LiquidityDTO {
+public class LiquidityDTO extends DatabaseDTO {
   private int addressNumber = -1;
   private int startBlockNumber = -1;
   private int startTransactionNumber = -1;
@@ -48,10 +46,5 @@ public class LiquidityDTO {
 
   public void setAddress(String address) {
     this.address = address;
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

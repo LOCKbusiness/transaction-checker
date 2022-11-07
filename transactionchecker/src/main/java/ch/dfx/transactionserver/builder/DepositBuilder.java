@@ -55,7 +55,7 @@ public class DepositBuilder {
    * 
    */
   public void build() throws DfxException {
-    LOGGER.trace("build() ...");
+    LOGGER.debug("build() ...");
 
     Connection connection = null;
 

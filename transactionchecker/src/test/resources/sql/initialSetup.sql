@@ -31,6 +31,41 @@ CREATE TABLE IF NOT EXISTS address (
 
 CREATE UNIQUE INDEX idx1_address ON address(address);
 
+-- =======================
+-- ADDRESS_TRANSACTION_OUT
+-- =======================
+CREATE TABLE IF NOT EXISTS address_transaction_out (
+  block_number       BIGINT        NOT NULL,
+  transaction_number BIGINT        NOT NULL,
+  vout_number        BIGINT        NOT NULL,
+  address_number     BIGINT        NOT NULL,
+  vout               DECIMAL(20,8) NOT NULL,
+  type               VARCHAR(20)   NULL
+);
+
+CREATE UNIQUE INDEX idx1_address_transaction_out ON address_transaction_out(block_number, transaction_number, vout_number);
+
+CREATE INDEX idx2_address_transaction_out ON address_transaction_out(block_number, transaction_number);
+CREATE INDEX idx3_address_transaction_out ON address_transaction_out(address_number);
+
+-- ======================
+-- ADDRESS_TRANSACTION_IN
+-- ======================
+CREATE TABLE IF NOT EXISTS address_transaction_in (
+  block_number          BIGINT        NOT NULL,
+  transaction_number    BIGINT        NOT NULL,
+  vin_number            BIGINT        NOT NULL,
+  address_number        BIGINT        NOT NULL,
+  in_block_number       BIGINT        NOT NULL,
+  in_transaction_number BIGINT        NOT NULL,
+  vin                   DECIMAL(20,8) NOT NULL
+);
+
+CREATE UNIQUE INDEX idx1_address_transaction_in ON address_transaction_in(block_number, transaction_number, vin_number);
+
+CREATE INDEX idx2_address_transaction_in ON address_transaction_in(block_number, transaction_number);
+CREATE INDEX idx3_address_transaction_in ON address_transaction_in(address_number);
+
 -- =========
 -- LIQUIDITY
 -- =========
@@ -107,12 +142,18 @@ CREATE UNIQUE INDEX idx1_api_duplicate_check ON api_duplicate_check(withdrawal_i
 -- MASTERNODE_WHITELIST
 -- ====================
 CREATE TABLE IF NOT EXISTS masternode_whitelist (
-  wallet_id     BIGINT      NOT NULL,
-  idx           BIGINT      NOT NULL,
-  owner_address VARCHAR(64) NOT NULL,
-  create_time   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  change_time   TIMESTAMP WITH TIME ZONE
-                GENERATED ALWAYS AS CURRENT_TIMESTAMP
+  wallet_id             BIGINT      NOT NULL,
+  idx                   BIGINT      NOT NULL,
+  owner_address         VARCHAR(64) NOT NULL,
+  txid                  VARCHAR(64) NULL,
+  operator_address      VARCHAR(64) NULL,
+  reward_address        VARCHAR(64) NULL,
+  creation_block_number BIGINT      NOT NULL DEFAULT -1,
+  resign_block_number   BIGINT      NOT NULL DEFAULT -1,
+  state                 VARCHAR(20) NULL,
+  create_time           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  change_time           TIMESTAMP WITH TIME ZONE
+                        GENERATED ALWAYS AS CURRENT_TIMESTAMP
 );
 
 CREATE UNIQUE INDEX idx1_masternode_whitelist ON masternode_whitelist(wallet_id, idx, owner_address);

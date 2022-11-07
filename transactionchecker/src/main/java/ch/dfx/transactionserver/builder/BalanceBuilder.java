@@ -46,7 +46,7 @@ public class BalanceBuilder {
    * 
    */
   public void build() throws DfxException {
-    LOGGER.trace("build() ...");
+    LOGGER.debug("build() ...");
 
     Connection connection = null;
 
@@ -121,7 +121,7 @@ public class BalanceBuilder {
    * 
    */
   private void calcLiquidityBalance(@Nonnull Connection connection) throws DfxException {
-    LOGGER.debug("calcLiquidityBalance() ...");
+    LOGGER.trace("calcLiquidityBalance() ...");
 
     List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
 
@@ -134,7 +134,7 @@ public class BalanceBuilder {
    * 
    */
   private void calcDepositBalance(@Nonnull Connection connection) throws DfxException {
-    LOGGER.debug("calcDepositBalance() ...");
+    LOGGER.trace("calcDepositBalance() ...");
 
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
 

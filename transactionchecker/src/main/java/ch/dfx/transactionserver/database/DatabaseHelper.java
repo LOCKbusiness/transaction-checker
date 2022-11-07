@@ -44,6 +44,7 @@ public class DatabaseHelper {
   private PreparedStatement stakingByDepositAddressNumberSelectStatement = null;
   private PreparedStatement stakingByCustomerAddressNumberSelectStatement = null;
 
+  private PreparedStatement masternodeSelectStatement = null;
   private PreparedStatement masternodeWhitelistByOwnerAddressSelectStatement = null;
 
   /**
@@ -158,11 +159,13 @@ public class DatabaseHelper {
       stakingByCustomerAddressNumberSelectStatement = connection.prepareStatement(stakingByCustomerAddressNumberSelectSql);
 
       // Masternode ...
+      String masternodeSelectSql = "SELECT * FROM public.masternode_whitelist";
+      masternodeSelectStatement = connection.prepareStatement(masternodeSelectSql);
+
       String masternodeWhitelistByOwnerAddressSelectSql =
-          "SELECT * FROM public.masternode_whitelist"
+          masternodeSelectSql
               + " WHERE owner_address=?";
       masternodeWhitelistByOwnerAddressSelectStatement = connection.prepareStatement(masternodeWhitelistByOwnerAddressSelectSql);
-
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -193,6 +196,7 @@ public class DatabaseHelper {
       stakingByDepositAddressNumberSelectStatement.close();
       stakingByCustomerAddressNumberSelectStatement.close();
 
+      masternodeSelectStatement.close();
       masternodeWhitelistByOwnerAddressSelectStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
@@ -249,6 +253,8 @@ public class DatabaseHelper {
             resultSet.getInt("number"),
             resultSet.getString("address"),
             resultSet.getString("hex"));
+
+        addressDTO.keepInternalState();
       }
 
       resultSet.close();
@@ -271,16 +277,11 @@ public class DatabaseHelper {
       ResultSet resultSet = liquiditySelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        LiquidityDTO liquidityDTO = new LiquidityDTO();
-
-        liquidityDTO.setAddressNumber(resultSet.getInt("address_number"));
-        liquidityDTO.setAddress(resultSet.getString("address"));
-        liquidityDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
-        liquidityDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
-
-        liquidityDTOList.add(liquidityDTO);
+        liquidityDTOList.add(createLiquidityDTO(resultSet));
       }
       return liquidityDTOList;
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
       throw new DfxException("getLiquidityDTOList", e);
     }
@@ -300,12 +301,7 @@ public class DatabaseHelper {
       ResultSet resultSet = liquidityByAddressNumberSelectStatement.executeQuery();
 
       if (resultSet.next()) {
-        liquidityDTO = new LiquidityDTO();
-
-        liquidityDTO.setAddressNumber(resultSet.getInt("address_number"));
-        liquidityDTO.setAddress(resultSet.getString("address"));
-        liquidityDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
-        liquidityDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
+        liquidityDTO = createLiquidityDTO(resultSet);
       }
 
       if (null == liquidityDTO) {
@@ -319,6 +315,28 @@ public class DatabaseHelper {
       throw e;
     } catch (Exception e) {
       throw new DfxException("getLiquidityDTOByAddressNumber", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private LiquidityDTO createLiquidityDTO(@Nonnull ResultSet resultSet) throws DfxException {
+    LOGGER.trace("createLiquidityDTO() ...");
+
+    try {
+      LiquidityDTO liquidityDTO = new LiquidityDTO();
+
+      liquidityDTO.setAddressNumber(resultSet.getInt("address_number"));
+      liquidityDTO.setAddress(resultSet.getString("address"));
+      liquidityDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
+      liquidityDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
+
+      liquidityDTO.keepInternalState();
+
+      return liquidityDTO;
+    } catch (Exception e) {
+      throw new DfxException("createLiquidityDTO", e);
     }
   }
 
@@ -374,6 +392,8 @@ public class DatabaseHelper {
         depositDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
         depositDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
 
+        depositDTO.keepInternalState();
+
         depositDTOList.add(depositDTO);
       }
 
@@ -397,20 +417,14 @@ public class DatabaseHelper {
       ResultSet resultSet = balanceSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        BalanceDTO balanceDTO = new BalanceDTO(resultSet.getInt("address_number"));
-
-        balanceDTO.setBlockNumber(resultSet.getInt("block_number"));
-        balanceDTO.setTransactionCount(resultSet.getInt("transaction_count"));
-
-        balanceDTO.setVout(resultSet.getBigDecimal("vout"));
-        balanceDTO.setVin(resultSet.getBigDecimal("vin"));
-
-        balanceDTOList.add(balanceDTO);
+        balanceDTOList.add(createBalanceDTO(resultSet));
       }
 
       resultSet.close();
 
       return balanceDTOList;
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
       throw new DfxException("getBalanceDTOList", e);
     }
@@ -430,20 +444,39 @@ public class DatabaseHelper {
       ResultSet resultSet = balanceByAddressNumberSelectStatement.executeQuery();
 
       if (resultSet.next()) {
-        balanceDTO = new BalanceDTO(resultSet.getInt("address_number"));
-
-        balanceDTO.setBlockNumber(resultSet.getInt("block_number"));
-        balanceDTO.setTransactionCount(resultSet.getInt("transaction_count"));
-
-        balanceDTO.setVout(resultSet.getBigDecimal("vout"));
-        balanceDTO.setVin(resultSet.getBigDecimal("vin"));
+        balanceDTO = createBalanceDTO(resultSet);
       }
 
       resultSet.close();
 
       return balanceDTO;
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
       throw new DfxException("getBalanceDTOByAddressNumber", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private BalanceDTO createBalanceDTO(@Nonnull ResultSet resultSet) throws DfxException {
+    LOGGER.trace("createBalanceDTO() ...");
+
+    try {
+      BalanceDTO balanceDTO = new BalanceDTO(resultSet.getInt("address_number"));
+
+      balanceDTO.setBlockNumber(resultSet.getInt("block_number"));
+      balanceDTO.setTransactionCount(resultSet.getInt("transaction_count"));
+
+      balanceDTO.setVout(resultSet.getBigDecimal("vout"));
+      balanceDTO.setVin(resultSet.getBigDecimal("vin"));
+
+      balanceDTO.keepInternalState();
+
+      return balanceDTO;
+    } catch (Exception e) {
+      throw new DfxException("createBalanceDTO", e);
     }
   }
 
@@ -553,6 +586,8 @@ public class DatabaseHelper {
         stakingDTO.setLastOutBlockNumber(resultSet.getInt("last_out_block_number"));
         stakingDTO.setVout(resultSet.getBigDecimal("vout"));
 
+        stakingDTO.keepInternalState();
+
         stakingDTOList.add(stakingDTO);
       }
 
@@ -561,6 +596,31 @@ public class DatabaseHelper {
       return stakingDTOList;
     } catch (Exception e) {
       throw new DfxException("getStakingDTOList", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nonnull List<MasternodeWhitelistDTO> getMasternodeWhitelistDTOList() throws DfxException {
+    LOGGER.trace("getMasternodeWhitelistDTOList() ...");
+
+    try {
+      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = new ArrayList<>();
+
+      ResultSet resultSet = masternodeSelectStatement.executeQuery();
+
+      while (resultSet.next()) {
+        masternodeWhitelistDTOList.add(createMasternodeWhitelistDTO(resultSet));
+      }
+
+      resultSet.close();
+
+      return masternodeWhitelistDTOList;
+    } catch (DfxException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new DfxException("getMasternodeWhitelistDTOList", e);
     }
   }
 
@@ -578,18 +638,44 @@ public class DatabaseHelper {
       ResultSet resultSet = masternodeWhitelistByOwnerAddressSelectStatement.executeQuery();
 
       if (resultSet.next()) {
-        masternodeWhitelistDTO = new MasternodeWhitelistDTO();
-
-        masternodeWhitelistDTO.setWalletId(resultSet.getInt("wallet_id"));
-        masternodeWhitelistDTO.setIdx(resultSet.getInt("idx"));
-        masternodeWhitelistDTO.setOwnerAddress(resultSet.getString("owner_address"));
+        masternodeWhitelistDTO = createMasternodeWhitelistDTO(resultSet);
       }
 
       resultSet.close();
 
       return masternodeWhitelistDTO;
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
       throw new DfxException("getMasternodeWhitelistDTOByOwnerAddress", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private MasternodeWhitelistDTO createMasternodeWhitelistDTO(@Nonnull ResultSet resultSet) throws DfxException {
+    LOGGER.trace("createMasternodeWhitelistDTO() ...");
+
+    try {
+      MasternodeWhitelistDTO masternodeWhitelistDTO =
+          new MasternodeWhitelistDTO(
+              resultSet.getInt("wallet_id"),
+              resultSet.getInt("idx"),
+              resultSet.getString("owner_address"));
+
+      masternodeWhitelistDTO.setTransactionId(resultSet.getString("txid"));
+      masternodeWhitelistDTO.setOperatorAddress(resultSet.getString("operator_address"));
+      masternodeWhitelistDTO.setRewardAddress(resultSet.getString("reward_address"));
+      masternodeWhitelistDTO.setCreationBlockNumber(resultSet.getInt("creation_block_number"));
+      masternodeWhitelistDTO.setResignBlockNumber(resultSet.getInt("resign_block_number"));
+      masternodeWhitelistDTO.setState(resultSet.getString("state"));
+
+      masternodeWhitelistDTO.keepInternalState();
+
+      return masternodeWhitelistDTO;
+    } catch (Exception e) {
+      throw new DfxException("createMasternodeWhitelistDTO", e);
     }
   }
 }

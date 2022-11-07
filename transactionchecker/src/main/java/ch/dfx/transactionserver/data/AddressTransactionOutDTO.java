@@ -4,12 +4,10 @@ import java.math.BigDecimal;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class AddressTransactionOutDTO {
+public class AddressTransactionOutDTO extends DatabaseDTO {
   private final Integer blockNumber;
   private final Integer transactionNumber;
   private final Integer voutNumber;
@@ -62,10 +60,5 @@ public class AddressTransactionOutDTO {
 
   public void setType(String type) {
     this.type = type;
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

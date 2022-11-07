@@ -5,12 +5,10 @@ import java.math.BigDecimal;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class BalanceDTO {
+public class BalanceDTO extends DatabaseDTO {
   private final int addressNumber;
   private int blockNumber = -1;
   private int transactionCount = 0;
@@ -90,10 +88,5 @@ public class BalanceDTO {
 
   public void setDepositDTO(@Nullable DepositDTO depositDTO) {
     this.depositDTO = depositDTO;
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

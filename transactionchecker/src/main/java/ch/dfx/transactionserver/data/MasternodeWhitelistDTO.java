@@ -1,47 +1,92 @@
 package ch.dfx.transactionserver.data;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class MasternodeWhitelistDTO {
-  private int walletId = -1;
-  private int idx = -1;
-  private String ownerAddress = null;
+public class MasternodeWhitelistDTO extends DatabaseDTO {
+  private final int walletId;
+  private final int idx;
+  private final String ownerAddress;
+
+  // ...
+  private String transactionId = null;
+  private String operatorAddress = null;
+  private String rewardAddress = null;
+
+  private Integer creationBlockNumber = null;
+  private Integer resignBlockNumber = null;
+
+  private String state = null;
 
   /**
    * 
    */
-  public MasternodeWhitelistDTO() {
+  public MasternodeWhitelistDTO(
+      int walletId,
+      int idx,
+      String ownerAddress) {
+    this.walletId = walletId;
+    this.idx = idx;
+    this.ownerAddress = ownerAddress;
   }
 
   public int getWalletId() {
     return walletId;
   }
 
-  public void setWalletId(int walletId) {
-    this.walletId = walletId;
-  }
-
   public int getIdx() {
     return idx;
-  }
-
-  public void setIdx(int idx) {
-    this.idx = idx;
   }
 
   public String getOwnerAddress() {
     return ownerAddress;
   }
 
-  public void setOwnerAddress(String ownerAddress) {
-    this.ownerAddress = ownerAddress;
+  public String getTransactionId() {
+    return transactionId;
   }
 
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
+  public void setTransactionId(String transactionId) {
+    this.transactionId = transactionId;
+  }
+
+  public String getOperatorAddress() {
+    return operatorAddress;
+  }
+
+  public void setOperatorAddress(String operatorAddress) {
+    this.operatorAddress = operatorAddress;
+  }
+
+  public String getRewardAddress() {
+    return rewardAddress;
+  }
+
+  public void setRewardAddress(String rewardAddress) {
+    this.rewardAddress = rewardAddress;
+  }
+
+  public Integer getCreationBlockNumber() {
+    return creationBlockNumber;
+  }
+
+  public void setCreationBlockNumber(Integer creationBlockNumber) {
+    this.creationBlockNumber = creationBlockNumber;
+  }
+
+  public Integer getResignBlockNumber() {
+    return resignBlockNumber;
+  }
+
+  public void setResignBlockNumber(Integer resignBlockNumber) {
+    this.resignBlockNumber = resignBlockNumber;
+  }
+
+  public String getState() {
+    return state;
+  }
+
+  public void setState(String state) {
+    this.state = state;
   }
 }

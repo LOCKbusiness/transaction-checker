@@ -12,8 +12,8 @@ import ch.dfx.transactionserver.database.H2DBManagerImpl;
 /**
  * 
  */
-public class DepositBuilderMain {
-  private static final Logger LOGGER = LogManager.getLogger(DepositBuilderMain.class);
+public class MasternodeBuilderMain {
+  private static final Logger LOGGER = LogManager.getLogger(MasternodeBuilderMain.class);
 
   /**
    * 
@@ -30,7 +30,7 @@ public class DepositBuilderMain {
       String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...
-      System.setProperty("logFilename", "depositbuilder-" + network + "-" + environment);
+      System.setProperty("logFilename", "masternodebuilder-" + network + "-" + environment);
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
@@ -45,8 +45,8 @@ public class DepositBuilderMain {
       H2DBManager databaseManager = new H2DBManagerImpl();
 
       // ...
-      DepositBuilder depositBuilder = new DepositBuilder(databaseManager);
-      depositBuilder.build();
+      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(databaseManager);
+      masternodeBuilder.build();
     } catch (Exception e) {
       LOGGER.error("Fatal Error" + e);
       System.exit(-1);

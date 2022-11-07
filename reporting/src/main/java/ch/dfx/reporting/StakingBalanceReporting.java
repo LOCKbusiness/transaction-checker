@@ -1,6 +1,5 @@
-package ch.dfx;
+package ch.dfx.reporting;
 
-import java.io.File;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.Comparator;
@@ -8,13 +7,13 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
-import ch.dfx.excel.ExcelWriter;
 import ch.dfx.excel.data.CellData;
 import ch.dfx.excel.data.RowData;
 import ch.dfx.excel.data.RowDataList;
@@ -22,105 +21,60 @@ import ch.dfx.transactionserver.data.BalanceDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.LiquidityDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
-import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.H2DBManager;
-import ch.dfx.transactionserver.database.H2DBManagerImpl;
-import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
 /**
  * 
  */
-public class Reporting implements SchedulerProviderRunnable {
-  private static final Logger LOGGER = LogManager.getLogger(Reporting.class);
-
-  private final H2DBManager databaseManager;
-  private final DatabaseHelper databaseHelper;
-
-  private boolean isProcessing = false;
+public class StakingBalanceReporting extends Reporting {
+  private static final Logger LOGGER = LogManager.getLogger(StakingBalanceReporting.class);
 
   /**
    * 
    */
-  public Reporting() {
-    this.databaseManager = new H2DBManagerImpl();
-    this.databaseHelper = new DatabaseHelper();
+  public StakingBalanceReporting(@Nonnull H2DBManager databaseManager) {
+    super(databaseManager);
   }
 
-  @Override
-  public boolean isProcessing() {
-    return isProcessing;
-  }
+  /**
+   * 
+   */
+  public void report() throws DfxException {
+    LOGGER.debug("report()");
 
-  @Override
-  public void run() {
-    LOGGER.trace("run()");
+    String googleRootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
+    String googleFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STAKING_BALANCE_SHEET);
 
-    isProcessing = true;
+    if (!StringUtils.isEmpty(googleFileName)) {
+      Connection connection = databaseManager.openConnection();
+      databaseHelper.openStatements(connection);
 
-    try {
-      fillExcel();
+      List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
 
-      LOGGER.debug("Reporting updated");
-    } catch (Throwable t) {
-      LOGGER.error("run", t);
-    } finally {
-      isProcessing = false;
+      RowDataList rowDataList = createRowDataList(liquidityDTOList);
+      writeExcel(googleRootPath, googleFileName, rowDataList);
+
+      databaseHelper.closeStatements();
+      databaseManager.closeConnection(connection);
     }
   }
 
   /**
    * 
    */
-  private void fillExcel() throws DfxException {
-    LOGGER.trace("fillExcel()");
+  private RowDataList createRowDataList(@Nonnull List<LiquidityDTO> liquidityDTOList) throws DfxException {
+    LOGGER.trace("createRowDataList()");
 
-    Connection connection = databaseManager.openConnection();
-    databaseHelper.openStatements(connection);
+    RowDataList rowDataList = new RowDataList();
 
-    List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
-    fillExcel(liquidityDTOList);
+    // ...
+    for (LiquidityDTO liquidityDTO : liquidityDTOList) {
+      LOGGER.debug("Liquidity Address: " + liquidityDTO.getAddress());
 
-    databaseHelper.closeStatements();
-    databaseManager.closeConnection(connection);
-  }
-
-  /**
-   * 
-   */
-  private void fillExcel(@Nonnull List<LiquidityDTO> liquidityDTOList) throws DfxException {
-    LOGGER.trace("fillExcel()");
-
-    try {
-      String googleRootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
-      String googleStakingBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STAKING_BALANCE_SHEET);
-
-      LOGGER.debug("Staking Balance Sheet: " + googleStakingBalanceSheet);
-
-      // ...
-      File excelStakingBalanceFile = new File(googleRootPath, googleStakingBalanceSheet);
-
-      ExcelWriter excelWriter = new ExcelWriter();
-      excelWriter.openWorkbook(excelStakingBalanceFile);
-
-      // ...
-      RowDataList rowDataList = new RowDataList();
-
-      // ...
-      for (LiquidityDTO liquidityDTO : liquidityDTOList) {
-        LOGGER.debug("Liquidity Address: " + liquidityDTO.getAddress());
-
-        addDeposit(liquidityDTO, rowDataList);
-      }
-
-      excelWriter.insertRowData(rowDataList);
-
-      // ...
-      excelWriter.writeWorkbook(excelStakingBalanceFile);
-    } catch (DfxException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new DfxException("fillExcel", e);
+      addDeposit(liquidityDTO, rowDataList);
     }
+
+    return rowDataList;
   }
 
   /**

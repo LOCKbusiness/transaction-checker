@@ -19,7 +19,6 @@ public class StakingBuilderMain {
    * 
    */
   public static void main(String[] args) {
-
     try {
       Class.forName("org.h2.Driver");
 

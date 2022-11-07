@@ -12,6 +12,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.builder.BalanceBuilder;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
 import ch.dfx.transactionserver.builder.DepositBuilder;
+import ch.dfx.transactionserver.builder.MasternodeBuilder;
 import ch.dfx.transactionserver.builder.StakingBuilder;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
@@ -37,6 +38,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private int depositErrorCounter = 0;
   private int balanceErrorCounter = 0;
   private int stakingErrorCounter = 0;
+  private int masternodeErrorCounter = 0;
 
   /**
    * 
@@ -92,6 +94,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     executeDeposit();
     executeBalance();
     executeStaking();
+    executeMasternode();
   }
 
   /**
@@ -189,13 +192,32 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
+  private void executeMasternode() {
+    LOGGER.trace("executeMasternode() ...");
+
+    try {
+      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(databaseManager);
+      masternodeBuilder.build();
+    } catch (DfxException e) {
+      masternodeErrorCounter++;
+      LOGGER.error("executeMasternode: masternodeErrorCounter=" + masternodeErrorCounter, e.getMessage());
+    } catch (Exception e) {
+      masternodeErrorCounter++;
+      LOGGER.error("executeMasternode: masternodeErrorCounter=" + masternodeErrorCounter, e);
+    }
+  }
+
+  /**
+   * 
+   */
   private void checkErrorCounter() {
     LOGGER.trace("checkErrorCounter() ...");
 
     if (2 < databaseErrorCounter
         || 2 < depositErrorCounter
         || 2 < balanceErrorCounter
-        || 2 < stakingErrorCounter) {
+        || 2 < stakingErrorCounter
+        || 2 < masternodeErrorCounter) {
       LOGGER.error("Too many errors, will exit now");
       SchedulerProvider.getInstance().exit(-1);
     }

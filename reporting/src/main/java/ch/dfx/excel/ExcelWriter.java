@@ -39,6 +39,7 @@ public class ExcelWriter {
   private CellStyle boldCellStyle = null;
   private Font boldFont = null;
 
+  private CellStyle decimalNumberCellStyle = null;
   private CellStyle numberCellStyle = null;
 
   /**
@@ -74,8 +75,11 @@ public class ExcelWriter {
 
     // ...
     DataFormat dataFormat = workbook.createDataFormat();
+    decimalNumberCellStyle = workbook.createCellStyle();
+    decimalNumberCellStyle.setDataFormat(dataFormat.getFormat("#,##0.00000000"));
+
     numberCellStyle = workbook.createCellStyle();
-    numberCellStyle.setDataFormat(dataFormat.getFormat("#,##0.00000000"));
+    numberCellStyle.setDataFormat(dataFormat.getFormat("#0"));
   }
 
   /**
@@ -154,8 +158,14 @@ public class ExcelWriter {
       if (String.class == valueClass) {
         cell.setCellValue((String) value);
       } else if (BigDecimal.class == valueClass) {
-        cell.setCellStyle(numberCellStyle);
+        cell.setCellStyle(decimalNumberCellStyle);
         cell.setCellValue(((BigDecimal) value).doubleValue());
+      } else if (Integer.class == valueClass) {
+        cell.setCellStyle(numberCellStyle);
+        cell.setCellValue(((Integer) value).doubleValue());
+      } else if (Long.class == valueClass) {
+        cell.setCellStyle(numberCellStyle);
+        cell.setCellValue(((Long) value).doubleValue());
       } else {
         throw new DfxException("unknown value class " + valueClass.getSimpleName());
       }

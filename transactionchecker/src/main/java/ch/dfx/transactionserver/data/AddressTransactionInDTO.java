@@ -4,12 +4,10 @@ import java.math.BigDecimal;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class AddressTransactionInDTO {
+public class AddressTransactionInDTO extends DatabaseDTO {
   private final Integer blockNumber;
   private final Integer transactionNumber;
   private final Integer vinNumber;
@@ -68,10 +66,5 @@ public class AddressTransactionInDTO {
 
   public void setVin(BigDecimal vin) {
     this.vin = vin;
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

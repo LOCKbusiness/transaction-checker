@@ -50,7 +50,7 @@ public class StakingBuilder {
    * 
    */
   public void build() throws DfxException {
-    LOGGER.trace("build() ...");
+    LOGGER.debug("build() ...");
 
     Connection connection = null;
 
@@ -167,7 +167,7 @@ public class StakingBuilder {
    * 
    */
   private void calcStakingBalance(@Nonnull Connection connection) throws DfxException {
-    LOGGER.debug("calcStakingBalance() ...");
+    LOGGER.trace("calcStakingBalance() ...");
 
     // ...
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();

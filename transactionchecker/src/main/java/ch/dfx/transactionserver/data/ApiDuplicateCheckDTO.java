@@ -1,11 +1,9 @@
 package ch.dfx.transactionserver.data;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class ApiDuplicateCheckDTO {
+public class ApiDuplicateCheckDTO extends DatabaseDTO {
   private Integer withdrawalId = null;
   private String transactionId = null;
 
@@ -29,10 +27,5 @@ public class ApiDuplicateCheckDTO {
 
   public void setTransactionId(String transactionId) {
     this.transactionId = transactionId;
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

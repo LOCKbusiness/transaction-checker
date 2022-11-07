@@ -2,12 +2,10 @@ package ch.dfx.transactionserver.data;
 
 import javax.annotation.Nullable;
 
-import ch.dfx.common.TransactionCheckerUtils;
-
 /**
  * 
  */
-public class DepositDTO {
+public class DepositDTO extends DatabaseDTO {
   private int liquidityAddressNumber = -1;
   private int depositAddressNumber = -1;
   private int customerAddressNumber = -1;
@@ -86,10 +84,5 @@ public class DepositDTO {
 
   public void setCustomerAddress(@Nullable String customerAddress) {
     this.customerAddress = customerAddress;
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

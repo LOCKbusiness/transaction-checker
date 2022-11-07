@@ -6,6 +6,9 @@ import ch.dfx.common.TransactionCheckerUtils;
  * 
  */
 public class OpenTransactionPayloadDTO {
+  // ...
+  private String type = null;
+
   // Masternode ...
   private String ownerWallet = null;
   private Integer accountIndex = null;
@@ -17,6 +20,14 @@ public class OpenTransactionPayloadDTO {
    * 
    */
   public OpenTransactionPayloadDTO() {
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
   }
 
   public String getOwnerWallet() {

@@ -145,46 +145,74 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
     BigDecimal totalBalance = BigDecimal.ZERO;
 
-    // ...
+    // enabled ...
     long numberOfEnabledMasternodes = masternodeWhitelistDTOList.stream().filter(dto -> "ENABLED".equals(dto.getState())).count();
     BigDecimal masternodeBalance = BigDecimal.valueOf(MASTERNODE_BALANCE).multiply(BigDecimal.valueOf(numberOfEnabledMasternodes));
     totalBalance = totalBalance.add(masternodeBalance);
 
     // ...
-    RowData rowData1 = new RowData();
-    rowData1.addCellData(new CellData().setValue("Masternode (enabled):"));
-    rowData1.addCellData(new CellData().setValue(numberOfEnabledMasternodes));
-    rowData1.addCellData(new CellData().setValue(MASTERNODE_BALANCE));
-    rowData1.addCellData(new CellData().setValue(masternodeBalance));
+    RowData enabledRowData = new RowData();
+    enabledRowData.addCellData(new CellData().setValue("Masternode (enabled):"));
+    enabledRowData.addCellData(new CellData().setValue(numberOfEnabledMasternodes));
+    enabledRowData.addCellData(new CellData().setValue(MASTERNODE_BALANCE));
+    enabledRowData.addCellData(new CellData().setValue(masternodeBalance));
 
-    rowDataList.add(rowData1);
+    rowDataList.add(enabledRowData);
+
+    // pre enabled ...
+    long numberOfPreEnabledMasternodes = masternodeWhitelistDTOList.stream().filter(dto -> "PRE_ENABLED".equals(dto.getState())).count();
+    BigDecimal preEnabledMasternodeBalance = BigDecimal.valueOf(MASTERNODE_BALANCE).multiply(BigDecimal.valueOf(numberOfPreEnabledMasternodes));
+    totalBalance = totalBalance.add(preEnabledMasternodeBalance);
 
     // ...
+    RowData preEnabledRowData = new RowData();
+    preEnabledRowData.addCellData(new CellData().setValue("Masternode (pre enabled):"));
+    preEnabledRowData.addCellData(new CellData().setValue(numberOfPreEnabledMasternodes));
+    preEnabledRowData.addCellData(new CellData().setValue(MASTERNODE_BALANCE));
+    preEnabledRowData.addCellData(new CellData().setValue(preEnabledMasternodeBalance));
+
+    rowDataList.add(preEnabledRowData);
+
+    // pre resigned ...
     long numberOfPreResignedMasternodes = masternodeWhitelistDTOList.stream().filter(dto -> "PRE_RESIGNED".equals(dto.getState())).count();
-    BigDecimal preresignedMasternodeBalance = BigDecimal.valueOf(MASTERNODE_BALANCE).multiply(BigDecimal.valueOf(numberOfPreResignedMasternodes));
-    totalBalance = totalBalance.add(preresignedMasternodeBalance);
+    BigDecimal preResignedMasternodeBalance = BigDecimal.valueOf(MASTERNODE_BALANCE).multiply(BigDecimal.valueOf(numberOfPreResignedMasternodes));
+    totalBalance = totalBalance.add(preResignedMasternodeBalance);
 
     // ...
-    RowData rowData2 = new RowData();
-    rowData2.addCellData(new CellData().setValue("Masternode (pre resigned):"));
-    rowData2.addCellData(new CellData().setValue(numberOfPreResignedMasternodes));
-    rowData2.addCellData(new CellData().setValue(MASTERNODE_BALANCE));
-    rowData2.addCellData(new CellData().setValue(preresignedMasternodeBalance));
+    RowData preResignedRowData = new RowData();
+    preResignedRowData.addCellData(new CellData().setValue("Masternode (pre resigned):"));
+    preResignedRowData.addCellData(new CellData().setValue(numberOfPreResignedMasternodes));
+    preResignedRowData.addCellData(new CellData().setValue(MASTERNODE_BALANCE));
+    preResignedRowData.addCellData(new CellData().setValue(preResignedMasternodeBalance));
 
-    rowDataList.add(rowData2);
+    rowDataList.add(preResignedRowData);
+
+    // resigned ...
+    long numberOfResignedMasternodes = masternodeWhitelistDTOList.stream().filter(dto -> "RESIGNED".equals(dto.getState())).count();
+    BigDecimal resignedMasternodeBalance = BigDecimal.ZERO;
+    totalBalance = totalBalance.add(resignedMasternodeBalance);
 
     // ...
+    RowData resignedRowData = new RowData();
+    resignedRowData.addCellData(new CellData().setValue("Masternode (resigned):"));
+    resignedRowData.addCellData(new CellData().setValue(numberOfResignedMasternodes));
+    resignedRowData.addCellData(new CellData().setValue(null));
+    resignedRowData.addCellData(new CellData().setValue(resignedMasternodeBalance));
+
+    rowDataList.add(resignedRowData);
+
+    // total fee ...
     long totalNumberOfMasternodes = masternodeWhitelistDTOList.stream().filter(dto -> null != dto.getState()).count();
     BigDecimal totalMasternodeFee = BigDecimal.valueOf(MASTERNODE_FEE).multiply(BigDecimal.valueOf(totalNumberOfMasternodes));
     totalBalance = totalBalance.add(totalMasternodeFee);
 
-    RowData rowData3 = new RowData();
-    rowData3.addCellData(new CellData().setValue("Masternode Fee:"));
-    rowData3.addCellData(new CellData().setValue(totalNumberOfMasternodes));
-    rowData3.addCellData(new CellData().setValue(MASTERNODE_FEE));
-    rowData3.addCellData(new CellData().setValue(totalMasternodeFee));
+    RowData totalFeeRowData = new RowData();
+    totalFeeRowData.addCellData(new CellData().setValue("Masternode Fee:"));
+    totalFeeRowData.addCellData(new CellData().setValue(totalNumberOfMasternodes));
+    totalFeeRowData.addCellData(new CellData().setValue(MASTERNODE_FEE));
+    totalFeeRowData.addCellData(new CellData().setValue(totalMasternodeFee));
 
-    rowDataList.add(rowData3);
+    rowDataList.add(totalFeeRowData);
 
     return totalBalance;
   }

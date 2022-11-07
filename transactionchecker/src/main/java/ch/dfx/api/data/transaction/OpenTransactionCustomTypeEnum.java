@@ -7,27 +7,29 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
+
 /**
  * 
  */
 public enum OpenTransactionCustomTypeEnum {
-  CREATE_MASTERNODE("CreateMasternode", OpenTransactionTypeEnum.MASTERNODE),
-  RESIGN_MASTERNODE("ResignMasternode", OpenTransactionTypeEnum.MASTERNODE),
-  UPDATE_MASTERNODE("UpdateMasternode", OpenTransactionTypeEnum.MASTERNODE),
+  CREATE_MASTERNODE("CreateMasternode", ApiTransactionTypeEnum.CREATE_MASTERNODE),
+  RESIGN_MASTERNODE("ResignMasternode", ApiTransactionTypeEnum.RESIGN_MASTERNODE),
 
-  VAULT("Vault", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  DEPOSIT_TO_VAULT("DepositToVault", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  WITHDRAW_FROM_VAULT("WithdrawFromVault", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  TAKE_LOAN("TakeLoan", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  PAYBACK_LOAN("PaybackLoan", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  ADD_POOL_LIQUIDITY("AddPoolLiquidity", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  REMOV_EPOOL_LIQUIDITY("RemovePoolLiquidity", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  POOL_SWAP("PoolSwap", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  ANY_ACCOUNTS_TO_ACCOUNTS("AnyAccountsToAccounts", OpenTransactionTypeEnum.YIELD_MASCHINE);
+  VAULT("Vault", ApiTransactionTypeEnum.CREATE_VAULT),
+  DEPOSIT_TO_VAULT("DepositToVault", ApiTransactionTypeEnum.DEPOSIT_TO_VAULT),
+  WITHDRAW_FROM_VAULT("WithdrawFromVault", ApiTransactionTypeEnum.WITHDRAW_FROM_VAULT),
+  TAKE_LOAN("TakeLoan", ApiTransactionTypeEnum.TAKE_LOAN),
+  PAYBACK_LOAN("PaybackLoan", ApiTransactionTypeEnum.PAYBACK_LOAN),
+  ADD_POOL_LIQUIDITY("AddPoolLiquidity", ApiTransactionTypeEnum.POOL_ADD_LIQUIDITY),
+  REMOVE_POOL_LIQUIDITY("RemovePoolLiquidity", ApiTransactionTypeEnum.POOL_REMOVE_LIQUIDITY),
+
+  POOL_SWAP("PoolSwap", ApiTransactionTypeEnum.COMPOSITE_SWAP),
+  ANY_ACCOUNTS_TO_ACCOUNTS("AnyAccountsToAccounts", ApiTransactionTypeEnum.ACCOUNT_TO_ACCOUNT);
 
   // ...
   private final String chainTypeString;
-  private final OpenTransactionTypeEnum openTransactionType;
+  private final ApiTransactionTypeEnum apiTransactionType;
 
   /**
    * 
@@ -48,9 +50,9 @@ public enum OpenTransactionCustomTypeEnum {
    */
   private OpenTransactionCustomTypeEnum(
       @Nonnull String chainTypeString,
-      @Nonnull OpenTransactionTypeEnum openTransactionType) {
+      @Nonnull ApiTransactionTypeEnum apiTransactionType) {
     this.chainTypeString = chainTypeString;
-    this.openTransactionType = openTransactionType;
+    this.apiTransactionType = apiTransactionType;
   }
 
   /**
@@ -63,7 +65,7 @@ public enum OpenTransactionCustomTypeEnum {
   /**
    * 
    */
-  public OpenTransactionTypeEnum getOpenTransactionType() {
-    return openTransactionType;
+  public ApiTransactionTypeEnum getApiTransactionType() {
+    return apiTransactionType;
   }
 }

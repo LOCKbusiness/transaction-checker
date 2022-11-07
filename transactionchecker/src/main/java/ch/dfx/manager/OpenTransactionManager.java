@@ -187,7 +187,8 @@ public class OpenTransactionManager {
           OpenTransactionCustomTypeEnum.createByChainType(decodeCustomTransaction.getType());
 
       if (null != openTransactionCustomType) {
-        openTransactionType = openTransactionCustomType.getOpenTransactionType();
+        ApiTransactionTypeEnum apiTransactionType = openTransactionCustomType.getApiTransactionType();
+        openTransactionType = apiTransactionType.getOpenTransactionType();
       } else {
         openTransactionType = OpenTransactionTypeEnum.UTXO;
       }

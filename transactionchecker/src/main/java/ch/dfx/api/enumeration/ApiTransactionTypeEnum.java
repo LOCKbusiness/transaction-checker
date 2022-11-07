@@ -14,30 +14,30 @@ import ch.dfx.api.data.transaction.OpenTransactionTypeEnum;
  */
 public enum ApiTransactionTypeEnum {
   // Masternode ...
-  CREATE_MASTERNODE("CREATE_MASTERNODE", OpenTransactionTypeEnum.MASTERNODE),
-  RESIGN_MASTERNODE("RESIGN_MASTERNODE", OpenTransactionTypeEnum.MASTERNODE),
+  CREATE_MASTERNODE("CreateMasternode", OpenTransactionTypeEnum.MASTERNODE),
+  RESIGN_MASTERNODE("ResignMasternode", OpenTransactionTypeEnum.MASTERNODE),
 
   // UTXO ...
-  SEND_FROM_LIQ("SEND_FROM_LIQ", OpenTransactionTypeEnum.UTXO),
-  SEND_TO_LIQ("SEND_TO_LIQ", OpenTransactionTypeEnum.UTXO),
+  SEND_FROM_LIQ("SendFromLiq", OpenTransactionTypeEnum.UTXO),
+  SEND_TO_LIQ("SendToLiq", OpenTransactionTypeEnum.UTXO),
 
-  UTXO_MERGE("UTXO_MERGE", OpenTransactionTypeEnum.UTXO),
-  UTXO_SPLIT("UTXO_SPLIT", OpenTransactionTypeEnum.UTXO),
+  UTXO_MERGE("UtxoMerge", OpenTransactionTypeEnum.UTXO),
+  UTXO_SPLIT("UtxoSplit", OpenTransactionTypeEnum.UTXO),
 
-  ACCOUNT_TO_ACCOUNT("ACCOUNT_TO_ACCOUNT", OpenTransactionTypeEnum.UTXO),
-  COMPOSITE_SWAP("COMPOSITE_SWAP", OpenTransactionTypeEnum.UTXO),
+  ACCOUNT_TO_ACCOUNT("AccountToAccount", OpenTransactionTypeEnum.UTXO),
+  COMPOSITE_SWAP("CompositeSwap", OpenTransactionTypeEnum.UTXO),
 
   // Withdrawal ...
-  WITHDRAWAL("WITHDRAWAL", OpenTransactionTypeEnum.WITHDRAWAL),
+  WITHDRAWAL("Withdrawal", OpenTransactionTypeEnum.WITHDRAWAL),
 
   // Yield Machine ...
-  CREATE_VAULT("CREATE_VAULT", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  DEPOSIT_TO_VAULT("DEPOSIT_TO_VAULT", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  WITHDRAW_FROM_VAULT("WITHDRAW_FROM_VAULT", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  TAKE_LOAN("TAKE_LOAN", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  PAYBACK_LOAN("PAYBACK_LOAN", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  POOL_ADD_LIQUIDITY("POOL_ADD_LIQUIDITY", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  POOL_REMOVE_LIQUIDITY("POOL_REMOVE_LIQUIDITY", OpenTransactionTypeEnum.YIELD_MASCHINE);
+  CREATE_VAULT("CreateVault", OpenTransactionTypeEnum.YIELD_MASCHINE),
+  DEPOSIT_TO_VAULT("DepositToVault", OpenTransactionTypeEnum.YIELD_MASCHINE),
+  WITHDRAW_FROM_VAULT("WithdrawFromVault", OpenTransactionTypeEnum.YIELD_MASCHINE),
+  TAKE_LOAN("TakeLoan", OpenTransactionTypeEnum.YIELD_MASCHINE),
+  PAYBACK_LOAN("PaybackLoan", OpenTransactionTypeEnum.YIELD_MASCHINE),
+  POOL_ADD_LIQUIDITY("PoolAddLiquidity", OpenTransactionTypeEnum.YIELD_MASCHINE),
+  POOL_REMOVE_LIQUIDITY("PoolRemoveLiquidity", OpenTransactionTypeEnum.YIELD_MASCHINE);
 
   // ...
   private final String typeAsString;

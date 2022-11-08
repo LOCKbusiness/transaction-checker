@@ -53,7 +53,7 @@ public class OpenTransactionManagerMasternodeTest {
    * 
    */
   @BeforeClass
-  public static void globalSetup() throws Exception {
+  public static void globalSetup() {
     if (!isSuiteContext) {
       TestUtils.globalSetup("opentransactionmanagermasternode");
     }

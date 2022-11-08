@@ -56,34 +56,38 @@ public class TestUtils {
   /**
    * 
    */
-  public static void globalSetup(@Nonnull String logPrefix) throws Exception {
-    // ...
-    String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+  public static void globalSetup(@Nonnull String logPrefix) {
+    try {
+      // ...
+      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
-    // ...
-    System.setProperty("logFilename", logPrefix + "-test-" + NETWORK + "-" + environment);
-    TransactionCheckerUtils.initLog4j("log4j2.xml");
+      // ...
+      System.setProperty("logFilename", logPrefix + "-test-" + NETWORK + "-" + environment);
+      TransactionCheckerUtils.initLog4j("log4j2.xml");
 
-    // ...
-    Properties properties = new Properties();
-    properties.put(PropertyEnum.LOCK_ADDRESS.name().toLowerCase(), "");
-    properties.put(PropertyEnum.LOCK_SIGNATURE.name().toLowerCase(), "");
-    properties.put(
-        PropertyEnum.LOCK_API_TEST_TOKEN.name().toLowerCase(),
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXRJZCI6NSwidXNlcklkIjozLCJhZGRyZXNzIjoidGYxcTJ0azN1bjJwZGVkZmQ1aHpjc21meGp5bTMyZGVsZ3Z0ZzlxaHp6IiwiYmxvY2tjaGFpbiI6IkRlRmlDaGFpbiIsInJvbGUiOiJUcmFuc2FjdGlvbkNoZWNrZXIiLCJpYXQiOjE2NjU4MjAxNzksImV4cCI6MTY2NTk5Mjk3OX0.lfyMpb49XtWV91dcsilj3gFWo7cvYZ6iVA4k2YDTXOE");
-    properties.put(PropertyEnum.LOCK_API_URL.name().toLowerCase(), API_URL);
+      // ...
+      Properties properties = new Properties();
+      properties.put(PropertyEnum.LOCK_ADDRESS.name().toLowerCase(), "");
+      properties.put(PropertyEnum.LOCK_SIGNATURE.name().toLowerCase(), "");
+      properties.put(
+          PropertyEnum.LOCK_API_TEST_TOKEN.name().toLowerCase(),
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXRJZCI6NSwidXNlcklkIjozLCJhZGRyZXNzIjoidGYxcTJ0azN1bjJwZGVkZmQ1aHpjc21meGp5bTMyZGVsZ3Z0ZzlxaHp6IiwiYmxvY2tjaGFpbiI6IkRlRmlDaGFpbiIsInJvbGUiOiJUcmFuc2FjdGlvbkNoZWNrZXIiLCJpYXQiOjE2NjU4MjAxNzksImV4cCI6MTY2NTk5Mjk3OX0.lfyMpb49XtWV91dcsilj3gFWo7cvYZ6iVA4k2YDTXOE");
+      properties.put(PropertyEnum.LOCK_API_URL.name().toLowerCase(), API_URL);
 
-    ConfigPropertyProvider.setup(properties);
+      ConfigPropertyProvider.setup(properties);
 
-    // ...
-    LOGGER.debug("globalSetup()");
+      // ...
+      LOGGER.debug("globalSetup()");
 
-    // ...
-    databaseManagerMock = mock(H2DBManager.class);
-    dataProviderMock = mock(DefiDataProvider.class);
+      // ...
+      databaseManagerMock = mock(H2DBManager.class);
+      dataProviderMock = mock(DefiDataProvider.class);
 
-    setupDatabase();
-    startHttpServer();
+      setupDatabase();
+      startHttpServer();
+    } catch (Exception e) {
+      LOGGER.error("globalSetup", e);
+    }
   }
 
   /**

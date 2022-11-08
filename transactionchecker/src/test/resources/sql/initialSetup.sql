@@ -66,18 +66,19 @@ CREATE UNIQUE INDEX idx1_address_transaction_in ON address_transaction_in(block_
 CREATE INDEX idx2_address_transaction_in ON address_transaction_in(block_number, transaction_number);
 CREATE INDEX idx3_address_transaction_in ON address_transaction_in(address_number);
 
--- =========
--- LIQUIDITY
--- =========
-CREATE TABLE IF NOT EXISTS liquidity (
-  address_number           BIGINT NOT NULL,
+-- ===============
+-- STAKING_ADDRESS
+-- ===============
+CREATE TABLE IF NOT EXISTS staking_address (
+  liquidity_address_number BIGINT NOT NULL,
+  reward_address_number    BIGINT NOT NULL DEFAULT -1,
   start_block_number       BIGINT NOT NULL,
   start_transaction_number BIGINT NOT NULL,
   change_time              TIMESTAMP WITH TIME ZONE
                            GENERATED ALWAYS AS CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX idx1_liquidity ON liquidity(address_number);
+CREATE UNIQUE INDEX idx1_staking_address ON staking_address(liquidity_address_number, reward_address_number);
 
 -- =======
 -- DEPOSIT

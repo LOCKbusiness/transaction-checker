@@ -10,10 +10,10 @@ VALUES (36029, 'tf1qe3qedn8zfhysdatxlh77m9me7crsj6k72ah3zp', '0014cc4196cce24dc9
 INSERT INTO public.address (number, address, hex)
 VALUES (17831, 'tf1qwufuhfrkyhprnsylxcj566lax7ntnza305sna7', '00147713cba47625c239c09f36254d6bfd37a6b98bb1');
 
--- =========
--- LIQUIDITY
--- =========
-INSERT INTO public.liquidity (address_number, start_block_number, start_transaction_number)
+-- ===============
+-- STAKING_ADDRESS
+-- ===============
+INSERT INTO public.staking_address (liquidity_address_number, start_block_number, start_transaction_number)
 VALUES (36031, 0, 0);
 
 -- =======

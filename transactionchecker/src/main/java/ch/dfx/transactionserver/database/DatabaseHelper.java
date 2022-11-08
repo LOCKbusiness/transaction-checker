@@ -16,8 +16,8 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.BalanceDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.data.LiquidityDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
+import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 
 /**
@@ -29,8 +29,8 @@ public class DatabaseHelper {
   private PreparedStatement addressByNumberSelectStatement = null;
   private PreparedStatement addressByAddressSelectStatement = null;
 
-  private PreparedStatement liquiditySelectStatement = null;
-  private PreparedStatement liquidityByAddressNumberSelectStatement = null;
+  private PreparedStatement stakingAddressSelectStatement = null;
+  private PreparedStatement stakingAddressByLiquidityAddressNumberSelectStatement = null;
 
   private PreparedStatement depositSelectStatement = null;
   private PreparedStatement depositByLiquidityAddressNumberSelectStatement = null;
@@ -68,20 +68,23 @@ public class DatabaseHelper {
       addressByAddressSelectStatement = connection.prepareStatement(addressByAddressSelectSql);
 
       // Liquidity ...
-      String liquiditySelectSql =
+      String stakingAddressSelectSql =
           "SELECT"
-              + " l.*,"
-              + " a.address"
+              + " s.*,"
+              + " a1.address AS liquidity_address,"
+              + " a2.address AS reward_address,"
               + " FROM"
-              + " public.liquidity l"
-              + " JOIN public.address a ON"
-              + " l.address_number = a.number";
-      liquiditySelectStatement = connection.prepareStatement(liquiditySelectSql);
+              + " public.staking_address s"
+              + " JOIN public.address a1 ON"
+              + " s.liquidity_address_number = a1.number"
+              + " LEFT JOIN public.address a2 ON"
+              + " s.reward_address_number = a2.number";
+      stakingAddressSelectStatement = connection.prepareStatement(stakingAddressSelectSql);
 
-      String liquidityByAddressNumberSelectSql =
-          liquiditySelectSql
-              + " WHERE l.address_number=?";
-      liquidityByAddressNumberSelectStatement = connection.prepareStatement(liquidityByAddressNumberSelectSql);
+      String stakingAddressByLiquidityAddressNumberSelectSql =
+          stakingAddressSelectSql
+              + " WHERE s.liquidity_address_number=? AND s.reward_address_number=-1";
+      stakingAddressByLiquidityAddressNumberSelectStatement = connection.prepareStatement(stakingAddressByLiquidityAddressNumberSelectSql);
 
       // Deposit ...
       String depositSelectSql =
@@ -181,8 +184,8 @@ public class DatabaseHelper {
       addressByNumberSelectStatement.close();
       addressByAddressSelectStatement.close();
 
-      liquiditySelectStatement.close();
-      liquidityByAddressNumberSelectStatement.close();
+      stakingAddressSelectStatement.close();
+      stakingAddressByLiquidityAddressNumberSelectStatement.close();
 
       depositSelectStatement.close();
       depositByLiquidityAddressNumberSelectStatement.close();
@@ -268,75 +271,78 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public @Nonnull List<LiquidityDTO> getLiquidityDTOList() throws DfxException {
-    LOGGER.trace("getLiquidityDTOList() ...");
+  public @Nonnull List<StakingAddressDTO> getStakingAddressDTOList() throws DfxException {
+    LOGGER.trace("getStakingAddressList() ...");
 
     try {
-      List<LiquidityDTO> liquidityDTOList = new ArrayList<>();
+      List<StakingAddressDTO> stakingAddressDTOList = new ArrayList<>();
 
-      ResultSet resultSet = liquiditySelectStatement.executeQuery();
+      ResultSet resultSet = stakingAddressSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        liquidityDTOList.add(createLiquidityDTO(resultSet));
-      }
-      return liquidityDTOList;
-    } catch (DfxException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new DfxException("getLiquidityDTOList", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  public @Nonnull LiquidityDTO getLiquidityDTOByAddressNumber(int addressNumber) throws DfxException {
-    LOGGER.trace("getLiquidityDTOByAddressNumber() ...");
-
-    try {
-      LiquidityDTO liquidityDTO = null;
-
-      liquidityByAddressNumberSelectStatement.setInt(1, addressNumber);
-
-      ResultSet resultSet = liquidityByAddressNumberSelectStatement.executeQuery();
-
-      if (resultSet.next()) {
-        liquidityDTO = createLiquidityDTO(resultSet);
-      }
-
-      if (null == liquidityDTO) {
-        throw new DfxException("Liquidity not found by address " + addressNumber);
+        stakingAddressDTOList.add(createStakingAddressDTO(resultSet));
       }
 
       resultSet.close();
 
-      return liquidityDTO;
+      return stakingAddressDTOList;
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
-      throw new DfxException("getLiquidityDTOByAddressNumber", e);
+      throw new DfxException("getStakingAddressList", e);
     }
   }
 
   /**
    * 
    */
-  private LiquidityDTO createLiquidityDTO(@Nonnull ResultSet resultSet) throws DfxException {
-    LOGGER.trace("createLiquidityDTO() ...");
+  public @Nullable StakingAddressDTO getStakingAddressDTOByLiquidityAddressNumber(int liquidityAddressNumber) throws DfxException {
+    LOGGER.trace("getStakingAddressDTOByLiquidityAddressNumber() ...");
 
     try {
-      LiquidityDTO liquidityDTO = new LiquidityDTO();
+      StakingAddressDTO stakingAddressDTO = null;
 
-      liquidityDTO.setAddressNumber(resultSet.getInt("address_number"));
-      liquidityDTO.setAddress(resultSet.getString("address"));
-      liquidityDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
-      liquidityDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
+      stakingAddressByLiquidityAddressNumberSelectStatement.setInt(1, liquidityAddressNumber);
 
-      liquidityDTO.keepInternalState();
+      ResultSet resultSet = stakingAddressByLiquidityAddressNumberSelectStatement.executeQuery();
 
-      return liquidityDTO;
+      if (resultSet.next()) {
+        stakingAddressDTO = createStakingAddressDTO(resultSet);
+      }
+
+      resultSet.close();
+
+      return stakingAddressDTO;
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
-      throw new DfxException("createLiquidityDTO", e);
+      throw new DfxException("getStakingAddressDTOByLiquidityAddressNumber", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private StakingAddressDTO createStakingAddressDTO(@Nonnull ResultSet resultSet) throws DfxException {
+    LOGGER.trace("createStakingAddressDTO() ...");
+
+    try {
+      StakingAddressDTO stakingAddressDTO = new StakingAddressDTO();
+
+      stakingAddressDTO.setLiquidityAddressNumber(resultSet.getInt("liquidity_address_number"));
+      stakingAddressDTO.setLiquidityAddress(resultSet.getString("liquidity_address"));
+
+      stakingAddressDTO.setRewardAddressNumber(resultSet.getInt("reward_address_number"));
+      stakingAddressDTO.setRewardAddress(resultSet.getString("reward_address"));
+
+      stakingAddressDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
+      stakingAddressDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
+
+      stakingAddressDTO.keepInternalState();
+
+      return stakingAddressDTO;
+    } catch (Exception e) {
+      throw new DfxException("createStakingAddressDTO", e);
     }
   }
 

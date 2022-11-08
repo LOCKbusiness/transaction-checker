@@ -19,7 +19,7 @@ import ch.dfx.excel.data.RowData;
 import ch.dfx.excel.data.RowDataList;
 import ch.dfx.transactionserver.data.BalanceDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.data.LiquidityDTO;
+import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.H2DBManager;
 
@@ -49,9 +49,9 @@ public class StakingBalanceReporting extends Reporting {
       Connection connection = databaseManager.openConnection();
       databaseHelper.openStatements(connection);
 
-      List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
+      List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
 
-      RowDataList rowDataList = createRowDataList(liquidityDTOList);
+      RowDataList rowDataList = createRowDataList(stakingAddressDTOList);
       writeExcel(googleRootPath, googleFileName, rowDataList);
 
       databaseHelper.closeStatements();
@@ -62,16 +62,18 @@ public class StakingBalanceReporting extends Reporting {
   /**
    * 
    */
-  private RowDataList createRowDataList(@Nonnull List<LiquidityDTO> liquidityDTOList) throws DfxException {
+  private RowDataList createRowDataList(@Nonnull List<StakingAddressDTO> stakingAddressDTOList) throws DfxException {
     LOGGER.trace("createRowDataList()");
 
     RowDataList rowDataList = new RowDataList();
 
     // ...
-    for (LiquidityDTO liquidityDTO : liquidityDTOList) {
-      LOGGER.debug("Liquidity Address: " + liquidityDTO.getAddress());
+    for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
+      if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
+        LOGGER.debug("Liquidity Address: " + stakingAddressDTO.getLiquidityAddress());
 
-      addDeposit(liquidityDTO, rowDataList);
+        addDeposit(stakingAddressDTO, rowDataList);
+      }
     }
 
     return rowDataList;
@@ -81,11 +83,11 @@ public class StakingBalanceReporting extends Reporting {
    * 
    */
   private void addDeposit(
-      @Nonnull LiquidityDTO liquidityDTO,
+      @Nonnull StakingAddressDTO stakingAddressDTO,
       @Nonnull RowDataList rowDataList) throws DfxException {
     LOGGER.trace("addDeposit()");
 
-    List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOListByLiquidityAddressNumber(liquidityDTO.getAddressNumber());
+    List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOListByLiquidityAddressNumber(stakingAddressDTO.getLiquidityAddressNumber());
     LOGGER.debug("Number of Deposit Addresses: " + depositDTOList.size());
 
     // ...
@@ -103,7 +105,7 @@ public class StakingBalanceReporting extends Reporting {
       rowData.addCellData(new CellData().setValue(depositDTO.getCustomerAddress()));
 
       addBalance(depositDTO, rowData);
-      addStaking(liquidityDTO, depositDTO, rowData);
+      addStaking(stakingAddressDTO, depositDTO, rowData);
 
       rowDataList.add(rowData);
     }
@@ -138,7 +140,7 @@ public class StakingBalanceReporting extends Reporting {
    * 
    */
   private void addStaking(
-      @Nonnull LiquidityDTO liquidityDTO,
+      @Nonnull StakingAddressDTO stakingAddressDTO,
       @Nonnull DepositDTO depositDTO,
       @Nonnull RowData rowData) throws DfxException {
     LOGGER.trace("addStaking()");
@@ -148,7 +150,7 @@ public class StakingBalanceReporting extends Reporting {
 
     List<StakingDTO> stakingDTOList =
         databaseHelper.getStakingDTOListByLiquidityAdressNumberAndDepositAddressNumber(
-            liquidityDTO.getAddressNumber(), depositDTO.getDepositAddressNumber());
+            stakingAddressDTO.getLiquidityAddressNumber(), depositDTO.getDepositAddressNumber());
 
     for (StakingDTO stakingDTO : stakingDTOList) {
       totalVin = totalVin.add(stakingDTO.getVin());

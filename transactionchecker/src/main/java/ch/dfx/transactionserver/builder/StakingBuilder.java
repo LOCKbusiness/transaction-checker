@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.data.LiquidityDTO;
+import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
@@ -174,9 +174,11 @@ public class StakingBuilder {
 
     for (DepositDTO depositDTO : depositDTOList) {
       int liquidityAddressNumber = depositDTO.getLiquidityAddressNumber();
-      LiquidityDTO liquidityDTO = databaseHelper.getLiquidityDTOByAddressNumber(liquidityAddressNumber);
+      StakingAddressDTO stakingAddressDTO = databaseHelper.getStakingAddressDTOByLiquidityAddressNumber(liquidityAddressNumber);
 
-      calcBalance(connection, liquidityDTO, depositDTO);
+      if (null != stakingAddressDTO) {
+        calcBalance(connection, stakingAddressDTO, depositDTO);
+      }
     }
   }
 
@@ -185,7 +187,7 @@ public class StakingBuilder {
    */
   private void calcBalance(
       @Nonnull Connection connection,
-      @Nonnull LiquidityDTO liquidityDTO,
+      @Nonnull StakingAddressDTO stakingAddressDTO,
       @Nonnull DepositDTO depositDTO) throws DfxException {
     LOGGER.trace("calcBalance() ...");
 
@@ -203,7 +205,7 @@ public class StakingBuilder {
 
       // ...
       StakingDTO vinStakingDTO = calcVin(stakingLastInBlockNumber, liquidityAddressNumber, depositAddressNumber);
-      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, liquidityDTO.getStartBlockNumber(), liquidityAddressNumber, customerAddressNumber);
+      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, stakingAddressDTO.getStartBlockNumber(), liquidityAddressNumber, customerAddressNumber);
 
       // ...
       int maxStakingLastInBlockNumber = stakingLastInBlockNumber;

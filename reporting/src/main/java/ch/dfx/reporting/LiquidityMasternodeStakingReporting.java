@@ -17,8 +17,8 @@ import ch.dfx.excel.data.CellData;
 import ch.dfx.excel.data.RowData;
 import ch.dfx.excel.data.RowDataList;
 import ch.dfx.transactionserver.data.BalanceDTO;
-import ch.dfx.transactionserver.data.LiquidityDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
+import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.H2DBManager;
 
@@ -52,11 +52,11 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
       Connection connection = databaseManager.openConnection();
       databaseHelper.openStatements(connection);
 
-      List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
+      List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
       List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseHelper.getMasternodeWhitelistDTOList();
       List<StakingDTO> stakingDTOList = databaseHelper.getStakingDTOList();
 
-      RowDataList rowDataList = createRowDataList(liquidityDTOList, masternodeWhitelistDTOList, stakingDTOList);
+      RowDataList rowDataList = createRowDataList(stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
       writeExcel(googleRootPath, googleFileName, rowDataList);
 
       databaseHelper.closeStatements();
@@ -68,7 +68,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    * 
    */
   private RowDataList createRowDataList(
-      @Nonnull List<LiquidityDTO> liquidityDTOList,
+      @Nonnull List<StakingAddressDTO> stakingAddressDTOList,
       @Nonnull List<MasternodeWhitelistDTO> masternodeWhitelistDTOList,
       @Nonnull List<StakingDTO> stakingDTOList) throws DfxException {
     LOGGER.trace("createRowDataList()");
@@ -79,7 +79,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     BigDecimal liquidityMasternodeBalance = BigDecimal.ZERO;
 
     // ...
-    BigDecimal liquidityBalance = fillLiquidityBalance(liquidityDTOList, rowDataList);
+    BigDecimal liquidityBalance = fillLiquidityBalance(stakingAddressDTOList, rowDataList);
     liquidityMasternodeBalance = liquidityMasternodeBalance.add(liquidityBalance);
 
     // ...
@@ -106,20 +106,23 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    * 
    */
   private BigDecimal fillLiquidityBalance(
-      @Nonnull List<LiquidityDTO> liquidityDTOList,
+      @Nonnull List<StakingAddressDTO> stakingAddressDTOList,
       @Nonnull RowDataList rowDataList) throws DfxException {
     LOGGER.trace("fillLiquidityBalance()");
 
     BigDecimal liquidityBalance = BigDecimal.ZERO;
 
-    for (LiquidityDTO liquidityDTO : liquidityDTOList) {
-      BalanceDTO liquidityBalanceDTO =
-          databaseHelper.getBalanceDTOByAddressNumber(liquidityDTO.getAddressNumber());
-      if (null != liquidityBalanceDTO) {
-        BigDecimal vout = liquidityBalanceDTO.getVout();
-        BigDecimal vin = liquidityBalanceDTO.getVin();
+    for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
+      if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
+        BalanceDTO liquidityBalanceDTO =
+            databaseHelper.getBalanceDTOByAddressNumber(stakingAddressDTO.getLiquidityAddressNumber());
 
-        liquidityBalance = liquidityBalance.add(vout.subtract(vin));
+        if (null != liquidityBalanceDTO) {
+          BigDecimal vout = liquidityBalanceDTO.getVout();
+          BigDecimal vin = liquidityBalanceDTO.getVin();
+
+          liquidityBalance = liquidityBalance.add(vout.subtract(vin));
+        }
       }
     }
 

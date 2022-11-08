@@ -116,6 +116,7 @@ public class DatabaseBuilder {
 
       connection.commit();
     } catch (DfxException e) {
+
       DatabaseUtils.rollback(connection);
       throw e;
     } catch (Exception e) {

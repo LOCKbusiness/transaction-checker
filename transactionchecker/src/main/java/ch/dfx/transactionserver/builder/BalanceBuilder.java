@@ -3,7 +3,9 @@ package ch.dfx.transactionserver.builder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -13,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.BalanceDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.data.LiquidityDTO;
+import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -56,7 +58,7 @@ public class BalanceBuilder {
       databaseHelper.openStatements(connection);
       openStatements(connection);
 
-      calcLiquidityBalance(connection);
+      calcStakingAddressBalance(connection);
       calcDepositBalance(connection);
 
       closeStatements();
@@ -120,13 +122,22 @@ public class BalanceBuilder {
   /**
    * 
    */
-  private void calcLiquidityBalance(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("calcLiquidityBalance() ...");
+  private void calcStakingAddressBalance(@Nonnull Connection connection) throws DfxException {
+    LOGGER.trace("calcStakingAddressBalance() ...");
 
-    List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
+    Set<Integer> stakingAddressNumberSet = new HashSet<>();
 
-    for (LiquidityDTO liquidityDTO : liquidityDTOList) {
-      calcBalance(connection, liquidityDTO.getAddressNumber());
+    List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
+
+    for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
+      stakingAddressNumberSet.add(stakingAddressDTO.getLiquidityAddressNumber());
+      stakingAddressNumberSet.add(stakingAddressDTO.getRewardAddressNumber());
+    }
+
+    for (int stakingAddressNumber : stakingAddressNumberSet) {
+      if (-1 != stakingAddressNumber) {
+        calcBalance(connection, stakingAddressNumber);
+      }
     }
   }
 

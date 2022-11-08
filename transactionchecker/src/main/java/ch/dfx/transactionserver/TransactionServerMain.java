@@ -51,12 +51,14 @@ public class TransactionServerMain {
 
       // ...
       boolean isMainnet = Stream.of(args).anyMatch(a -> "--mainnet".equals(a));
+      boolean isStagnet = Stream.of(args).anyMatch(a -> "--stagnet".equals(a));
+      boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
       boolean isCompact = Stream.of(args).anyMatch(a -> "--compact".equals(a));
       boolean isInitialSetup = Stream.of(args).anyMatch(a -> "--initialsetup".equals(a));
       boolean isServerOnly = Stream.of(args).anyMatch(a -> "--serveronly".equals(a));
 
       // ...
-      String network = (isMainnet ? "mainnet" : "testnet");
+      String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
       String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...

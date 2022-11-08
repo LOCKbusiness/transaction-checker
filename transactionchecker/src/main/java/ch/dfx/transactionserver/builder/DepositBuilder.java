@@ -19,7 +19,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.AddressTransactionInDTO;
 import ch.dfx.transactionserver.data.AddressTransactionOutDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.data.LiquidityDTO;
+import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -29,10 +29,6 @@ import ch.dfx.transactionserver.database.H2DBManager;
  */
 public class DepositBuilder {
   private static final Logger LOGGER = LogManager.getLogger(DepositBuilder.class);
-
-  private PreparedStatement liquiditySelectStatement = null;
-
-  private PreparedStatement numberToAddressSelectStatement = null;
 
   private PreparedStatement outTransactionByBlockAndAddressSelectStatement = null;
   private PreparedStatement inTransactionByBlockAndTransactionSelectStatement = null;
@@ -66,24 +62,37 @@ public class DepositBuilder {
       openStatements(connection);
 
       // ...
-      List<LiquidityDTO> liquidityDTOList = databaseHelper.getLiquidityDTOList();
-
       Set<Integer> depositAddressNumberSet =
           databaseHelper.getDepositDTOList().stream().map(DepositDTO::getDepositAddressNumber).collect(Collectors.toSet());
 
       // ...
-      for (LiquidityDTO liquidityDTO : liquidityDTOList) {
-        LOGGER.debug("Liquidity Address: " + liquidityDTO.getAddress());
-        List<DepositDTO> depositDTOList = getDepositDTOList(liquidityDTO, depositAddressNumberSet);
+      List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
 
-        for (DepositDTO depositDTO : depositDTOList) {
-          fillCustomerAddress(depositDTO);
-        }
+      Set<Integer> rewardAddressNumberSet = new HashSet<>();
+      stakingAddressDTOList.stream()
+          .filter(dto -> -1 != dto.getRewardAddressNumber())
+          .forEach(dto -> rewardAddressNumberSet.add(dto.getRewardAddressNumber()));
 
-        // ...
-        for (DepositDTO depositDTO : depositDTOList) {
-          if (depositDTO.getDepositAddressNumber() != depositDTO.getCustomerAddressNumber()) {
-            insertDeposit(depositDTO);
+      for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
+        if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
+          LOGGER.debug("Liquidity Address: " + stakingAddressDTO.getLiquidityAddress());
+          List<DepositDTO> depositDTOList = getDepositDTOList(stakingAddressDTO, depositAddressNumberSet);
+
+          for (DepositDTO depositDTO : depositDTOList) {
+            fillCustomerAddress(depositDTO);
+          }
+
+          for (DepositDTO depositDTO : depositDTOList) {
+            int depositAddressNumber = depositDTO.getDepositAddressNumber();
+            int customerAddressNumber = depositDTO.getCustomerAddressNumber();
+
+            if (-1 != depositAddressNumber
+                && -1 != customerAddressNumber
+                && depositAddressNumber != customerAddressNumber
+                && !rewardAddressNumberSet.contains(depositAddressNumber)
+                && !rewardAddressNumberSet.contains(customerAddressNumber)) {
+              insertDeposit(depositDTO);
+            }
           }
         }
       }
@@ -107,14 +116,6 @@ public class DepositBuilder {
     LOGGER.trace("openStatements() ...");
 
     try {
-      // Liquidity ...
-      String liquiditySql = "SELECT * FROM public.liquidity";
-      liquiditySelectStatement = connection.prepareStatement(liquiditySql);
-
-      // Address ...
-      String numberToAddressSql = "SELECT address FROM public.address WHERE number=?";
-      numberToAddressSelectStatement = connection.prepareStatement(numberToAddressSql);
-
       // Transaction ...
       String outTransactionByBlockAndAddressSelectSql = "SELECT * FROM public.address_transaction_out WHERE block_number>=? AND address_number=?";
       outTransactionByBlockAndAddressSelectStatement = connection.prepareStatement(outTransactionByBlockAndAddressSelectSql);
@@ -140,10 +141,6 @@ public class DepositBuilder {
     LOGGER.trace("closeStatements() ...");
 
     try {
-      liquiditySelectStatement.close();
-
-      numberToAddressSelectStatement.close();
-
       outTransactionByBlockAndAddressSelectStatement.close();
       inTransactionByBlockAndTransactionSelectStatement.close();
 
@@ -157,7 +154,7 @@ public class DepositBuilder {
    * 
    */
   private List<DepositDTO> getDepositDTOList(
-      @Nonnull LiquidityDTO liquidityDTO,
+      @Nonnull StakingAddressDTO stakingAddressDTO,
       @Nonnull Set<Integer> depositAddressNumberSet) throws DfxException {
     LOGGER.trace("getDepositDTOList() ...");
 
@@ -165,8 +162,8 @@ public class DepositBuilder {
     Set<String> unifierTransactionSet = new HashSet<>();
     Set<Integer> unifierAddressSet = new HashSet<>();
 
-    int liquidityStartBlockNumber = liquidityDTO.getStartBlockNumber();
-    int liquidityAddressNumber = liquidityDTO.getAddressNumber();
+    int liquidityStartBlockNumber = stakingAddressDTO.getStartBlockNumber();
+    int liquidityAddressNumber = stakingAddressDTO.getLiquidityAddressNumber();
 
     List<AddressTransactionOutDTO> transactionOutDTOList = getTransactionOutDTOList(liquidityStartBlockNumber, liquidityAddressNumber);
 
@@ -182,7 +179,7 @@ public class DepositBuilder {
         for (AddressTransactionInDTO depositTransactionInDTO : depositTransactionInDTOList) {
           Integer addressNumber = depositTransactionInDTO.getAddressNumber();
 
-          if (liquidityDTO.getAddressNumber() != addressNumber.intValue()
+          if (liquidityAddressNumber != addressNumber.intValue()
               && !depositAddressNumberSet.contains(addressNumber)) {
             if (unifierAddressSet.add(addressNumber)) {
               DepositDTO depositDTO = new DepositDTO();
@@ -224,12 +221,10 @@ public class DepositBuilder {
 
     List<AddressTransactionInDTO> customerTransactionInDTOList = getTransactionInDTOList(customerBlockNumber, customerTransactionNumber);
 
-    if (customerTransactionInDTOList.isEmpty()) {
-      throw new DfxException("Customer In-Transaction not found");
+    if (!customerTransactionInDTOList.isEmpty()) {
+      AddressTransactionInDTO customerTransactionInDTO = customerTransactionInDTOList.get(0);
+      depositDTO.setCustomerAddressNumber(customerTransactionInDTO.getAddressNumber());
     }
-
-    AddressTransactionInDTO customerTransactionInDTO = customerTransactionInDTOList.get(0);
-    depositDTO.setCustomerAddressNumber(customerTransactionInDTO.getAddressNumber());
   }
 
   /**
@@ -314,18 +309,13 @@ public class DepositBuilder {
       resultSet.close();
 
       // ...
-      if (transactionInDTOList.isEmpty()) {
-        throw new DfxException("cannot determine transaction " + transactionNumber + " in block " + blockNumber);
+      if (!transactionInDTOList.isEmpty()) {
+        Comparator<AddressTransactionInDTO> comparator =
+            Comparator.comparing(AddressTransactionInDTO::getVinNumber);
+        transactionInDTOList.sort(comparator);
       }
 
-      // ...
-      Comparator<AddressTransactionInDTO> comparator =
-          Comparator.comparing(AddressTransactionInDTO::getVinNumber);
-      transactionInDTOList.sort(comparator);
-
       return transactionInDTOList;
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
       throw new DfxException("getTransactionInDTOList", e);
     }

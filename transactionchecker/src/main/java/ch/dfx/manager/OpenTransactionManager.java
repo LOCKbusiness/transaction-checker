@@ -44,8 +44,8 @@ import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.message.MessageHandler;
-import ch.dfx.transactionserver.data.LiquidityDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
+import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -680,8 +680,8 @@ public class OpenTransactionManager {
 
       // ...
       Set<String> liquidityAddressSet = new HashSet<>();
-      List<LiquidityDTO> liquidityDTOList = dataHelper.getLiquidityDTOList();
-      liquidityDTOList.forEach(dto -> liquidityAddressSet.add(dto.getAddress()));
+      List<StakingAddressDTO> stakingAddressDTOList = dataHelper.getStakingAddressDTOList();
+      stakingAddressDTOList.forEach(dto -> liquidityAddressSet.add(dto.getLiquidityAddress()));
 
       // ...
       for (int i = 0; i < voutAddressList.size(); i++) {

@@ -54,6 +54,8 @@ public class OceanHandlerMain {
 
     // ...
     boolean isMainnet = Stream.of(args).anyMatch(a -> "--mainnet".equals(a));
+    boolean isStagnet = Stream.of(args).anyMatch(a -> "--stagnet".equals(a));
+    boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
     boolean isFromOcean = Stream.of(args).anyMatch(a -> "--from-ocean".equals(a));
     boolean isFromFile = Stream.of(args).anyMatch(a -> "--from-file".equals(a));
 
@@ -64,7 +66,7 @@ public class OceanHandlerMain {
     }
 
     // ...
-    String network = (isMainnet ? "mainnet" : "testnet");
+    String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
     String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
     // ...

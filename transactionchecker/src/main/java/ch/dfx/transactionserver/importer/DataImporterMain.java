@@ -23,9 +23,11 @@ public class DataImporterMain {
 
       // ...
       boolean isMainnet = Stream.of(args).anyMatch(a -> "--mainnet".equals(a));
+      boolean isStagnet = Stream.of(args).anyMatch(a -> "--stagnet".equals(a));
+      boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
 
       // ...
-      String network = (isMainnet ? "mainnet" : "testnet");
+      String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
       String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...

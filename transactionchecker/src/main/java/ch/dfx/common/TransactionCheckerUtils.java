@@ -98,6 +98,23 @@ public class TransactionCheckerUtils {
   /**
    * 
    */
+  public static String getNetwork(boolean isMainnet, boolean isStagnet, boolean isTestnet) {
+    String network;
+
+    if (isMainnet) {
+      network = "mainnet";
+    } else if (isStagnet) {
+      network = "stagnet";
+    } else {
+      network = "testnet";
+    }
+
+    return network;
+  }
+
+  /**
+   * 
+   */
   public static String getLog4jFilename(
       @Nonnull String name,
       @Nonnull String network) {

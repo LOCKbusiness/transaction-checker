@@ -75,6 +75,7 @@ public class EncryptionForSecretsMain {
     } else {
       // ...
       File testnetRootDirectory = Paths.get("", "config", "properties", "testnet").toFile();
+      File stagnetRootDirectory = Paths.get("", "config", "properties", "stagnet").toFile();
       File mainnetRootDirectory = Paths.get("", "config", "properties", "mainnet").toFile();
 
       List<File> fileList = new ArrayList<>();
@@ -82,6 +83,10 @@ public class EncryptionForSecretsMain {
       fileList.add(new File(testnetRootDirectory, "config.secret.properties"));
       fileList.add(new File(testnetRootDirectory, "macos/config.secret.properties"));
       fileList.add(new File(testnetRootDirectory, "windows/config.secret.properties"));
+
+      fileList.add(new File(stagnetRootDirectory, "config.secret.properties"));
+      fileList.add(new File(stagnetRootDirectory, "macos/config.secret.properties"));
+      fileList.add(new File(stagnetRootDirectory, "windows/config.secret.properties"));
 
       fileList.add(new File(mainnetRootDirectory, "config.secret.properties"));
       fileList.add(new File(mainnetRootDirectory, "macos/config.secret.properties"));

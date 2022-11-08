@@ -42,11 +42,13 @@ public class TransactionSupervisonMain {
 
       // ...
       boolean isMainnet = Stream.of(args).anyMatch(a -> "--mainnet".equals(a));
+      boolean isStagnet = Stream.of(args).anyMatch(a -> "--stagnet".equals(a));
+      boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
       Optional<String> optionalStartblockArgument = Stream.of(args).filter(a -> a.startsWith("--startblock=")).findFirst();
       Optional<String> optionalEndblockArgument = Stream.of(args).filter(a -> a.startsWith("--endblock=")).findFirst();
 
       // ...
-      String network = (isMainnet ? "mainnet" : "testnet");
+      String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
       String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
 
       // ...

@@ -129,6 +129,8 @@ public class OpenTransactionManagerTest {
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
 
+      TestUtils.deleteTable("public.api_duplicate_check");
+
       // ...
       transactionManager.execute();
 
@@ -159,6 +161,8 @@ public class OpenTransactionManagerTest {
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      TestUtils.deleteTable("public.api_duplicate_check");
 
       // ...
       transactionManager.execute();
@@ -191,6 +195,8 @@ public class OpenTransactionManagerTest {
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
 
+      TestUtils.deleteTable("public.api_duplicate_check");
+
       // ...
       transactionManager.execute();
 
@@ -221,6 +227,8 @@ public class OpenTransactionManagerTest {
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      TestUtils.deleteTable("public.api_duplicate_check");
 
       // ...
       transactionManager.execute();
@@ -253,6 +261,8 @@ public class OpenTransactionManagerTest {
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
 
+      TestUtils.deleteTable("public.api_duplicate_check");
+
       // ...
       transactionManager.execute();
 
@@ -283,6 +293,8 @@ public class OpenTransactionManagerTest {
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      TestUtils.deleteTable("public.api_duplicate_check");
 
       // ...
       transactionManager.execute();
@@ -315,6 +327,8 @@ public class OpenTransactionManagerTest {
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
 
+      TestUtils.deleteTable("public.api_duplicate_check");
+
       // ...
       transactionManager.execute();
 
@@ -346,6 +360,8 @@ public class OpenTransactionManagerTest {
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
 
+      TestUtils.deleteTable("public.api_duplicate_check");
+
       // ...
       transactionManager.execute();
 
@@ -376,6 +392,8 @@ public class OpenTransactionManagerTest {
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      TestUtils.deleteTable("public.api_duplicate_check");
 
       // ...
       transactionManager.execute();
@@ -423,6 +441,8 @@ public class OpenTransactionManagerTest {
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
 
+      TestUtils.deleteTable("public.api_duplicate_check");
+
       // ...
       transactionManager.execute();
 
@@ -467,6 +487,8 @@ public class OpenTransactionManagerTest {
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      TestUtils.deleteTable("public.api_duplicate_check");
 
       // ...
       transactionManager.execute();

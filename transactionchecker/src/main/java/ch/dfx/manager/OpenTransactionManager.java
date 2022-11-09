@@ -1,8 +1,6 @@
 package ch.dfx.manager;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -15,7 +13,6 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,19 +33,20 @@ import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
 import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.manager.checker.transaction.DuplicateChecker;
+import ch.dfx.manager.checker.transaction.SignatureChecker;
+import ch.dfx.manager.checker.transaction.SizeChecker;
+import ch.dfx.manager.checker.transaction.TypeChecker;
 import ch.dfx.message.MessageHandler;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
-import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
 
 /**
@@ -58,10 +56,6 @@ public class OpenTransactionManager {
   private static final Logger LOGGER = LogManager.getLogger(OpenTransactionManager.class);
 
   // ...
-  private PreparedStatement apiDuplicateCheckSelectStatement = null;
-  private PreparedStatement apiDuplicateCheckInsertStatement = null;
-
-  // ...
   private final ApiAccessHandler apiAccessHandler;
   private final H2DBManager databaseManager;
   private final DefiDataProvider dataProvider;
@@ -69,6 +63,11 @@ public class OpenTransactionManager {
   private final DatabaseHelper dataHelper;
   private final MessageHandler messageHandler;
   private final WithdrawalManager withdrawalManager;
+
+  private final TypeChecker typeChecker;
+  private final SizeChecker sizeChecker;
+  private final DuplicateChecker duplicateChecker;
+  private final SignatureChecker signatureChecker;
 
   /**
    * 
@@ -85,6 +84,11 @@ public class OpenTransactionManager {
     this.dataHelper = new DatabaseHelper();
     this.messageHandler = new MessageHandler(dataProvider);
     this.withdrawalManager = new WithdrawalManager(network, databaseManager, dataProvider);
+
+    this.typeChecker = new TypeChecker(apiAccessHandler, dataProvider);
+    this.sizeChecker = new SizeChecker(apiAccessHandler, dataProvider);
+    this.duplicateChecker = new DuplicateChecker(apiAccessHandler, dataProvider, databaseManager);
+    this.signatureChecker = new SignatureChecker(apiAccessHandler, dataProvider);
   }
 
   /**
@@ -232,290 +236,16 @@ public class OpenTransactionManager {
     LOGGER.trace("processOpenTransaction() ...");
 
     // Check 1: Check Typ ...
-    OpenTransactionDTOList workOpenTransactionDTOList = checkType(apiOpenTransactionDTOList);
+    OpenTransactionDTOList workOpenTransactionDTOList = typeChecker.checkType(apiOpenTransactionDTOList);
 
     // Check 2: Transaction Hex Size ...
-    workOpenTransactionDTOList = checkSize(workOpenTransactionDTOList);
+    workOpenTransactionDTOList = sizeChecker.checkSize(workOpenTransactionDTOList);
 
     // Check 3: Transaction (Withdrawal) Duplicated ...
-    workOpenTransactionDTOList = checkDuplicated(workOpenTransactionDTOList);
+    workOpenTransactionDTOList = duplicateChecker.checkDuplicated(workOpenTransactionDTOList);
 
     // Check 4: Transaction Signature ...
-    return checkTransactionSignature(workOpenTransactionDTOList);
-  }
-
-  /**
-   * 
-   */
-  private OpenTransactionDTOList checkType(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
-    LOGGER.trace("checkType() ...");
-
-    OpenTransactionDTOList checkedOpenTransactionDTOList = new OpenTransactionDTOList();
-
-    for (OpenTransactionDTO openTransactionDTO : openTransactionDTOList) {
-      if (doCheckType(openTransactionDTO)) {
-        checkedOpenTransactionDTOList.add(openTransactionDTO);
-      }
-    }
-
-    return checkedOpenTransactionDTOList;
-  }
-
-  /**
-   * 
-   */
-  private boolean doCheckType(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("doCheckType() ...");
-
-    boolean isValid;
-
-    try {
-      isValid = OpenTransactionTypeEnum.UNKNOWN != openTransactionDTO.getType();
-
-      if (!isValid) {
-        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - unknown type");
-        sendInvalidated(openTransactionDTO);
-      }
-    } catch (Exception e) {
-      LOGGER.error("doCheckType", e);
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
-  /**
-   * 
-   */
-  private OpenTransactionDTOList checkSize(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
-    LOGGER.trace("checkSize() ...");
-
-    OpenTransactionDTOList checkedOpenTransactionDTOList = new OpenTransactionDTOList();
-
-    for (OpenTransactionDTO openTransactionDTO : openTransactionDTOList) {
-      if (doCheckSize(openTransactionDTO)) {
-        checkedOpenTransactionDTOList.add(openTransactionDTO);
-      }
-    }
-
-    return checkedOpenTransactionDTOList;
-  }
-
-  /**
-   * 
-   */
-  private boolean doCheckSize(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("doCheckSize() ...");
-
-    boolean isValid;
-
-    try {
-      int rawTransactionMaxSize = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RAW_TRANSACTION_MAX_SIZE, 250000);
-
-      String hex = openTransactionDTO.getRawTx().getHex();
-
-      isValid = rawTransactionMaxSize > hex.length();
-
-      if (!isValid) {
-        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - size too big");
-        sendInvalidated(openTransactionDTO);
-      }
-    } catch (Exception e) {
-      LOGGER.error("doCheckSize", e);
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
-  /**
-   * 
-   */
-  private OpenTransactionDTOList checkDuplicated(@Nonnull OpenTransactionDTOList apiOpenTransactionDTOList) {
-    LOGGER.trace("checkDuplicated() ...");
-
-    OpenTransactionDTOList checkedOpenTransactionDTOList = new OpenTransactionDTOList();
-
-    // ...
-    if (!apiOpenTransactionDTOList.isEmpty()) {
-      Connection connection = null;
-
-      try {
-        connection = databaseManager.openConnection();
-
-        openStatements(connection);
-
-        for (OpenTransactionDTO apiOpenTransactionDTO : apiOpenTransactionDTOList) {
-          if (doCheckInsertApiDuplicate(apiOpenTransactionDTO)) {
-            checkedOpenTransactionDTOList.add(apiOpenTransactionDTO);
-          }
-        }
-
-        closeStatements();
-
-        connection.commit();
-      } catch (Exception e) {
-        DatabaseUtils.rollback(connection);
-        LOGGER.error("checkDuplicated", e);
-      } finally {
-        databaseManager.closeConnection(connection);
-      }
-    }
-
-    return checkedOpenTransactionDTOList;
-  }
-
-  /**
-   * 
-   */
-  private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
-
-    try {
-      String apiDuplicateCheckSelectSql = "SELECT * FROM public.api_duplicate_check WHERE withdrawal_id=? AND transaction_id=?";
-      apiDuplicateCheckSelectStatement = connection.prepareStatement(apiDuplicateCheckSelectSql);
-
-      String apiDuplicateCheckInsertSql = "INSERT INTO public.api_duplicate_check (withdrawal_id, transaction_id) VALUES (?, ?)";
-      apiDuplicateCheckInsertStatement = connection.prepareStatement(apiDuplicateCheckInsertSql);
-    } catch (Exception e) {
-      throw new DfxException("openStatements", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
-
-    try {
-      apiDuplicateCheckSelectStatement.close();
-      apiDuplicateCheckInsertStatement.close();
-    } catch (Exception e) {
-      throw new DfxException("closeStatements", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private boolean doCheckInsertApiDuplicate(@Nonnull OpenTransactionDTO apiOpenTransactionDTO) {
-    LOGGER.trace("doCheckInsertApiDuplicate() ...");
-
-    boolean isValid;
-
-    try {
-      Integer withdrawalId = getWithdrawalId(apiOpenTransactionDTO);
-
-      if (null == withdrawalId) {
-        isValid = true;
-      } else {
-        isValid = apiDuplicateCheckInsert(withdrawalId, apiOpenTransactionDTO.getId());
-
-        if (!isValid) {
-          apiOpenTransactionDTO.setInvalidatedReason("[Withdrawal] ID: " + withdrawalId + " - duplicated");
-          sendInvalidated(apiOpenTransactionDTO);
-        }
-      }
-    } catch (Exception e) {
-      LOGGER.error("doCheckInsertApiDuplicate", e);
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
-  /**
-   * Duplicate Check:
-   * withdrawal id x + transaction id y: is allowed to receive multiple times
-   * withdrawal id x + transaction id z: is not allowed to receive multiple times
-   */
-  private boolean apiDuplicateCheckInsert(
-      @Nonnull Integer withdrawalId,
-      @Nonnull String transactionId) {
-    LOGGER.trace("apiDuplicateCheckInsert() ...");
-
-    boolean isValid;
-
-    try {
-      apiDuplicateCheckSelectStatement.setInt(1, withdrawalId);
-      apiDuplicateCheckSelectStatement.setString(2, transactionId);
-
-      ResultSet resultSet = apiDuplicateCheckSelectStatement.executeQuery();
-      isValid = resultSet.next();
-      resultSet.close();
-
-      // ...
-      if (!isValid) {
-        apiDuplicateCheckInsertStatement.setInt(1, withdrawalId);
-        apiDuplicateCheckInsertStatement.setString(2, transactionId);
-        apiDuplicateCheckInsertStatement.execute();
-      }
-
-      isValid = true;
-    } catch (Exception e) {
-      LOGGER.info("apiDuplicateCheckInsert: WithdrawId=" + withdrawalId + " / TransactionId=" + transactionId);
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
-  /**
-   * 
-   */
-  private OpenTransactionDTOList checkTransactionSignature(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
-    LOGGER.trace("checkTransactionSignature() ...");
-
-    OpenTransactionDTOList checkedOpenTransactionDTOList = new OpenTransactionDTOList();
-
-    for (OpenTransactionDTO openTransactionDTO : openTransactionDTOList) {
-      if (doCheckTransactionSignature(openTransactionDTO)) {
-        checkedOpenTransactionDTOList.add(openTransactionDTO);
-      }
-    }
-
-    return checkedOpenTransactionDTOList;
-  }
-
-  /**
-   * 
-   */
-  private boolean doCheckTransactionSignature(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("doCheckTransactionSignature() ...");
-
-    boolean isValid;
-
-    try {
-      isValid = validateIssuerSignature(openTransactionDTO);
-
-      if (!isValid) {
-        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - invalid signature");
-        sendInvalidated(openTransactionDTO);
-      }
-    } catch (Exception e) {
-      LOGGER.error("doCheckTransactionSignature", e);
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
-  /**
-   * 
-   */
-  private boolean validateIssuerSignature(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("validateIssurerSignature() ...");
-
-    String openTransactionIssuerSignature = openTransactionDTO.getIssuerSignature();
-    String openTransactionHex = openTransactionDTO.getRawTx().getHex();
-
-    String verifyAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_VERIFY_ADDRESS);
-
-    Boolean isValid = messageHandler.verifyMessage(verifyAddress, openTransactionIssuerSignature, openTransactionHex);
-    LOGGER.debug("Open Transaction Id: " + openTransactionDTO.getId() + " / " + isValid);
-
-    return BooleanUtils.isTrue(isValid);
+    return signatureChecker.checkTransactionSignature(workOpenTransactionDTOList);
   }
 
   /**

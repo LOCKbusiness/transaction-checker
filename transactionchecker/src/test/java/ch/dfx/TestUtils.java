@@ -18,6 +18,8 @@ import org.apache.logging.log4j.Logger;
 import org.h2.tools.RunScript;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.provider.DefiDataProvider;
@@ -32,9 +34,6 @@ import ch.dfx.transactionserver.database.H2DBManager;
  */
 public class TestUtils {
   private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
-
-  // ...
-  public static final String NETWORK = "testnet";
 
   // ...
   public static H2DBManager databaseManagerMock = null;
@@ -59,10 +58,11 @@ public class TestUtils {
   public static void globalSetup(@Nonnull String logPrefix) {
     try {
       // ...
-      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+      NetworkEnum network = TransactionCheckerUtils.getNetwork(false, false, true);
+      EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
       // ...
-      System.setProperty("logFilename", logPrefix + "-test-" + NETWORK + "-" + environment);
+      System.setProperty("logFilename", logPrefix + "-test-" + network + "-" + environment);
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...

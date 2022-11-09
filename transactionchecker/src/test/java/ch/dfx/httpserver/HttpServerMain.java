@@ -15,6 +15,8 @@ import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.httpserver.handler.APISignInHandler;
 import ch.dfx.httpserver.handler.APITransactionRequestHandler;
 import ch.dfx.httpserver.handler.APIWithdrawalRequestHandler;
@@ -24,6 +26,8 @@ import ch.dfx.httpserver.handler.APIWithdrawalRequestHandler;
  */
 public class HttpServerMain {
   private static final Logger LOGGER = LogManager.getLogger(HttpServerMain.class);
+
+  private static final String IDENTIFIER = "httpserver";
 
   private static final int PORT = 8080;
 
@@ -40,11 +44,11 @@ public class HttpServerMain {
       boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
 
       // ...
-      String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
-      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+      NetworkEnum network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
+      EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
       // ...
-      System.setProperty("logFilename", "httpserver-" + environment);
+      System.setProperty("logFilename", TransactionCheckerUtils.getLog4jFilename(IDENTIFIER, network));
       TransactionCheckerUtils.initLog4j("log4j2-httpserver.xml");
 
       Log4jContextFactory factory = (Log4jContextFactory) LogManager.getFactory();

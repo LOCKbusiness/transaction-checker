@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.ApiAccessHandlerImpl;
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.handler.DefiWalletHandler;
@@ -32,8 +34,8 @@ public class OpenTransactionManagerMain {
       boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
 
       // ...
-      String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
-      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+      NetworkEnum network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
+      EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
       // ...
       System.setProperty("logFilename", "opentransactionmanager-" + network + "-" + environment);
@@ -46,7 +48,7 @@ public class OpenTransactionManagerMain {
       String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
       DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-      DefiWalletHandler walletHandler = new DefiWalletHandler(dataProvider);
+      DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
       walletHandler.loadWallet(wallet);
 
       // ...

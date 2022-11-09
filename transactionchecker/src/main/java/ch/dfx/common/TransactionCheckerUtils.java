@@ -33,6 +33,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 
 import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -98,15 +99,15 @@ public class TransactionCheckerUtils {
   /**
    * 
    */
-  public static String getNetwork(boolean isMainnet, boolean isStagnet, boolean isTestnet) {
-    String network;
+  public static NetworkEnum getNetwork(boolean isMainnet, boolean isStagnet, boolean isTestnet) {
+    NetworkEnum network;
 
     if (isMainnet) {
-      network = "mainnet";
+      network = NetworkEnum.MAINNET;
     } else if (isStagnet) {
-      network = "stagnet";
+      network = NetworkEnum.STAGNET;
     } else {
-      network = "testnet";
+      network = NetworkEnum.TESTNET;
     }
 
     return network;
@@ -117,11 +118,11 @@ public class TransactionCheckerUtils {
    */
   public static String getLog4jFilename(
       @Nonnull String name,
-      @Nonnull String network) {
+      @Nonnull NetworkEnum network) {
     return new StringBuilder()
         .append(name)
         .append("-").append(network)
-        .append("-").append(getEnvironment().name().toLowerCase())
+        .append("-").append(getEnvironment())
         .append("-").append(TransactionCheckerUtils.LOGFILE_DATE_FORMAT.format(new Date()))
         .toString();
   }
@@ -140,18 +141,18 @@ public class TransactionCheckerUtils {
    * 
    */
   public static void loadConfigProperties(
-      @Nonnull String network,
-      @Nonnull String environment) throws DfxException {
+      @Nonnull NetworkEnum network,
+      @Nonnull EnvironmentEnum environment) throws DfxException {
     LOGGER.trace("loadConfigProperties() ...");
 
     // ...
-    File configDirectory = Paths.get("config", "properties", network).toFile();
+    File configDirectory = Paths.get("config", "properties", network.toString()).toFile();
 
     File configFile = new File(configDirectory, "config.properties");
     File configSecretEncFile = new File(configDirectory, "config.secret.enc");
 
     // ...
-    File configEnvDirectory = new File(configDirectory, environment);
+    File configEnvDirectory = new File(configDirectory, environment.toString());
 
     File configEnvFile = new File(configEnvDirectory, "config.properties");
     File configEnvSecretEncFile = new File(configEnvDirectory, "config.secret.enc");
@@ -202,11 +203,11 @@ public class TransactionCheckerUtils {
    */
   public static String getProcessLockFilename(
       @Nonnull String name,
-      @Nonnull String network) {
+      @Nonnull NetworkEnum network) {
     return new StringBuilder()
         .append(name)
         .append(".").append(network)
-        .append(".").append(getEnvironment().name().toLowerCase())
+        .append(".").append(getEnvironment())
         .append(".lock")
         .toString();
   }

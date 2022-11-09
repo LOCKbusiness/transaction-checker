@@ -14,6 +14,8 @@ import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -27,12 +29,12 @@ import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 public class TransactionServerWatchdogMain {
   private static final Logger LOGGER = LogManager.getLogger(TransactionServerWatchdogMain.class);
 
-  public static final String IDENTIFIER = "transactionserver-watchdog";
+  private static final String IDENTIFIER = "transactionserver-watchdog";
 
 //  private static final int PORT = 8080;
 
   // ...
-  private final String network;
+  private final NetworkEnum network;
 
 //  private HttpServer httpServer = null;
   private Registry registry = null;
@@ -48,8 +50,8 @@ public class TransactionServerWatchdogMain {
       boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
 
       // ...
-      String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
-      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+      NetworkEnum network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
+      EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
       // ...
       System.setProperty("logFilename", TransactionCheckerUtils.getLog4jFilename(IDENTIFIER, network));
@@ -68,7 +70,7 @@ public class TransactionServerWatchdogMain {
       transactionServerWatchdogMain.watchdog();
 
       while (true) {
-        transactionServerWatchdogMain.runProcess(network);
+        transactionServerWatchdogMain.runProcess();
         Thread.sleep(30 * 1000);
       }
     } catch (
@@ -83,7 +85,7 @@ public class TransactionServerWatchdogMain {
   /**
    * 
    */
-  public TransactionServerWatchdogMain(@Nonnull String network) {
+  public TransactionServerWatchdogMain(@Nonnull NetworkEnum network) {
     this.network = network;
   }
 
@@ -232,7 +234,7 @@ public class TransactionServerWatchdogMain {
   /**
    * 
    */
-  private void runProcess(String network) {
+  private void runProcess() {
     LOGGER.debug("runProcess");
 
     try {

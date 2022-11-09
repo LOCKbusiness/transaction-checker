@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -27,7 +28,7 @@ import ch.dfx.transactionserver.importer.data.DataImporterMasternodeOwnerDataLis
 public class DataImporter {
   private static final Logger LOGGER = LogManager.getLogger(DataImporter.class);
 
-  private final String network;
+  private final NetworkEnum network;
 
   private final Gson gson;
 
@@ -40,7 +41,7 @@ public class DataImporter {
   /**
    * 
    */
-  public DataImporter(@Nonnull String network) {
+  public DataImporter(@Nonnull NetworkEnum network) {
     this.network = network;
 
     this.databaseManager = new H2DBManagerImpl();
@@ -92,7 +93,9 @@ public class DataImporter {
   private Path getPath() {
     Path path;
 
-    if ("mainnet".equals(network)) {
+    if (NetworkEnum.MAINNET == network) {
+      path = Paths.get("data", "json", "masternode", "owner-prd.json");
+    } else if (NetworkEnum.STAGNET == network) {
       path = Paths.get("data", "json", "masternode", "owner-prd.json");
     } else {
       path = Paths.get("data", "json", "masternode", "owner-dev.json");

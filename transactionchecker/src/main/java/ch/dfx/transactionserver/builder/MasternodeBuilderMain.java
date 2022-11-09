@@ -6,6 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
@@ -14,6 +16,8 @@ import ch.dfx.transactionserver.database.H2DBManagerImpl;
  */
 public class MasternodeBuilderMain {
   private static final Logger LOGGER = LogManager.getLogger(MasternodeBuilderMain.class);
+
+  private static final String IDENTIFIER = "masternodebuilder";
 
   /**
    * 
@@ -28,11 +32,11 @@ public class MasternodeBuilderMain {
       boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
 
       // ...
-      String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
-      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+      NetworkEnum network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
+      EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
       // ...
-      System.setProperty("logFilename", "masternodebuilder-" + network + "-" + environment);
+      System.setProperty("logFilename", TransactionCheckerUtils.getLog4jFilename(IDENTIFIER, network));
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...

@@ -35,6 +35,7 @@ import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
 import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -73,7 +74,7 @@ public class OpenTransactionManager {
    * 
    */
   public OpenTransactionManager(
-      @Nonnull String network,
+      @Nonnull NetworkEnum network,
       @Nonnull ApiAccessHandler apiAccessHandler,
       @Nonnull H2DBManager databaseManager,
       @Nonnull DefiDataProvider dataProvider) {

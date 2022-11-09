@@ -7,6 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -32,10 +34,12 @@ public class ReportingMain {
 
       // ...
       boolean isMainnet = Stream.of(args).anyMatch(a -> "--mainnet".equals(a));
+      boolean isStagnet = Stream.of(args).anyMatch(a -> "--stagnet".equals(a));
+      boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
 
       // ...
-      String network = (isMainnet ? "mainnet" : "testnet");
-      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+      NetworkEnum network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
+      EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
       // ...
       System.setProperty("logFilename", TransactionCheckerUtils.getLog4jFilename(IDENTIFIER, network));

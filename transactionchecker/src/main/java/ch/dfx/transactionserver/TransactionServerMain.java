@@ -13,6 +13,8 @@ import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 import org.h2.tools.Server;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -35,7 +37,7 @@ public class TransactionServerMain {
   public static final String IDENTIFIER = "transactionserver";
 
   // ...
-  private final String network;
+  private final NetworkEnum network;
 
   private final H2DBManager databaseManager;
 
@@ -58,8 +60,8 @@ public class TransactionServerMain {
       boolean isServerOnly = Stream.of(args).anyMatch(a -> "--serveronly".equals(a));
 
       // ...
-      String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
-      String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+      NetworkEnum network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
+      EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
       // ...
       System.setProperty("logFilename", TransactionCheckerUtils.getLog4jFilename(IDENTIFIER, network));
@@ -82,7 +84,7 @@ public class TransactionServerMain {
       } else if (isInitialSetup) {
         transactionServer.initialSetup();
       } else {
-        transactionServer.execute(network, isMainnet, isServerOnly);
+        transactionServer.execute(isMainnet, isServerOnly);
       }
     } catch (Throwable t) {
       // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
@@ -94,7 +96,7 @@ public class TransactionServerMain {
   /**
    * 
    */
-  public TransactionServerMain(@Nonnull String network) {
+  public TransactionServerMain(@Nonnull NetworkEnum network) {
     this.network = network;
 
     this.databaseManager = new H2DBManagerImpl();
@@ -135,7 +137,6 @@ public class TransactionServerMain {
    * 
    */
   private void execute(
-      @Nonnull String network,
       boolean isMainnet,
       boolean isServerOnly) throws DfxException {
     LOGGER.debug("execute");
@@ -210,7 +211,7 @@ public class TransactionServerMain {
     String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
     DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-    DefiWalletHandler walletHandler = new DefiWalletHandler(dataProvider);
+    DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
     walletHandler.loadWallet(wallet);
   }
 
@@ -224,7 +225,7 @@ public class TransactionServerMain {
       String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
       DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-      DefiWalletHandler walletHandler = new DefiWalletHandler(dataProvider);
+      DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
       walletHandler.unloadWallet(wallet);
     } catch (Exception e) {
       LOGGER.error("unloadWallet", e);

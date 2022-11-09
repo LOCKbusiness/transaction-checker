@@ -25,6 +25,7 @@ import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.ApiAccessHandlerImpl;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
@@ -64,11 +65,11 @@ public class OpenTransactionManagerMasternodeTest {
     // ...
     gson = new GsonBuilder().setPrettyPrinting().create();
 
-    apiAccessHandler = new ApiAccessHandlerImpl(TestUtils.NETWORK);
+    apiAccessHandler = new ApiAccessHandlerImpl(NetworkEnum.TESTNET);
     apiAccessHandler.signIn();
 
     transactionManager =
-        new OpenTransactionManager(TestUtils.NETWORK, apiAccessHandler, databaseManagerMock, dataProviderMock);
+        new OpenTransactionManager(NetworkEnum.TESTNET, apiAccessHandler, databaseManagerMock, dataProviderMock);
   }
 
   /**

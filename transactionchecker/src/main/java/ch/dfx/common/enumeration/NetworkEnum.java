@@ -3,10 +3,10 @@ package ch.dfx.common.enumeration;
 /**
  * 
  */
-public enum EnvironmentEnum {
-  UNKNOWN,
-  WINDOWS,
-  MACOS;
+public enum NetworkEnum {
+  TESTNET,
+  STAGNET,
+  MAINNET;
 
   @Override
   public String toString() {

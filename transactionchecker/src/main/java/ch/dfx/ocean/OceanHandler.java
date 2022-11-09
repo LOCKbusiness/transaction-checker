@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.ocean.data.ListTransactionsDTO;
 import ch.dfx.ocean.data.TransactionDetailVinDTO;
@@ -50,7 +51,7 @@ public class OceanHandler {
   private final HttpClient httpClient;
   private final HttpGet httpGet;
 
-  private String network = null;
+  private NetworkEnum network = null;
   private String address = null;
 
   private BigDecimal vinBalance = null;
@@ -70,7 +71,7 @@ public class OceanHandler {
    * 
    */
   public void setup(
-      @Nonnull String network,
+      @Nonnull NetworkEnum network,
       @Nonnull String address) {
     LOGGER.trace("setup() ...");
 

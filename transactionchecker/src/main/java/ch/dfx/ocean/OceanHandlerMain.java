@@ -15,6 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.EnvironmentEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.ocean.data.ListTransactionsDTO;
 import ch.dfx.ocean.data.TransactionsDTO;
@@ -44,6 +46,12 @@ import ch.dfx.transactionserver.database.H2DBManagerImpl;
 public class OceanHandlerMain {
   private static final Logger LOGGER = LogManager.getLogger(OceanHandlerMain.class);
 
+  private static final String IDENTIFIER = "oceanhandler";
+
+  // ...
+  private final NetworkEnum network;
+
+  // ...
   private final H2DBManager databaseManager;
   private final DatabaseHelper databaseHelper;
 
@@ -66,18 +74,18 @@ public class OceanHandlerMain {
     }
 
     // ...
-    String network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
-    String environment = TransactionCheckerUtils.getEnvironment().name().toLowerCase();
+    NetworkEnum network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
+    EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
     // ...
-    System.setProperty("logFilename", "ocean-" + network + "-" + environment);
+    System.setProperty("logFilename", TransactionCheckerUtils.getLog4jFilename(IDENTIFIER, network));
     TransactionCheckerUtils.initLog4j("log4j2.xml");
 
     // ...
     TransactionCheckerUtils.loadConfigProperties(network, environment);
 
     // ...
-    OceanHandlerMain oceanHandler = new OceanHandlerMain();
+    OceanHandlerMain oceanHandler = new OceanHandlerMain(network);
 
     // ...
     List<DepositDTO> depositDTOList = oceanHandler.getDepositDTOList();
@@ -89,9 +97,9 @@ public class OceanHandlerMain {
         File jsonFile = new File("logs", "ocean-" + depositAddress + ".json");
 
         if (isFromOcean) {
-          oceanHandler.readFromOcean(network, depositAddress, jsonFile);
+          oceanHandler.readFromOcean(depositAddress, jsonFile);
         } else if (isFromFile) {
-          oceanHandler.readFromFile(network, depositAddress, jsonFile);
+          oceanHandler.readFromFile(depositAddress, jsonFile);
         }
       }
     }
@@ -100,7 +108,9 @@ public class OceanHandlerMain {
   /**
    * 
    */
-  public OceanHandlerMain() {
+  public OceanHandlerMain(NetworkEnum network) {
+    this.network = network;
+
     this.databaseManager = new H2DBManagerImpl();
     this.databaseHelper = new DatabaseHelper();
   }
@@ -158,7 +168,6 @@ public class OceanHandlerMain {
    * 
    */
   private void readFromOcean(
-      @Nonnull String network,
       @Nonnull String testAddress,
       @Nonnull File jsonFile) throws DfxException {
     LOGGER.debug("readFromOcean() ...");
@@ -190,7 +199,6 @@ public class OceanHandlerMain {
    * 
    */
   private void readFromFile(
-      @Nonnull String network,
       @Nonnull String testAddress,
       @Nonnull File jsonFile) throws DfxException {
     LOGGER.debug("readFromFile() ...");

@@ -29,6 +29,7 @@ import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionRawTxDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
@@ -66,11 +67,11 @@ public class WithdrawalManager {
    * 
    */
   public WithdrawalManager(
-      @Nonnull String network,
+      @Nonnull NetworkEnum network,
       @Nonnull H2DBManager databaseManager,
       @Nonnull DefiDataProvider dataProvider) {
     Objects.requireNonNull(network, "null 'network' not allowed");
-    this.jsonSignatureCheckFile = Path.of("", "data", "javascript", network, "message-verification.json");
+    this.jsonSignatureCheckFile = Path.of("", "data", "javascript", network.toString(), "message-verification.json");
 
     this.databaseManager = databaseManager;
     this.dataProvider = dataProvider;

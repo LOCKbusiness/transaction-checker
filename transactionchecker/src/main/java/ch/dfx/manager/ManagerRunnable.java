@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.ApiAccessHandlerImpl;
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -27,7 +28,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   private final ApiAccessHandler apiAccessHandler;
 
   // ...
-  private final String network;
+  private final NetworkEnum network;
 
   private boolean isProcessing = false;
 
@@ -39,7 +40,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
    */
   public ManagerRunnable(
       @Nonnull H2DBManager databaseManager,
-      @Nonnull String network) {
+      @Nonnull NetworkEnum network) {
     Objects.requireNonNull(databaseManager, "null databaseManager is not allowed");
 
     this.databaseManager = databaseManager;

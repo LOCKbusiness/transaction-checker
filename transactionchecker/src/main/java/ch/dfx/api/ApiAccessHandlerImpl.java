@@ -36,6 +36,7 @@ import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -50,7 +51,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   private static final Logger LOGGER = LogManager.getLogger(ApiAccessHandlerImpl.class);
 
   // ...
-  private final String network;
+  private final NetworkEnum network;
 
   // ...
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS");
@@ -69,7 +70,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   /**
    * 
    */
-  public ApiAccessHandlerImpl(@Nonnull String network) {
+  public ApiAccessHandlerImpl(@Nonnull NetworkEnum network) {
     Objects.requireNonNull(network, "null 'network' not allowed");
     this.network = network;
 
@@ -424,7 +425,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
               .append(".json")
               .toString();
 
-      Path jsonLogFilePath = Path.of("", "logs", "json", network, type, fileName);
+      Path jsonLogFilePath = Path.of("", "logs", "json", network.toString(), type, fileName);
 
       // ...
       int jsonStringLengthMB = jsonString.length() / 1024 / 1024;

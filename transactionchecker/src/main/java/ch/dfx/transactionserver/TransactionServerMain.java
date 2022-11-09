@@ -153,7 +153,9 @@ public class TransactionServerMain {
       startDatabaseServer();
 
       // ...
-      loadWallet();
+      if (NetworkEnum.STAGNET != network) {
+        loadWallet();
+      }
 
       // ...
       int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
@@ -191,7 +193,9 @@ public class TransactionServerMain {
 
     SchedulerProvider.getInstance().shutdown();
 
-    unloadWallet();
+    if (NetworkEnum.STAGNET != network) {
+      unloadWallet();
+    }
 
     stopDatabaseServer();
 

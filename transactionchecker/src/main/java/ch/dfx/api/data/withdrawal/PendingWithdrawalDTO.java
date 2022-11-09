@@ -12,10 +12,9 @@ public class PendingWithdrawalDTO {
 
   private String signMessage = null;
   private String signature = null;
+  private String asset = null;
 
   private BigDecimal amount = null;
-
-  private PendingWithdrawalAssetDTO asset = null;
 
   /**
    * 
@@ -47,20 +46,20 @@ public class PendingWithdrawalDTO {
     this.signature = signature;
   }
 
+  public String getAsset() {
+    return asset;
+  }
+
+  public void setAsset(String asset) {
+    this.asset = asset;
+  }
+
   public BigDecimal getAmount() {
     return amount;
   }
 
   public void setAmount(BigDecimal amount) {
     this.amount = amount;
-  }
-
-  public PendingWithdrawalAssetDTO getAsset() {
-    return asset;
-  }
-
-  public void setAsset(PendingWithdrawalAssetDTO asset) {
-    this.asset = asset;
   }
 
   @Override

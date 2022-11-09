@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
@@ -97,6 +98,23 @@ public class TestUtils {
     LOGGER.debug("globalCleanup()");
 
     stopHttpServer();
+  }
+
+  /**
+   * 
+   */
+  public static void deleteTable(@Nonnull String tableName) {
+    LOGGER.debug("deleteTable(): tableName=" + tableName);
+
+    try {
+      String deleteSql = "DELETE FROM " + tableName;
+
+      Statement statement = connection.createStatement();
+      statement.execute(deleteSql);
+      statement.close();
+    } catch (Exception e) {
+      LOGGER.error("deleteTable", e);
+    }
   }
 
   /**

@@ -127,6 +127,22 @@ CREATE TABLE IF NOT EXISTS staking (
 
 CREATE UNIQUE INDEX idx1_staking ON staking(liquidity_address_number, deposit_address_number, customer_address_number);
 
+-- ===========================
+-- STAKING_WITHDRAWAL_RESERVED
+-- ===========================
+CREATE TABLE IF NOT EXISTS staking_withdrawal_reserved (
+  withdrawal_id    BIGINT      NOT NULL,
+  transaction_id   VARCHAR(64) NOT NULL,
+  customer_address VARCHAR(64) NOT NULL,
+  vout             DECIMAL(20,8) NOT NULL,
+  create_time      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  change_time      TIMESTAMP WITH TIME ZONE
+                   GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_staking_withdrawal_reserved ON staking_withdrawal_reserved(withdrawal_id);
+CREATE UNIQUE INDEX idx2_staking_withdrawal_reserved ON staking_withdrawal_reserved(transaction_id);
+
 -- ===================
 -- API_DUPLICATE_CHECK
 -- ===================
@@ -138,6 +154,7 @@ CREATE TABLE IF NOT EXISTS api_duplicate_check (
 );
 
 CREATE UNIQUE INDEX idx1_api_duplicate_check ON api_duplicate_check(withdrawal_id);
+CREATE UNIQUE INDEX idx2_api_duplicate_check ON api_duplicate_check(transaction_id);
 
 -- ====================
 -- MASTERNODE_WHITELIST

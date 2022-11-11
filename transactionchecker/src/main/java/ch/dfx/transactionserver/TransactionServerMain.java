@@ -20,6 +20,9 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.handler.DefiWalletHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.logging.MessageEventBus;
+import ch.dfx.logging.MessageEventCollector;
+import ch.dfx.logging.MessageEventProvider;
 import ch.dfx.manager.ManagerRunnable;
 import ch.dfx.process.ProcessInfoProvider;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
@@ -40,6 +43,8 @@ public class TransactionServerMain {
   private final NetworkEnum network;
 
   private final H2DBManager databaseManager;
+
+  private final MessageEventCollector messageEventCollector;
 
   // ...
   private Server tcpServer = null;
@@ -87,7 +92,6 @@ public class TransactionServerMain {
         transactionServer.execute(isMainnet, isServerOnly);
       }
     } catch (Throwable t) {
-      // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
       LOGGER.error("Fatal Error", t);
       System.exit(-1);
     }
@@ -100,6 +104,7 @@ public class TransactionServerMain {
     this.network = network;
 
     this.databaseManager = new H2DBManagerImpl();
+    this.messageEventCollector = new MessageEventCollector();
   }
 
   /**
@@ -150,6 +155,8 @@ public class TransactionServerMain {
       Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
 
       // ...
+      setupMessageEventHandling();
+
       startDatabaseServer();
 
       // ...
@@ -182,6 +189,22 @@ public class TransactionServerMain {
           SchedulerProvider.getInstance().add(processInfoProvider, 10, runPeriodWatchdog, TimeUnit.SECONDS);
         }
       }
+    }
+  }
+
+  /**
+   * 
+   */
+  private void setupMessageEventHandling() {
+    LOGGER.debug("setupMessageEventHandling()");
+
+    MessageEventBus.getInstance().register(messageEventCollector);
+
+    int runPeriodMessageEvent = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
+
+    if (60 <= runPeriodMessageEvent) {
+      MessageEventProvider messageEventProvider = new MessageEventProvider(messageEventCollector);
+      SchedulerProvider.getInstance().add(messageEventProvider, 0, runPeriodMessageEvent, TimeUnit.SECONDS);
     }
   }
 

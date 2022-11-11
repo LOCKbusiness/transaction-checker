@@ -1,4 +1,4 @@
-package ch.dfx.transactionserver.builder;
+package ch.dfx.transactionserver.cleaner;
 
 import java.util.stream.Stream;
 
@@ -14,10 +14,10 @@ import ch.dfx.transactionserver.database.H2DBManagerImpl;
 /**
  * 
  */
-public class StakingBuilderMain {
-  private static final Logger LOGGER = LogManager.getLogger(StakingBuilderMain.class);
+public class StakingWithdrawalReservedCleanerMain {
+  private static final Logger LOGGER = LogManager.getLogger(StakingWithdrawalReservedCleanerMain.class);
 
-  private static final String IDENTIFIER = "stakingbuilder";
+  private static final String IDENTIFIER = "balancebuilder";
 
   /**
    * 
@@ -51,8 +51,8 @@ public class StakingBuilderMain {
       H2DBManager databaseManager = new H2DBManagerImpl();
 
       // ...
-      StakingBuilder stakingBuilder = new StakingBuilder(databaseManager);
-      stakingBuilder.build();
+      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(databaseManager);
+      stakingWithdrawalReservedCleaner.clean();
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

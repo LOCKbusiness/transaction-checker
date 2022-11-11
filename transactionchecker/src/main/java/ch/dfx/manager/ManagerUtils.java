@@ -17,10 +17,10 @@ public class ManagerUtils {
   /**
    * 
    */
-  public static void setCheckSignatureMessage(
+  public static void setWithdrawalCheckInvalidReason(
       @Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO,
       @Nonnull String messageInfo) {
-    LOGGER.trace("setCheckSignatureMessage() ...");
+    LOGGER.trace("setWithdrawalCheckInvalidReason() ...");
 
     String message = "[Withdrawal] ID: " + transactionWithdrawalDTO.getId() + " - " + messageInfo;
 

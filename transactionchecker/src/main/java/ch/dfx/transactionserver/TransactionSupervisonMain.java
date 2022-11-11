@@ -96,7 +96,7 @@ public class TransactionSupervisonMain {
         transactionSupervison.checkTransaction(startblock, endblock);
       }
     } catch (Exception e) {
-      LOGGER.error("Fatal Error" + e);
+      LOGGER.error("Fatal Error", e);
       System.exit(-1);
     }
   }

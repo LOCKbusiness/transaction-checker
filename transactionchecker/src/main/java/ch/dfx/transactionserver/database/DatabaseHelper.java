@@ -19,12 +19,16 @@ import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
+import ch.dfx.transactionserver.data.StakingWithdrawalReservedDTO;
+import ch.dfx.transactionserver.data.TransactionDTO;
 
 /**
  * 
  */
 public class DatabaseHelper {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseHelper.class);
+
+  private PreparedStatement transactionByIdSelectStatement = null;
 
   private PreparedStatement addressByNumberSelectStatement = null;
   private PreparedStatement addressByAddressSelectStatement = null;
@@ -44,6 +48,8 @@ public class DatabaseHelper {
   private PreparedStatement stakingByDepositAddressNumberSelectStatement = null;
   private PreparedStatement stakingByCustomerAddressNumberSelectStatement = null;
 
+  private PreparedStatement stakingWithdrawalReservedSelectStatement = null;
+
   private PreparedStatement masternodeSelectStatement = null;
   private PreparedStatement masternodeWhitelistByOwnerAddressSelectStatement = null;
 
@@ -60,6 +66,10 @@ public class DatabaseHelper {
     LOGGER.trace("openStatements() ...");
 
     try {
+      // Transaction ...
+      String transactionByIdSelectSql = "SELECT * FROM public.transaction WHERE txid=?";
+      transactionByIdSelectStatement = connection.prepareStatement(transactionByIdSelectSql);
+
       // Address ...
       String addressByNumberSelectSql = "SELECT * FROM public.address WHERE number=?";
       addressByNumberSelectStatement = connection.prepareStatement(addressByNumberSelectSql);
@@ -161,6 +171,10 @@ public class DatabaseHelper {
               + " WHERE s.customer_address_number=?";
       stakingByCustomerAddressNumberSelectStatement = connection.prepareStatement(stakingByCustomerAddressNumberSelectSql);
 
+      // Staking Withdrawal Reserved ...
+      String stakingWithdrawalReservedSelectSql = "SELECT * FROM public.staking_withdrawal_reserved";
+      stakingWithdrawalReservedSelectStatement = connection.prepareStatement(stakingWithdrawalReservedSelectSql);
+
       // Masternode ...
       String masternodeSelectSql = "SELECT * FROM public.masternode_whitelist";
       masternodeSelectStatement = connection.prepareStatement(masternodeSelectSql);
@@ -181,6 +195,8 @@ public class DatabaseHelper {
     LOGGER.trace("closeStatements() ...");
 
     try {
+      transactionByIdSelectStatement.close();
+
       addressByNumberSelectStatement.close();
       addressByAddressSelectStatement.close();
 
@@ -199,11 +215,44 @@ public class DatabaseHelper {
       stakingByDepositAddressNumberSelectStatement.close();
       stakingByCustomerAddressNumberSelectStatement.close();
 
+      stakingWithdrawalReservedSelectStatement.close();
+
       masternodeSelectStatement.close();
       masternodeWhitelistByOwnerAddressSelectStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
     }
+  }
+
+  /**
+   * 
+   */
+  public @Nullable TransactionDTO getTransactionDTOById(@Nonnull String transactionId) throws DfxException {
+    LOGGER.trace("getTransactionDTOById() ...");
+
+    try {
+      TransactionDTO transactionDTO = null;
+
+      transactionByIdSelectStatement.setString(1, transactionId);
+
+      ResultSet resultSet = transactionByIdSelectStatement.executeQuery();
+
+      if (resultSet.next()) {
+        transactionDTO = new TransactionDTO(
+            resultSet.getInt("block_number"),
+            resultSet.getInt("number"),
+            resultSet.getString("txid"));
+
+        transactionDTO.keepInternalState();
+      }
+
+      resultSet.close();
+
+      return transactionDTO;
+    } catch (Exception e) {
+      throw new DfxException("getTransactionDTOById", e);
+    }
+
   }
 
   /**
@@ -602,6 +651,37 @@ public class DatabaseHelper {
       return stakingDTOList;
     } catch (Exception e) {
       throw new DfxException("getStakingDTOList", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nonnull List<StakingWithdrawalReservedDTO> getStakingWithdrawalReservedDTOList() throws DfxException {
+    LOGGER.trace("getStakingWithdrawalReservedDTOList() ...");
+
+    try {
+      List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = new ArrayList<>();
+
+      ResultSet resultSet = stakingWithdrawalReservedSelectStatement.executeQuery();
+
+      while (resultSet.next()) {
+        StakingWithdrawalReservedDTO stakingWithdrawalReservedDTO = new StakingWithdrawalReservedDTO();
+
+        stakingWithdrawalReservedDTO.setWithdrawalId(resultSet.getInt("withdrawal_id"));
+        stakingWithdrawalReservedDTO.setTransactionId(resultSet.getString("transaction_id"));
+        stakingWithdrawalReservedDTO.setCustomerAddress(resultSet.getString("customer_address"));
+        stakingWithdrawalReservedDTO.setVout(resultSet.getBigDecimal("vout"));
+        stakingWithdrawalReservedDTO.setCreateTime(resultSet.getTimestamp("create_time"));
+
+        stakingWithdrawalReservedDTOList.add(stakingWithdrawalReservedDTO);
+      }
+
+      resultSet.close();
+
+      return stakingWithdrawalReservedDTOList;
+    } catch (Exception e) {
+      throw new DfxException("getStakingWithdrawalReservedDTOList", e);
     }
   }
 

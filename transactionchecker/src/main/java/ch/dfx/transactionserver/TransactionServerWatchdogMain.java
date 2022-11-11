@@ -4,6 +4,7 @@ import java.io.File;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -19,6 +20,10 @@ import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.logging.MessageEventBus;
+import ch.dfx.logging.MessageEventCollector;
+import ch.dfx.logging.MessageEventProvider;
+import ch.dfx.logging.events.MessageEvent;
 import ch.dfx.process.ProcessInfoService;
 import ch.dfx.process.ProcessInfoServiceImpl;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
@@ -38,6 +43,8 @@ public class TransactionServerWatchdogMain {
 
 //  private HttpServer httpServer = null;
   private Registry registry = null;
+
+  private final MessageEventCollector messageEventCollector;
 
   /**
    *
@@ -66,6 +73,10 @@ public class TransactionServerWatchdogMain {
       // ...
       LOGGER.debug("Start");
 
+      // ...
+      MessageEventBus.getInstance().register(new MessageEventCollector());
+
+      // ...
       TransactionServerWatchdogMain transactionServerWatchdogMain = new TransactionServerWatchdogMain(network);
       transactionServerWatchdogMain.watchdog();
 
@@ -87,6 +98,8 @@ public class TransactionServerWatchdogMain {
    */
   public TransactionServerWatchdogMain(@Nonnull NetworkEnum network) {
     this.network = network;
+
+    this.messageEventCollector = new MessageEventCollector();
   }
 
   /**
@@ -101,6 +114,9 @@ public class TransactionServerWatchdogMain {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
 
         // ...
+        setupMessageEventHandling();
+
+        // ...
 //        startHttpServer();
         startRMI();
       }
@@ -108,6 +124,22 @@ public class TransactionServerWatchdogMain {
       throw e;
     } catch (Exception e) {
       throw new DfxException("watchdog", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void setupMessageEventHandling() {
+    LOGGER.debug("setupMessageEventHandling()");
+
+    MessageEventBus.getInstance().register(messageEventCollector);
+
+    int runPeriodMessageEvent = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
+
+    if (60 <= runPeriodMessageEvent) {
+      MessageEventProvider messageEventProvider = new MessageEventProvider(messageEventCollector);
+      SchedulerProvider.getInstance().add(messageEventProvider, 0, runPeriodMessageEvent, TimeUnit.SECONDS);
     }
   }
 
@@ -248,16 +280,23 @@ public class TransactionServerWatchdogMain {
 
       Process process = processBuilder.start();
 
-      LOGGER.debug("Process is running ...");
+      // ...
+      String startMessage = "[Transaction Check Server] Process is running";
+      MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
+      LOGGER.debug(startMessage);
 
       int exitCode = process.waitFor();
       LOGGER.debug("... Process exit code: " + exitCode);
 
       deleteTransactionServerProcessLockfile();
 
-      // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
+      String stopMessage = "[Transaction Check Server] Unexpected stop, trying to restart now";
+      MessageEventBus.getInstance().postEvent(new MessageEvent(stopMessage));
+      LOGGER.error(stopMessage);
     } catch (Throwable t) {
-      // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
+      String message = "[Transaction Check Server] Unexpected exception stop";
+      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+
       LOGGER.error("Fatal Error", t);
     }
   }

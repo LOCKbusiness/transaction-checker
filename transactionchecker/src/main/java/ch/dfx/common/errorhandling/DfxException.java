@@ -15,7 +15,7 @@ public class DfxException extends Exception {
    * 
    */
   public DfxException(String errorMessage) {
-    super(errorMessage);
+    super("[ERROR] " + errorMessage);
 
     LOGGER.error(errorMessage);
   }
@@ -24,7 +24,7 @@ public class DfxException extends Exception {
    * 
    */
   public DfxException(String errorMessage, Throwable throwable) {
-    super(errorMessage, throwable);
+    super("[ERROR] " + errorMessage, throwable);
 
     LOGGER.error(errorMessage, throwable);
   }

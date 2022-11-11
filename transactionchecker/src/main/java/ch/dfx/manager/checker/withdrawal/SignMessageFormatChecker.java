@@ -79,14 +79,13 @@ public class SignMessageFormatChecker {
 
       // ...
       DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
-//    DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
 
       // ...
       String openTransactionId = openTransactionDTO.getId();
       String rawTransactionId = transactionData.getTxid();
 
       if (!Objects.equals(openTransactionId, rawTransactionId)) {
-        ManagerUtils.setCheckSignatureMessage(transactionWithdrawalDTO, "transaction id not matches");
+        ManagerUtils.setWithdrawalCheckInvalidReason(transactionWithdrawalDTO, "transaction id not matches");
         return false;
       }
 
@@ -98,7 +97,7 @@ public class SignMessageFormatChecker {
       SIGN_MESSAGE_MATCHER.reset(signMessage);
 
       if (!SIGN_MESSAGE_MATCHER.matches()) {
-        ManagerUtils.setCheckSignatureMessage(transactionWithdrawalDTO, "unknown sign message format");
+        ManagerUtils.setWithdrawalCheckInvalidReason(transactionWithdrawalDTO, "unknown sign message format");
         return false;
       }
 
@@ -114,7 +113,7 @@ public class SignMessageFormatChecker {
           checkSignMessageAmount(new BigDecimal(signMessageAmount), pendingWithdrawalDTO.getAmount(), transactionOutAmount);
 
       if (!isSignMessageAmountValid) {
-        ManagerUtils.setCheckSignatureMessage(transactionWithdrawalDTO, "invalid amount");
+        ManagerUtils.setWithdrawalCheckInvalidReason(transactionWithdrawalDTO, "invalid amount");
         return false;
       }
 
@@ -127,11 +126,11 @@ public class SignMessageFormatChecker {
       checkSignMessage = checkSignMessage.replace("${stakingId}", signMessageStakingId);
       checkSignMessage = checkSignMessage.replace("${withdrawalId}", transactionWithdrawalDTO.getId().toString());
 
-      LOGGER.debug(signMessage);
-      LOGGER.debug(checkSignMessage);
+      LOGGER.trace(signMessage);
+      LOGGER.trace(checkSignMessage);
 
       if (!signMessage.equals(checkSignMessage)) {
-        ManagerUtils.setCheckSignatureMessage(transactionWithdrawalDTO, "sign message mismatch");
+        ManagerUtils.setWithdrawalCheckInvalidReason(transactionWithdrawalDTO, "sign message mismatch");
         return false;
       }
 
@@ -141,7 +140,7 @@ public class SignMessageFormatChecker {
       return true;
     } catch (Exception e) {
       LOGGER.error("checkSignMessageFormat", e);
-      ManagerUtils.setCheckSignatureMessage(transactionWithdrawalDTO, e.getMessage());
+      ManagerUtils.setWithdrawalCheckInvalidReason(transactionWithdrawalDTO, e.getMessage());
       return false;
     }
   }

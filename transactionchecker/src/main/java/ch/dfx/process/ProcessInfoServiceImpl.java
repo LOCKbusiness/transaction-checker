@@ -7,6 +7,8 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.logging.MessageEventBus;
+import ch.dfx.logging.events.MessageEvent;
 import ch.dfx.process.data.ProcessInfoDTO;
 
 /**
@@ -49,11 +51,13 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
     LOGGER.debug("Memory Capacity:  " + heapCapacity + "%");
 
     if (heapCapacity >= MEMORY_WATERMARK_CRITICAL) {
-      // SEND MESSAGE: ...
-      LOGGER.error("[Memory]: consumption is " + heapCapacity + "% (" + (heapUsedSize / MB) + " MB)");
+      String message = createMemoryMessage(heapUsedSize, heapCapacity);
+      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+      LOGGER.error(message);
     } else if (heapCapacity >= MEMORY_WATERMARK_WARNING) {
-      // SEND MESSAGE: ...
-      LOGGER.warn("[Memory]: consumption is " + heapCapacity + "% (" + (heapUsedSize / MB) + " MB)");
+      String message = createMemoryMessage(heapUsedSize, heapCapacity);
+      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+      LOGGER.warn(message);
     }
 
     // ...
@@ -67,11 +71,33 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
     LOGGER.debug("Disk Capacity:   " + diskCapacity + "%");
 
     if (diskCapacity >= DISK_WATERMARK_CRITICAL) {
-      // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
-      LOGGER.error("[Disk]: consumption is " + diskCapacity + "% (" + (diskUsedSpace / GB) + " GB)");
+      String message = createDiskMessage(diskUsedSpace, diskCapacity);
+      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+      LOGGER.error(message);
     } else if (diskCapacity >= DISK_WATERMARK_WARNING) {
-      // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
-      LOGGER.warn("[Disk]: consumption is " + diskCapacity + "% (" + (diskUsedSpace / GB) + " GB)");
+      String message = createDiskMessage(diskUsedSpace, diskCapacity);
+      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+      LOGGER.warn(message);
     }
+  }
+
+  /**
+   * 
+   */
+  private String createMemoryMessage(long heapUsedSize, long heapCapacity) {
+    return new StringBuilder()
+        .append("[Memory]: consumption is ").append(heapCapacity).append("%")
+        .append(" (").append((heapUsedSize / MB)).append(" MB)")
+        .toString();
+  }
+
+  /**
+   * 
+   */
+  private String createDiskMessage(long diskUsedSpace, long diskCapacity) {
+    return new StringBuilder()
+        .append("[Disk]: consumption is ").append(diskCapacity).append("%")
+        .append(" (").append((diskUsedSpace / GB)).append(" GB)")
+        .toString();
   }
 }

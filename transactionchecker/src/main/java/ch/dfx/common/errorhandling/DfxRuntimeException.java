@@ -15,7 +15,7 @@ public class DfxRuntimeException extends RuntimeException {
    * 
    */
   public DfxRuntimeException(String errorMessage) {
-    super(errorMessage);
+    super("[ERROR] " + errorMessage);
 
     LOGGER.error(errorMessage);
   }
@@ -24,7 +24,7 @@ public class DfxRuntimeException extends RuntimeException {
    * 
    */
   public DfxRuntimeException(String errorMessage, Throwable throwable) {
-    super(errorMessage, throwable);
+    super("[ERROR] " + errorMessage, throwable);
 
     LOGGER.error(errorMessage, throwable);
   }

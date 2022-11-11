@@ -76,7 +76,7 @@ public class SignMessageSignatureChecker {
           transactionWithdrawalDTO.setState(TransactionWithdrawalStateEnum.SIGNATURE_CHECKED);
           checkedTransactionWithdrawalDTOList.add(transactionWithdrawalDTO);
         } else {
-          ManagerUtils.setCheckSignatureMessage(transactionWithdrawalDTO, "invalid signature");
+          ManagerUtils.setWithdrawalCheckInvalidReason(transactionWithdrawalDTO, "invalid signature");
         }
       }
     }

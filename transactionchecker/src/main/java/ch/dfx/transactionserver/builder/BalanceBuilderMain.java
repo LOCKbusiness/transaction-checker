@@ -54,7 +54,7 @@ public class BalanceBuilderMain {
       BalanceBuilder balanceBuilder = new BalanceBuilder(databaseManager);
       balanceBuilder.build();
     } catch (Exception e) {
-      LOGGER.error("Fatal Error" + e);
+      LOGGER.error("Fatal Error", e);
       System.exit(-1);
     }
   }

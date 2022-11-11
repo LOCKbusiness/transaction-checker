@@ -12,8 +12,8 @@ import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionPayloadDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.common.errorhandling.DfxException;
+import ch.dfx.defichain.handler.DefiMessageHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
-import ch.dfx.message.MessageHandler;
 
 /**
  * 
@@ -23,7 +23,7 @@ public abstract class TransactionChecker {
 
   // ...
   private final ApiAccessHandler apiAccessHandler;
-  protected final MessageHandler messageHandler;
+  protected final DefiMessageHandler messageHandler;
 
   /**
    * 
@@ -33,7 +33,7 @@ public abstract class TransactionChecker {
       @Nonnull DefiDataProvider dataProvider) {
     this.apiAccessHandler = apiAccessHandler;
 
-    this.messageHandler = new MessageHandler(dataProvider);
+    this.messageHandler = new DefiMessageHandler(dataProvider);
   }
 
   /**

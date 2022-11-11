@@ -54,7 +54,7 @@ public class DepositBuilderMain {
       DepositBuilder depositBuilder = new DepositBuilder(databaseManager);
       depositBuilder.build();
     } catch (Exception e) {
-      LOGGER.error("Fatal Error" + e);
+      LOGGER.error("Fatal Error", e);
       System.exit(-1);
     }
   }

@@ -65,6 +65,7 @@ public class WithdrawalManager {
   public TransactionWithdrawalDTOList checkStakingBalance(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
     LOGGER.trace("checkStakingBalance() ...");
 
-    return stakingBalanceChecker.checkStakingBalance(transactionWithdrawalDTOList);
+//    return stakingBalanceChecker.checkStakingBalance(transactionWithdrawalDTOList);
+    return stakingBalanceChecker.checkStakingBalanceNew(transactionWithdrawalDTOList);
   }
 }

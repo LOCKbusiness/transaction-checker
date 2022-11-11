@@ -38,12 +38,12 @@ import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
+import ch.dfx.defichain.handler.DefiMessageHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.manager.checker.transaction.DuplicateChecker;
 import ch.dfx.manager.checker.transaction.SignatureChecker;
 import ch.dfx.manager.checker.transaction.SizeChecker;
 import ch.dfx.manager.checker.transaction.TypeChecker;
-import ch.dfx.message.MessageHandler;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
@@ -61,7 +61,7 @@ public class OpenTransactionManager {
   private final DefiDataProvider dataProvider;
 
   private final DatabaseHelper dataHelper;
-  private final MessageHandler messageHandler;
+  private final DefiMessageHandler messageHandler;
   private final WithdrawalManager withdrawalManager;
 
   private final TypeChecker typeChecker;
@@ -82,7 +82,7 @@ public class OpenTransactionManager {
     this.dataProvider = dataProvider;
 
     this.dataHelper = new DatabaseHelper();
-    this.messageHandler = new MessageHandler(dataProvider);
+    this.messageHandler = new DefiMessageHandler(dataProvider);
     this.withdrawalManager = new WithdrawalManager(network, databaseManager, dataProvider);
 
     this.typeChecker = new TypeChecker(apiAccessHandler, dataProvider);

@@ -50,7 +50,7 @@ public class DataImporterMain {
       DataImporter dataImporter = new DataImporter(network);
       dataImporter.execute();
     } catch (Exception e) {
-      LOGGER.error("Fatal Error" + e);
+      LOGGER.error("Fatal Error", e);
       System.exit(-1);
     }
   }

@@ -14,6 +14,7 @@ import ch.dfx.transactionserver.builder.DatabaseBuilder;
 import ch.dfx.transactionserver.builder.DepositBuilder;
 import ch.dfx.transactionserver.builder.MasternodeBuilder;
 import ch.dfx.transactionserver.builder.StakingBuilder;
+import ch.dfx.transactionserver.cleaner.StakingWithdrawalReservedCleaner;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
@@ -34,11 +35,12 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private boolean isProcessing = false;
 
   // ...
-  private int databaseErrorCounter = 0;
-  private int depositErrorCounter = 0;
-  private int balanceErrorCounter = 0;
-  private int stakingErrorCounter = 0;
-  private int masternodeErrorCounter = 0;
+  private int databaseBuilderErrorCounter = 0;
+  private int depositBuilderErrorCounter = 0;
+  private int balanceBuilderErrorCounter = 0;
+  private int stakingBuilderErrorCounter = 0;
+  private int masternodeBuilderErrorCounter = 0;
+  private int stakingWithdrawalReservedCleanerErrorCounter = 0;
 
   /**
    * 
@@ -75,7 +77,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
 
       checkProcessLockfile();
     } catch (Throwable t) {
-      databaseErrorCounter++;
+      databaseBuilderErrorCounter++;
       LOGGER.error("run", t);
     } finally {
       isProcessing = false;
@@ -88,13 +90,18 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private void doRun() {
     LOGGER.trace("doRun() ...");
 
+    // ...
     executeDatabase();
     checkDatabase();
 
+    // ...
     executeDeposit();
     executeBalance();
     executeStaking();
     executeMasternode();
+
+    // ...
+    executeStakingWithdrawalReservedCleaner();
   }
 
   /**
@@ -107,11 +114,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       DatabaseBuilder databaseBuilder = new DatabaseBuilder(databaseManager);
       databaseBuilder.build();
     } catch (DfxException e) {
-      databaseErrorCounter++;
-      LOGGER.error("executeDatabase: databaseErrorCounter=" + databaseErrorCounter, e.getMessage());
+      databaseBuilderErrorCounter++;
+      LOGGER.error("Database Builder: errorCounter=" + databaseBuilderErrorCounter, e.getMessage());
     } catch (Exception e) {
-      databaseErrorCounter++;
-      LOGGER.error("executeDatabase: databaseErrorCounter=" + databaseErrorCounter, e);
+      databaseBuilderErrorCounter++;
+      LOGGER.error("Database Builder: errorCounter=" + databaseBuilderErrorCounter, e);
     }
   }
 
@@ -125,14 +132,14 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       DatabaseChecker databaseChecker = new DatabaseChecker(databaseManager);
 
       if (databaseChecker.check()) {
-        databaseErrorCounter = 0;
+        databaseBuilderErrorCounter = 0;
       }
     } catch (DfxException e) {
-      databaseErrorCounter++;
-      LOGGER.error("checkDatabase: databaseErrorCounter=" + databaseErrorCounter, e.getMessage());
+      databaseBuilderErrorCounter++;
+      LOGGER.error("Database Checker: errorCounter=" + databaseBuilderErrorCounter, e.getMessage());
     } catch (Exception e) {
-      databaseErrorCounter++;
-      LOGGER.error("checkDatabase: databaseErrorCounter=" + databaseErrorCounter, e);
+      databaseBuilderErrorCounter++;
+      LOGGER.error("Database Checker: errorCounter=" + databaseBuilderErrorCounter, e);
     }
   }
 
@@ -146,11 +153,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       DepositBuilder depositBuilder = new DepositBuilder(databaseManager);
       depositBuilder.build();
     } catch (DfxException e) {
-      depositErrorCounter++;
-      LOGGER.error("executeDeposit: depositErrorCounter=" + depositErrorCounter, e.getMessage());
+      depositBuilderErrorCounter++;
+      LOGGER.error("Deposit Builder: errorCounter=" + depositBuilderErrorCounter, e.getMessage());
     } catch (Exception e) {
-      depositErrorCounter++;
-      LOGGER.error("executeDeposit: depositErrorCounter=" + depositErrorCounter, e);
+      depositBuilderErrorCounter++;
+      LOGGER.error("Deposit Builder: errorCounter=" + depositBuilderErrorCounter, e);
     }
   }
 
@@ -164,10 +171,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       BalanceBuilder balanceBuilder = new BalanceBuilder(databaseManager);
       balanceBuilder.build();
     } catch (DfxException e) {
-      balanceErrorCounter++;
-      LOGGER.error("executeBalance: balanceErrorCounter=" + balanceErrorCounter, e.getMessage());
+      balanceBuilderErrorCounter++;
+      LOGGER.error("Balance Builder: errorCounter=" + balanceBuilderErrorCounter, e.getMessage());
     } catch (Exception e) {
-      balanceErrorCounter++;
+      balanceBuilderErrorCounter++;
+      LOGGER.error("Balance Builder: errorCounter=" + balanceBuilderErrorCounter, e);
     }
   }
 
@@ -181,11 +189,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       StakingBuilder stakingBuilder = new StakingBuilder(databaseManager);
       stakingBuilder.build();
     } catch (DfxException e) {
-      stakingErrorCounter++;
-      LOGGER.error("executeStaking: stakingErrorCounter=" + stakingErrorCounter, e.getMessage());
+      stakingBuilderErrorCounter++;
+      LOGGER.error("Staking Builder: errorCounter=" + stakingBuilderErrorCounter, e.getMessage());
     } catch (Exception e) {
-      stakingErrorCounter++;
-      LOGGER.error("executeStaking: stakingErrorCounter=" + stakingErrorCounter, e);
+      stakingBuilderErrorCounter++;
+      LOGGER.error("Staking Builder: errorCounter=" + stakingBuilderErrorCounter, e);
     }
   }
 
@@ -199,11 +207,29 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       MasternodeBuilder masternodeBuilder = new MasternodeBuilder(databaseManager);
       masternodeBuilder.build();
     } catch (DfxException e) {
-      masternodeErrorCounter++;
-      LOGGER.error("executeMasternode: masternodeErrorCounter=" + masternodeErrorCounter, e.getMessage());
+      masternodeBuilderErrorCounter++;
+      LOGGER.error("Masternode Builder: errorCounter=" + masternodeBuilderErrorCounter, e.getMessage());
     } catch (Exception e) {
-      masternodeErrorCounter++;
-      LOGGER.error("executeMasternode: masternodeErrorCounter=" + masternodeErrorCounter, e);
+      masternodeBuilderErrorCounter++;
+      LOGGER.error("Masternode Builder: errorCounter=" + masternodeBuilderErrorCounter, e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void executeStakingWithdrawalReservedCleaner() {
+    LOGGER.trace("executeStakingWithdrawalReservedCleaner() ...");
+
+    try {
+      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(databaseManager);
+      stakingWithdrawalReservedCleaner.clean();
+    } catch (DfxException e) {
+      stakingWithdrawalReservedCleanerErrorCounter++;
+      LOGGER.error("StakingWithdrawalReserved Cleaner: errorCounter=" + stakingWithdrawalReservedCleanerErrorCounter, e.getMessage());
+    } catch (Exception e) {
+      masternodeBuilderErrorCounter++;
+      LOGGER.error("StakingWithdrawalReserved Cleaner: errorCounter=" + stakingWithdrawalReservedCleanerErrorCounter, e);
     }
   }
 
@@ -213,11 +239,12 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private void checkErrorCounter() {
     LOGGER.trace("checkErrorCounter() ...");
 
-    if (2 < databaseErrorCounter
-        || 2 < depositErrorCounter
-        || 2 < balanceErrorCounter
-        || 2 < stakingErrorCounter
-        || 2 < masternodeErrorCounter) {
+    if (2 < databaseBuilderErrorCounter
+        || 2 < depositBuilderErrorCounter
+        || 2 < balanceBuilderErrorCounter
+        || 2 < stakingBuilderErrorCounter
+        || 2 < masternodeBuilderErrorCounter
+        || 2 < stakingWithdrawalReservedCleanerErrorCounter) {
       LOGGER.error("Too many errors, will exit now");
       SchedulerProvider.getInstance().exit(-1);
     }

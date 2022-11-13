@@ -44,8 +44,8 @@ public class StakingWithdrawalReservedCleaner {
   /**
    * 
    */
-  public void clean() {
-    LOGGER.trace("clean()");
+  public void clean() throws DfxException {
+    LOGGER.debug("clean()");
 
     Connection connection = null;
 
@@ -63,8 +63,10 @@ public class StakingWithdrawalReservedCleaner {
 
       closeStatements();
       databaseHelper.closeStatements();
+    } catch (DfxException e) {
+      throw e;
     } catch (Exception e) {
-      LOGGER.error("clean", e);
+      throw new DfxException("clean", e);
     } finally {
       databaseManager.closeConnection(connection);
     }
@@ -160,9 +162,17 @@ public class StakingWithdrawalReservedCleaner {
     LOGGER.trace("deleteStakingWithdrawalReservedDTO() ...");
 
     try {
-      stakingWithdrawalReservedDeleteStatement.setInt(1, stakingWithdrawalReservedDTO.getWithdrawalId());
-      stakingWithdrawalReservedDeleteStatement.setString(2, stakingWithdrawalReservedDTO.getTransactionId());
-      stakingWithdrawalReservedDeleteStatement.setString(3, stakingWithdrawalReservedDTO.getCustomerAddress());
+      Integer withdrawalId = stakingWithdrawalReservedDTO.getWithdrawalId();
+      String transactionId = stakingWithdrawalReservedDTO.getTransactionId();
+      String customerAddress = stakingWithdrawalReservedDTO.getCustomerAddress();
+
+      LOGGER.debug(
+          "[DELETE] Withdrawal Id / Transaction Id / Customer Address: "
+              + withdrawalId + " / " + transactionId + " / " + customerAddress);
+
+      stakingWithdrawalReservedDeleteStatement.setInt(1, withdrawalId);
+      stakingWithdrawalReservedDeleteStatement.setString(2, transactionId);
+      stakingWithdrawalReservedDeleteStatement.setString(3, customerAddress);
 
       stakingWithdrawalReservedDeleteStatement.execute();
 

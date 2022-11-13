@@ -52,7 +52,7 @@ public class StakingBalanceChecker {
    * 
    */
   public TransactionWithdrawalDTOList checkStakingBalance(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkStakingBalance() ...");
+    LOGGER.trace("checkStakingBalance()");
 
     TransactionWithdrawalDTOList checkedTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
 
@@ -85,7 +85,7 @@ public class StakingBalanceChecker {
    * 
    */
   private boolean checkStakingBalance(@Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) {
-    LOGGER.trace("checkStakingBalance() ...");
+    LOGGER.trace("checkStakingBalance()");
 
     try {
       String customerAddress = transactionWithdrawalDTO.getCustomerAddress();
@@ -129,7 +129,7 @@ public class StakingBalanceChecker {
    * 
    */
   public TransactionWithdrawalDTOList checkStakingBalanceNew(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkStakingBalance() ...");
+    LOGGER.trace("checkStakingBalance()");
 
     TransactionWithdrawalDTOList checkedTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
 
@@ -164,7 +164,7 @@ public class StakingBalanceChecker {
    * 
    */
   private void openStatementsNew(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       String stakingWithdrawalReservedSelectByCustomerAddressSql = "SELECT * FROM public.staking_withdrawal_reserved WHERE customer_address=?";
@@ -184,7 +184,7 @@ public class StakingBalanceChecker {
    * 
    */
   private void closeStatementsNew() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       stakingWithdrawalReservedSelectByCustomerAddressStatement.close();
@@ -200,7 +200,7 @@ public class StakingBalanceChecker {
   private boolean checkStakingBalanceNew(
       @Nonnull Connection connection,
       @Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) {
-    LOGGER.trace("checkStakingBalance() ...");
+    LOGGER.trace("checkStakingBalance()");
 
     try {
       List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = getStakingWithdrawalReservedDTOList(transactionWithdrawalDTO);
@@ -253,7 +253,7 @@ public class StakingBalanceChecker {
    */
   private List<StakingWithdrawalReservedDTO> getStakingWithdrawalReservedDTOList(
       @Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) throws DfxException {
-    LOGGER.trace("getStakingWithdrawalReservedDTOList() ...");
+    LOGGER.trace("getStakingWithdrawalReservedDTOList()");
 
     try {
       List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = new ArrayList<>();
@@ -286,7 +286,7 @@ public class StakingBalanceChecker {
    * 
    */
   private BigDecimal getStakingBalanceNew(@Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) throws DfxException {
-    LOGGER.trace("getStakingBalance() ...");
+    LOGGER.trace("getStakingBalance()");
 
     BigDecimal stakingBalance = BigDecimal.ZERO;
 
@@ -312,7 +312,7 @@ public class StakingBalanceChecker {
   private void insertStakingWithdrawalReservedNew(
       @Nonnull Connection connection,
       @Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) throws DfxException {
-    LOGGER.trace("insertStakingWithdrawalReserved() ...");
+    LOGGER.trace("insertStakingWithdrawalReserved()");
 
     try {
       OpenTransactionDTO openTransactionDTO = transactionWithdrawalDTO.getOpenTransactionDTO();

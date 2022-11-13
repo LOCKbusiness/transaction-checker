@@ -35,7 +35,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 
   @Override
   public void run() {
-    LOGGER.trace("run() ...");
+    LOGGER.debug("run() ...");
+
+    long startTime = System.currentTimeMillis();
 
     isProcessing = true;
 
@@ -45,6 +47,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       LOGGER.error("run", t);
     } finally {
       isProcessing = false;
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

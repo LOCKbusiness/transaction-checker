@@ -106,7 +106,7 @@ public class TimerProvider {
    * 
    */
   public synchronized void exit(int exitCode) {
-    LOGGER.trace("exit() ...");
+    LOGGER.trace("exit()");
 
     try {
       Set<UUID> uuidSet = new HashSet<>(timerMap.keySet());

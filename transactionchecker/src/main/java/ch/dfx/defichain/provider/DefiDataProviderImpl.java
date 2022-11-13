@@ -80,7 +80,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public DefiLoadWalletData loadWallet(@Nonnull String wallet) throws DfxException {
-    LOGGER.trace("loadWallet(): wallet=" + wallet + " ...");
+    LOGGER.trace("loadWallet(): wallet=" + wallet);
 
     List<Object> paramList = Arrays.asList(wallet);
 
@@ -92,7 +92,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public String unloadWallet(@Nonnull String wallet) throws DfxException {
-    LOGGER.trace("unloadWallet(): wallet=" + wallet + " ...");
+    LOGGER.trace("unloadWallet(): wallet=" + wallet);
 
     List<Object> paramList = Arrays.asList(wallet);
 
@@ -104,7 +104,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public List<String> listWallets() throws DfxException {
-    LOGGER.trace("listWallets() ...");
+    LOGGER.trace("listWallets()");
 
     List<Object> paramList = new ArrayList<>();
 
@@ -119,7 +119,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
       @Nonnull String wallet,
       @Nonnull String passphrase,
       int timeInSeconds) throws DfxException {
-    LOGGER.trace("walletPassphrase(): wallet=" + wallet + " ...");
+    LOGGER.trace("walletPassphrase(): wallet=" + wallet);
 
     List<Object> paramList = Arrays.asList(passphrase, timeInSeconds);
 
@@ -131,7 +131,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public String walletLock(@Nonnull String wallet) throws DfxException {
-    LOGGER.trace("walletLock(): wallet=" + wallet + " ...");
+    LOGGER.trace("walletLock(): wallet=" + wallet);
 
     List<Object> paramList = new ArrayList<>();
 
@@ -146,7 +146,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
       @Nonnull String wallet,
       @Nonnull String address,
       @Nonnull String message) throws DfxException {
-    LOGGER.trace("signMessage(): wallet=" + wallet + " ...");
+    LOGGER.trace("signMessage(): wallet=" + wallet);
 
     List<Object> paramList = Arrays.asList(address, message);
 
@@ -161,7 +161,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
       @Nonnull String address,
       @Nonnull String signature,
       @Nonnull String message) throws DfxException {
-    LOGGER.trace("verifyMessage() ...");
+    LOGGER.trace("verifyMessage()");
 
     List<Object> paramList = Arrays.asList(address, signature, message);
 
@@ -173,7 +173,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public Long getBlockCount() throws DfxException {
-    LOGGER.trace("getBlockCount() ...");
+    LOGGER.trace("getBlockCount()");
 
     List<Object> paramList = new ArrayList<>();
 
@@ -185,7 +185,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public String getBlockHash(@Nonnull Long blockCount) throws DfxException {
-    LOGGER.trace("getBlockHash(): blockCount=" + blockCount + " ...");
+    LOGGER.trace("getBlockHash(): blockCount=" + blockCount);
 
     List<Object> paramList = Arrays.asList(blockCount);
 
@@ -197,7 +197,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public DefiBlockData getBlock(@Nonnull String blockHash) throws DfxException {
-    LOGGER.trace("getBlock(): blockHash=" + blockHash + " ...");
+    LOGGER.trace("getBlock(): blockHash=" + blockHash);
 
     List<Object> paramList = Arrays.asList(blockHash);
 
@@ -209,7 +209,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public DefiTransactionData getTransaction(@Nonnull String transactionId) throws DfxException {
-    LOGGER.trace("getTransaction(): transactionId=" + transactionId + " ...");
+    LOGGER.trace("getTransaction(): transactionId=" + transactionId);
 
     List<Object> paramList = Arrays.asList(transactionId, true);
 
@@ -223,7 +223,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   public DefiTransactionData getTransaction(
       @Nonnull String transactionId,
       @Nonnull String blockHash) throws DfxException {
-    LOGGER.trace("getTransaction(): transactionId=" + transactionId + " / blockHash=" + blockHash + " ...");
+    LOGGER.trace("getTransaction(): transactionId=" + transactionId + " / blockHash=" + blockHash);
 
     List<Object> paramList = Arrays.asList(transactionId, true, blockHash);
 
@@ -235,7 +235,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public DefiTransactionData decodeRawTransaction(@Nonnull String hexString) throws DfxException {
-    LOGGER.trace("decodeRawTransaction() ...");
+    LOGGER.trace("decodeRawTransaction()");
 
     List<Object> paramList = Arrays.asList(hexString);
 
@@ -249,7 +249,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   public Boolean isAppliedCustomTransaction(
       @Nonnull String transactionId,
       @Nonnull Long blockCount) throws DfxException {
-    LOGGER.trace("getTransaction(): transactionId=" + transactionId + " / blockCount=" + blockCount + " ...");
+    LOGGER.trace("getTransaction(): transactionId=" + transactionId + " / blockCount=" + blockCount);
 
     List<Object> paramList = Arrays.asList(transactionId, blockCount);
 
@@ -261,7 +261,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public DefiCustomData decodeCustomTransaction(@Nonnull String hexString) throws DfxException {
-    LOGGER.trace("decodeCustomTransaction() ...");
+    LOGGER.trace("decodeCustomTransaction()");
 
     DefiCustomData customData = null;
 
@@ -286,7 +286,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   public Map<String, DefiMasternodeData> getMasternode(
       @Nonnull String wallet,
       @Nonnull String transactionId) throws DfxException {
-    LOGGER.trace("getMasternode(): transactionId=" + transactionId + " ...");
+    LOGGER.trace("getMasternode(): transactionId=" + transactionId);
 
     Map<String, DefiMasternodeData> masternodeMap = null;
 
@@ -460,7 +460,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   private String trim(@Nonnull String text) {
     if (200 < text.length()) {
-      text = StringUtils.left(text, 200) + " ...";
+      text = StringUtils.left(text, 200);
     }
 
     return text.trim();

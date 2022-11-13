@@ -37,7 +37,7 @@ public class MessageEventBus {
     LOGGER.trace("register()");
     Objects.requireNonNull(object, "register null object is not allowed");
 
-    LOGGER.trace("register(): " + object.getClass().getSimpleName() + " ...");
+    LOGGER.trace("register(): " + object.getClass().getSimpleName());
     eventBus.register(object);
   }
 
@@ -48,7 +48,7 @@ public class MessageEventBus {
     LOGGER.trace("unregister()");
     Objects.requireNonNull(object, "unregister null object is not allowed");
 
-    LOGGER.trace("unregister(): " + object.getClass().getSimpleName() + " ...");
+    LOGGER.trace("unregister(): " + object.getClass().getSimpleName());
     eventBus.unregister(object);
   }
 
@@ -60,7 +60,7 @@ public class MessageEventBus {
     Objects.requireNonNull(event, "null event is not allowed");
 
     try {
-      LOGGER.trace("postEvent(): " + event.getClass().getSimpleName() + ": " + event.toString() + " ...");
+      LOGGER.trace("postEvent(): " + event.getClass().getSimpleName() + ": " + event.toString());
       eventBus.post(event);
     } catch (Throwable t) {
       LOGGER.error("postEvent", t);

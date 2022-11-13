@@ -31,7 +31,7 @@ public class SizeChecker extends TransactionChecker {
    * 
    */
   public OpenTransactionDTOList checkSize(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
-    LOGGER.trace("checkSize() ...");
+    LOGGER.trace("checkSize()");
 
     OpenTransactionDTOList checkedOpenTransactionDTOList = new OpenTransactionDTOList();
 
@@ -48,7 +48,7 @@ public class SizeChecker extends TransactionChecker {
    * 
    */
   private boolean doCheckSize(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("doCheckSize() ...");
+    LOGGER.trace("doCheckSize()");
 
     boolean isValid;
 

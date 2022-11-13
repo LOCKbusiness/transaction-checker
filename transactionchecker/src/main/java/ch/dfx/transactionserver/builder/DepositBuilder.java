@@ -51,7 +51,9 @@ public class DepositBuilder {
    * 
    */
   public void build() throws DfxException {
-    LOGGER.debug("build() ...");
+    LOGGER.debug("build()");
+
+    long startTime = System.currentTimeMillis();
 
     Connection connection = null;
 
@@ -106,6 +108,8 @@ public class DepositBuilder {
       throw new DfxException("build", e);
     } finally {
       databaseManager.closeConnection(connection);
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -113,7 +117,7 @@ public class DepositBuilder {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       // Transaction ...
@@ -138,7 +142,7 @@ public class DepositBuilder {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       outTransactionByBlockAndAddressSelectStatement.close();
@@ -156,7 +160,7 @@ public class DepositBuilder {
   private List<DepositDTO> getDepositDTOList(
       @Nonnull StakingAddressDTO stakingAddressDTO,
       @Nonnull Set<Integer> depositAddressNumberSet) throws DfxException {
-    LOGGER.trace("getDepositDTOList() ...");
+    LOGGER.trace("getDepositDTOList()");
 
     List<DepositDTO> depositDTOList = new ArrayList<>();
     Set<String> unifierTransactionSet = new HashSet<>();
@@ -203,7 +207,7 @@ public class DepositBuilder {
    * 
    */
   private void fillCustomerAddress(@Nonnull DepositDTO depositDTO) throws DfxException {
-    LOGGER.trace("fillCustomerAddress() ...");
+    LOGGER.trace("fillCustomerAddress()");
 
     int depositStartBlockNumber = depositDTO.getStartBlockNumber();
     int depositStartTransactionNumber = depositDTO.getStartTransactionNumber();
@@ -233,7 +237,7 @@ public class DepositBuilder {
   private List<AddressTransactionOutDTO> getTransactionOutDTOList(
       int startBlockNumber,
       int addressNumber) throws DfxException {
-    LOGGER.trace("getTransactionOutDTOList() ...");
+    LOGGER.trace("getTransactionOutDTOList()");
 
     try {
       List<AddressTransactionOutDTO> transactionOutDTOList = new ArrayList<>();
@@ -282,7 +286,7 @@ public class DepositBuilder {
   private List<AddressTransactionInDTO> getTransactionInDTOList(
       int blockNumber,
       int transactionNumber) throws DfxException {
-    LOGGER.trace("getTransactionInDTOList() ...");
+    LOGGER.trace("getTransactionInDTOList()");
 
     try {
       List<AddressTransactionInDTO> transactionInDTOList = new ArrayList<>();
@@ -325,7 +329,7 @@ public class DepositBuilder {
    * 
    */
   private void insertDeposit(@Nonnull DepositDTO depositDTO) throws DfxException {
-    LOGGER.trace("insertDeposit() ...");
+    LOGGER.trace("insertDeposit()");
 
     try {
       int liquidityAddressNumber = depositDTO.getLiquidityAddressNumber();

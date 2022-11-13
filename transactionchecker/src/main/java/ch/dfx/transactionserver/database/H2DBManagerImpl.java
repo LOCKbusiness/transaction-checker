@@ -35,6 +35,8 @@ public class H2DBManagerImpl implements H2DBManager {
    * 
    */
   private String getDirectoryUrl() {
+    LOGGER.trace("getDirectoryUrl()");
+
     String h2Dir = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_DIR);
     String h2DBName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_NAME);
 
@@ -45,6 +47,8 @@ public class H2DBManagerImpl implements H2DBManager {
    * 
    */
   private String getTcpUrl() {
+    LOGGER.trace("getTcpUrl()");
+
     String tcpHost = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SERVER_TCP_HOST);
     String tcpPort = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SERVER_TCP_PORT);
     String h2DBName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_NAME);
@@ -57,7 +61,7 @@ public class H2DBManagerImpl implements H2DBManager {
    */
   @Override
   public Connection openConnection() throws DfxException {
-    LOGGER.trace("openConnection() ...");
+    LOGGER.trace("openConnection()");
 
     try {
       String jdbcUrl = getTcpUrl();
@@ -80,7 +84,7 @@ public class H2DBManagerImpl implements H2DBManager {
    */
   @Override
   public void closeConnection(Connection connection) {
-    LOGGER.trace("closeConnection() ...");
+    LOGGER.trace("closeConnection()");
 
     try {
       if (null != connection) {
@@ -96,7 +100,7 @@ public class H2DBManagerImpl implements H2DBManager {
    */
   @Override
   public void compact() throws DfxException {
-    LOGGER.trace("compact() ...");
+    LOGGER.trace("compact()");
 
     try {
       String jdbcUrl = getDirectoryUrl();

@@ -114,7 +114,7 @@ public class TransactionSupervisonMain {
   private void checkTransaction(
       long startblock,
       long endblock) throws DfxException {
-    LOGGER.trace("checkTransaction() ...");
+    LOGGER.trace("checkTransaction()");
 
     Connection connection = null;
 
@@ -159,7 +159,7 @@ public class TransactionSupervisonMain {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       String transactionSelectSql = "SELECT * FROM public.transaction WHERE block_number=?";
@@ -173,7 +173,7 @@ public class TransactionSupervisonMain {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       transactionSelectStatement.close();

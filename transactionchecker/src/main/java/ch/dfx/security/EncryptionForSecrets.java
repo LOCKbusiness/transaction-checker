@@ -42,7 +42,7 @@ public class EncryptionForSecrets {
    * 
    */
   public SecretKeySpec createSecretKey(@Nonnull String password) throws DfxException {
-    LOGGER.trace("createSecretKey() ...");
+    LOGGER.trace("createSecretKey()");
     Objects.requireNonNull(password, "null 'password' not allowed ...");
 
     try {
@@ -63,7 +63,7 @@ public class EncryptionForSecrets {
   public File encrypt(
       @Nonnull File textInputFile,
       @Nonnull String password) throws DfxException {
-    LOGGER.trace("encrypt() ...");
+    LOGGER.trace("encrypt()");
     Objects.requireNonNull(textInputFile, "null 'textInputFile' not allowed ...");
     Objects.requireNonNull(password, "null 'password' not allowed ...");
 
@@ -89,7 +89,7 @@ public class EncryptionForSecrets {
       @Nonnull File textInputFile,
       @Nonnull IvParameterSpec ivParameterSpec,
       @Nonnull Cipher cipher) throws DfxException {
-    LOGGER.trace("writeEncryptedFile() ...");
+    LOGGER.trace("writeEncryptedFile()");
 
     String absolutFilePath = textInputFile.getAbsolutePath();
     String fullPath = FilenameUtils.getFullPath(absolutFilePath);
@@ -125,7 +125,7 @@ public class EncryptionForSecrets {
   public @Nullable Properties decrypt(
       @Nonnull File encryptedFile,
       @Nonnull String password) throws DfxException {
-    LOGGER.trace("decrypt() ...");
+    LOGGER.trace("decrypt()");
     Objects.requireNonNull(encryptedFile, "null 'encryptedFile' not allowed ...");
     Objects.requireNonNull(password, "null 'password' not allowed ...");
 

@@ -95,7 +95,9 @@ public class OpenTransactionManager {
    * 
    */
   public void execute() throws DfxException {
-    LOGGER.trace("execute() ...");
+    LOGGER.debug("execute()");
+
+    long startTime = System.currentTimeMillis();
 
     // ...
     OpenTransactionDTOList apiOpenTransactionDTOList = apiAccessHandler.getOpenTransactionDTOList();
@@ -114,6 +116,8 @@ public class OpenTransactionManager {
     OpenTransactionDTOList workOpenTransactionDTOList = processOpenTransaction(apiOpenTransactionDTOList);
 
     processOpenTransactionAndWithdrawal(workOpenTransactionDTOList, apiPendingWithdrawalDTOList);
+
+    LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
   }
 
   /**
@@ -121,7 +125,7 @@ public class OpenTransactionManager {
    * if they are not set via the API ...
    */
   private void fillEmptyDataOfOpenTransactionDTO(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("fillEmptyDataOfReceivedDTO() ...");
+    LOGGER.trace("fillEmptyDataOfReceivedDTO()");
 
     // ID ...
     openTransactionDTO.setId(TransactionCheckerUtils.emptyIfNull(openTransactionDTO.getId()));
@@ -147,7 +151,7 @@ public class OpenTransactionManager {
    * 
    */
   private void fillTypeOfOpenTransactionDTO(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("fillTypeOfOpenTransactionDTO() ...");
+    LOGGER.trace("fillTypeOfOpenTransactionDTO()");
 
     // Type ...
     OpenTransactionTypeEnum openTransactionType = OpenTransactionTypeEnum.UNKNOWN;
@@ -182,7 +186,7 @@ public class OpenTransactionManager {
    * 
    */
   private OpenTransactionTypeEnum getTypeOfOpenTransactionWithOwnerWallet(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("fillTypeOfOpenTransactionWithOwnerWallet() ...");
+    LOGGER.trace("fillTypeOfOpenTransactionWithOwnerWallet()");
 
     OpenTransactionTypeEnum openTransactionType = OpenTransactionTypeEnum.UNKNOWN;
 
@@ -211,7 +215,7 @@ public class OpenTransactionManager {
    * if they are not set via the API ...
    */
   private void fillEmptyDataOfPendingWithdrawalDTO(@Nonnull PendingWithdrawalDTO pendingWithdrawalDTO) {
-    LOGGER.trace("fillEmptyDataOfPendingWithdrawalDTO() ...");
+    LOGGER.trace("fillEmptyDataOfPendingWithdrawalDTO()");
 
     // ID ...
     pendingWithdrawalDTO.setId(TransactionCheckerUtils.zeroIfNull(pendingWithdrawalDTO.getId()));
@@ -233,7 +237,7 @@ public class OpenTransactionManager {
    * Check 4: Transaction Signature
    */
   private OpenTransactionDTOList processOpenTransaction(@Nonnull OpenTransactionDTOList apiOpenTransactionDTOList) {
-    LOGGER.trace("processOpenTransaction() ...");
+    LOGGER.trace("processOpenTransaction()");
 
     // Check 1: Check Typ ...
     OpenTransactionDTOList workOpenTransactionDTOList = typeChecker.checkType(apiOpenTransactionDTOList);
@@ -257,7 +261,7 @@ public class OpenTransactionManager {
   private void processOpenTransactionAndWithdrawal(
       @Nonnull OpenTransactionDTOList workOpenTransactionDTOList,
       @Nonnull PendingWithdrawalDTOList apiPendingWithdrawalDTOList) throws DfxException {
-    LOGGER.trace("processOpenTransactionAndWithdrawal() ...");
+    LOGGER.trace("processOpenTransactionAndWithdrawal()");
 
     // ...
     OpenTransactionDTOList utxoOpenTransactionDTOList = new OpenTransactionDTOList();
@@ -305,7 +309,7 @@ public class OpenTransactionManager {
    * 
    */
   private void processOpenUtxoTransaction(@Nonnull OpenTransactionDTOList utxoOpenTransactionDTOList) throws DfxException {
-    LOGGER.trace("processOpenUtxoTransaction() ...");
+    LOGGER.trace("processOpenUtxoTransaction()");
 
     for (OpenTransactionDTO openTransactionDTO : utxoOpenTransactionDTOList) {
       String hex = openTransactionDTO.getRawTx().getHex();
@@ -327,7 +331,7 @@ public class OpenTransactionManager {
    * 
    */
   private void processOpenMasternodeTransaction(@Nonnull OpenTransactionDTOList masternodeOpenTransactionDTOList) throws DfxException {
-    LOGGER.trace("processOpenMasternodeTransaction() ...");
+    LOGGER.trace("processOpenMasternodeTransaction()");
 
     for (OpenTransactionDTO openTransactionDTO : masternodeOpenTransactionDTOList) {
       String hex = openTransactionDTO.getRawTx().getHex();
@@ -349,7 +353,7 @@ public class OpenTransactionManager {
    * 
    */
   private void processOpenYieldMaschineTransaction(@Nonnull OpenTransactionDTOList yieldMaschineOpenTransactionDTOList) throws DfxException {
-    LOGGER.trace("processOpenYieldMaschineTransaction() ...");
+    LOGGER.trace("processOpenYieldMaschineTransaction()");
 
     for (OpenTransactionDTO openTransactionDTO : yieldMaschineOpenTransactionDTOList) {
       String hex = openTransactionDTO.getRawTx().getHex();
@@ -450,7 +454,7 @@ public class OpenTransactionManager {
   private void processOpenWithdrawalTransaction(
       @Nonnull OpenTransactionDTOList withdrawalOpenTransactionDTOList,
       @Nonnull PendingWithdrawalDTOList apiPendingWithdrawalDTOList) throws DfxException {
-    LOGGER.trace("processOpenWithdrawalTransaction() ...");
+    LOGGER.trace("processOpenWithdrawalTransaction()");
 
     // ...
     TransactionWithdrawalDTOList transactionWithdrawalDTOList =
@@ -468,7 +472,7 @@ public class OpenTransactionManager {
   private TransactionWithdrawalDTOList createTransactionWithdrawalDTOList(
       @Nonnull OpenTransactionDTOList openTransactionDTOList,
       @Nonnull PendingWithdrawalDTOList pendingWithdrawalDTOList) throws DfxException {
-    LOGGER.trace("createTransactionWithdrawalDTOList() ...");
+    LOGGER.trace("createTransactionWithdrawalDTOList()");
 
     TransactionWithdrawalDTOList transactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
 
@@ -502,7 +506,7 @@ public class OpenTransactionManager {
    * 
    */
   private Map<Integer, OpenTransactionDTO> createWithdrawalIdToOpenTransactionDTOMap(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
-    LOGGER.trace("createWithdrawalIdToOpenTransactionDTOMap() ...");
+    LOGGER.trace("createWithdrawalIdToOpenTransactionDTOMap()");
 
     Map<Integer, OpenTransactionDTO> withdrawalIdToOpenTransactionDTOMap = new HashMap<>();
 
@@ -522,7 +526,7 @@ public class OpenTransactionManager {
    * 
    */
   private Map<Integer, PendingWithdrawalDTO> createWithdrawalIdToPendingWithdrawalDTOMap(@Nonnull PendingWithdrawalDTOList pendingWithdrawalDTOList) {
-    LOGGER.trace("createWithdrawalIdToPendingWithdrawalDTOMap() ...");
+    LOGGER.trace("createWithdrawalIdToPendingWithdrawalDTOMap()");
 
     Map<Integer, PendingWithdrawalDTO> withdrawalIdToPendingWithdrawalDTOMap = new HashMap<>();
 
@@ -541,7 +545,7 @@ public class OpenTransactionManager {
    * 
    */
   private @Nullable Integer getWithdrawalId(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("getWithdrawalId() ...");
+    LOGGER.trace("getWithdrawalId()");
 
     Integer withdrawalId = null;
 
@@ -560,7 +564,7 @@ public class OpenTransactionManager {
    * Check 3: Check staking balance
    */
   private void processPendingWithdrawal(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("processPendingWithdrawal() ...");
+    LOGGER.trace("processPendingWithdrawal()");
 
     // Check 1: Check the sign message format ...
     TransactionWithdrawalDTOList checkTransactionWithdrawalDTOList = withdrawalManager.checkSignMessageFormat(transactionWithdrawalDTOList);
@@ -576,7 +580,7 @@ public class OpenTransactionManager {
    * 
    */
   private void send(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) throws DfxException {
-    LOGGER.trace("send() ...");
+    LOGGER.trace("send()");
 
     for (TransactionWithdrawalDTO transactionWithdrawalDTO : transactionWithdrawalDTOList) {
       OpenTransactionDTO openTransactionDTO = transactionWithdrawalDTO.getOpenTransactionDTO();
@@ -594,7 +598,7 @@ public class OpenTransactionManager {
    * 
    */
   private void sendVerified(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("sendVerified() ...");
+    LOGGER.trace("sendVerified()");
 
     String openTransactionHex = openTransactionDTO.getRawTx().getHex();
     String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
@@ -609,7 +613,7 @@ public class OpenTransactionManager {
    * 
    */
   private void sendInvalidated(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("sendInvalidated() ...");
+    LOGGER.trace("sendInvalidated()");
 
     String openTransactionHex = openTransactionDTO.getRawTx().getHex();
     String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);

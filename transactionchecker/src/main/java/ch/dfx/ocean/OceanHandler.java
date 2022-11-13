@@ -73,7 +73,7 @@ public class OceanHandler {
   public void setup(
       @Nonnull NetworkEnum network,
       @Nonnull String address) {
-    LOGGER.trace("setup() ...");
+    LOGGER.trace("setup()");
 
     this.network = network;
     this.address = address;
@@ -94,7 +94,7 @@ public class OceanHandler {
    * 
    */
   public void openWriter(@Nonnull File outputFile) throws DfxException {
-    LOGGER.trace("openWriter() ...");
+    LOGGER.trace("openWriter()");
 
     try {
       if (null == writer) {
@@ -110,7 +110,7 @@ public class OceanHandler {
    * 
    */
   public void closeWriter() {
-    LOGGER.trace("closeWriter() ...");
+    LOGGER.trace("closeWriter()");
 
     try {
       if (null != writer) {
@@ -128,7 +128,7 @@ public class OceanHandler {
    * 
    */
   public String webcall(@Nullable String next) throws DfxException {
-    LOGGER.trace("webcall() ...");
+    LOGGER.trace("webcall()");
 
     try {
       StringBuilder oceanURIBuilder = new StringBuilder()
@@ -173,7 +173,7 @@ public class OceanHandler {
    * 
    */
   public ListTransactionsDTO readFromFile(@Nonnull File jsonFile) throws DfxException {
-    LOGGER.trace("readFromFile() ...");
+    LOGGER.trace("readFromFile()");
 
     try {
       ListTransactionsDTO transactionsDTOList = gson.fromJson(new FileReader(jsonFile), ListTransactionsDTO.class);
@@ -194,7 +194,7 @@ public class OceanHandler {
    * 
    */
   private String analyzeTransactions(@Nonnull TransactionsDTO transactionsDTO) throws DfxException {
-    LOGGER.trace("analyzeTransactions() ...");
+    LOGGER.trace("analyzeTransactions()");
 
     List<TransactionsDetailDTO> transactionsDetailDTOList = transactionsDTO.getData();
 

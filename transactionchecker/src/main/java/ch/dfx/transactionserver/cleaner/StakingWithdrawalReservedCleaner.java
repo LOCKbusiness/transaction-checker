@@ -47,6 +47,8 @@ public class StakingWithdrawalReservedCleaner {
   public void clean() throws DfxException {
     LOGGER.debug("clean()");
 
+    long startTime = System.currentTimeMillis();
+
     Connection connection = null;
 
     try {
@@ -69,6 +71,8 @@ public class StakingWithdrawalReservedCleaner {
       throw new DfxException("clean", e);
     } finally {
       databaseManager.closeConnection(connection);
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -76,7 +80,7 @@ public class StakingWithdrawalReservedCleaner {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       String stakingWithdrawalReservedDeleteSql =
@@ -94,7 +98,7 @@ public class StakingWithdrawalReservedCleaner {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       stakingWithdrawalReservedDeleteStatement.close();
@@ -128,7 +132,7 @@ public class StakingWithdrawalReservedCleaner {
    * 
    */
   private void checkDuration(@Nonnull StakingWithdrawalReservedDTO stakingWithdrawalReservedDTO) {
-    LOGGER.trace("checkDuration() ...");
+    LOGGER.trace("checkDuration()");
 
     Timestamp createTime = stakingWithdrawalReservedDTO.getCreateTime();
 
@@ -159,7 +163,7 @@ public class StakingWithdrawalReservedCleaner {
   private void deleteStakingWithdrawalReservedDTO(
       @Nonnull Connection connection,
       @Nonnull StakingWithdrawalReservedDTO stakingWithdrawalReservedDTO) throws DfxException {
-    LOGGER.trace("deleteStakingWithdrawalReservedDTO() ...");
+    LOGGER.trace("deleteStakingWithdrawalReservedDTO()");
 
     try {
       Integer withdrawalId = stakingWithdrawalReservedDTO.getWithdrawalId();

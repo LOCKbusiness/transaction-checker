@@ -22,7 +22,7 @@ public class DatabaseUtils {
    * 
    */
   public static void rollback(@Nullable Connection connection) {
-    LOGGER.trace("rollback() ...");
+    LOGGER.trace("rollback()");
 
     try {
       if (null != connection) {
@@ -40,6 +40,8 @@ public class DatabaseUtils {
       @Nonnull ResultSet resultSet,
       @Nonnull String columnLabel,
       int defaultValue) throws DfxException {
+    LOGGER.trace("getIntOrDefault()");
+
     try {
       int value = resultSet.getInt(columnLabel);
 
@@ -60,6 +62,8 @@ public class DatabaseUtils {
       @Nonnull ResultSet resultSet,
       @Nonnull String columnLabel,
       BigDecimal defaultValue) throws DfxException {
+    LOGGER.trace("getBigDecimalOrDefault()");
+
     try {
       BigDecimal value = resultSet.getBigDecimal(columnLabel);
 

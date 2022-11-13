@@ -52,7 +52,9 @@ public class MasternodeBuilder {
    * 
    */
   public void build() throws DfxException {
-    LOGGER.debug("build() ...");
+    LOGGER.debug("build()");
+
+    long startTime = System.currentTimeMillis();
 
     Connection connection = null;
 
@@ -75,6 +77,8 @@ public class MasternodeBuilder {
       throw new DfxException("build", e);
     } finally {
       databaseManager.closeConnection(connection);
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -82,7 +86,7 @@ public class MasternodeBuilder {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       String masternodeSelectSql = "SELECT * FROM public.masternode_whitelist";
@@ -122,7 +126,7 @@ public class MasternodeBuilder {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       masternodeSelectStatement.close();
@@ -138,7 +142,7 @@ public class MasternodeBuilder {
    * 
    */
   private void fillMasternodeWhitelistDTO(@Nonnull List<MasternodeWhitelistDTO> masternodeWhitelistDTOList) throws DfxException {
-    LOGGER.trace("fillMasternodeWhitelistDTO() ...");
+    LOGGER.trace("fillMasternodeWhitelistDTO()");
 
     for (MasternodeWhitelistDTO masternodeWhitelistDTO : masternodeWhitelistDTOList) {
       String ownerAddress = masternodeWhitelistDTO.getOwnerAddress();
@@ -163,7 +167,7 @@ public class MasternodeBuilder {
   private void fillNewMasternodeWhitelistDTO(
       @Nonnull MasternodeWhitelistDTO masternodeWhitelistDTO,
       @Nonnull AddressDTO ownerAddressDTO) throws DfxException {
-    LOGGER.trace("fillNewMasternodeWhitelistDTO() ...");
+    LOGGER.trace("fillNewMasternodeWhitelistDTO()");
 
     try {
       masternodeTransactionSelectStatement.setInt(1, ownerAddressDTO.getNumber());
@@ -196,7 +200,7 @@ public class MasternodeBuilder {
    * 
    */
   private void fillMasternodeWhitelistDTO(@Nonnull MasternodeWhitelistDTO masternodeWhitelistDTO) throws DfxException {
-    LOGGER.trace("fillMasternodeWhitelistDTO() ...");
+    LOGGER.trace("fillMasternodeWhitelistDTO()");
 
     try {
       String transactionId = masternodeWhitelistDTO.getTransactionId();
@@ -222,7 +226,7 @@ public class MasternodeBuilder {
   private void updateMasternodeWhitelistDTO(
       @Nonnull Connection connection,
       @Nonnull List<MasternodeWhitelistDTO> masternodeWhitelistDTOList) throws DfxException {
-    LOGGER.trace("updateMasternodeWhitelistDTO() ...");
+    LOGGER.trace("updateMasternodeWhitelistDTO()");
 
     for (MasternodeWhitelistDTO masternodeWhitelistDTO : masternodeWhitelistDTOList) {
       if (masternodeWhitelistDTO.isInternalStateChanged()) {
@@ -237,7 +241,7 @@ public class MasternodeBuilder {
   private void updateMasternodeWhitelistDTO(
       @Nonnull Connection connection,
       @Nonnull MasternodeWhitelistDTO masternodeWhitelistDTO) throws DfxException {
-    LOGGER.trace("updateMasternodeWhitelistDTO() ...");
+    LOGGER.trace("updateMasternodeWhitelistDTO()");
 
     try {
       String ownerAddress = masternodeWhitelistDTO.getOwnerAddress();

@@ -46,7 +46,7 @@ public class DuplicateChecker extends TransactionChecker {
    * 
    */
   public OpenTransactionDTOList checkDuplicated(@Nonnull OpenTransactionDTOList apiOpenTransactionDTOList) {
-    LOGGER.trace("checkDuplicated() ...");
+    LOGGER.trace("checkDuplicated()");
 
     OpenTransactionDTOList checkedOpenTransactionDTOList = new OpenTransactionDTOList();
 
@@ -83,7 +83,7 @@ public class DuplicateChecker extends TransactionChecker {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       String apiDuplicateCheckSelectSql = "SELECT * FROM public.api_duplicate_check WHERE withdrawal_id=? AND transaction_id=?";
@@ -100,7 +100,7 @@ public class DuplicateChecker extends TransactionChecker {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       apiDuplicateCheckSelectStatement.close();
@@ -114,7 +114,7 @@ public class DuplicateChecker extends TransactionChecker {
    * 
    */
   private boolean doCheckInsertApiDuplicate(@Nonnull OpenTransactionDTO apiOpenTransactionDTO) {
-    LOGGER.trace("doCheckInsertApiDuplicate() ...");
+    LOGGER.trace("doCheckInsertApiDuplicate()");
 
     boolean isValid;
 
@@ -147,7 +147,7 @@ public class DuplicateChecker extends TransactionChecker {
   private boolean apiDuplicateCheckInsert(
       @Nonnull Integer withdrawalId,
       @Nonnull String transactionId) {
-    LOGGER.trace("apiDuplicateCheckInsert() ...");
+    LOGGER.trace("apiDuplicateCheckInsert()");
 
     boolean isValid;
 

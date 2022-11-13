@@ -143,7 +143,7 @@ public class TransactionCheckerUtils {
   public static void loadConfigProperties(
       @Nonnull NetworkEnum network,
       @Nonnull EnvironmentEnum environment) throws DfxException {
-    LOGGER.trace("loadConfigProperties() ...");
+    LOGGER.trace("loadConfigProperties()");
 
     // ...
     File configDirectory = Paths.get("config", "properties", network.toString()).toFile();
@@ -216,7 +216,7 @@ public class TransactionCheckerUtils {
    * 
    */
   public static DefiDataProvider createDefiDataProvider() {
-    LOGGER.trace("createDefiDataProvider() ...");
+    LOGGER.trace("createDefiDataProvider()");
 
     String username = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_RPC_USERNAME);
     String password = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_RPC_PASSWORD);

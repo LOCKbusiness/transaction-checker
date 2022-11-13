@@ -44,7 +44,7 @@ public class WithdrawalManager {
    * 
    */
   public TransactionWithdrawalDTOList checkSignMessageFormat(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkSignMessageFormat() ...");
+    LOGGER.trace("checkSignMessageFormat()");
 
     return signMessageFormatChecker.checkSignMessageFormat(transactionWithdrawalDTOList);
   }
@@ -53,7 +53,7 @@ public class WithdrawalManager {
    * 
    */
   public TransactionWithdrawalDTOList checkSignMessageSignature(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkSignMessageSignature() ...");
+    LOGGER.trace("checkSignMessageSignature()");
 
     return signMessageSignatureChecker.checkSignMessageSignature(transactionWithdrawalDTOList);
 
@@ -63,7 +63,7 @@ public class WithdrawalManager {
    * 
    */
   public TransactionWithdrawalDTOList checkStakingBalance(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkStakingBalance() ...");
+    LOGGER.trace("checkStakingBalance()");
 
 //    return stakingBalanceChecker.checkStakingBalance(transactionWithdrawalDTOList);
     return stakingBalanceChecker.checkStakingBalanceNew(transactionWithdrawalDTOList);

@@ -48,7 +48,9 @@ public class BalanceBuilder {
    * 
    */
   public void build() throws DfxException {
-    LOGGER.debug("build() ...");
+    LOGGER.debug("build()");
+
+    long startTime = System.currentTimeMillis();
 
     Connection connection = null;
 
@@ -73,6 +75,8 @@ public class BalanceBuilder {
       throw new DfxException("build", e);
     } finally {
       databaseManager.closeConnection(connection);
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -80,7 +84,7 @@ public class BalanceBuilder {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       // Balance ...
@@ -106,7 +110,7 @@ public class BalanceBuilder {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       balanceInsertStatement.close();
@@ -123,7 +127,7 @@ public class BalanceBuilder {
    * 
    */
   private void calcStakingAddressBalance(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("calcStakingAddressBalance() ...");
+    LOGGER.trace("calcStakingAddressBalance()");
 
     Set<Integer> stakingAddressNumberSet = new HashSet<>();
 
@@ -145,7 +149,7 @@ public class BalanceBuilder {
    * 
    */
   private void calcDepositBalance(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("calcDepositBalance() ...");
+    LOGGER.trace("calcDepositBalance()");
 
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
 
@@ -160,7 +164,7 @@ public class BalanceBuilder {
   private void calcBalance(
       @Nonnull Connection connection,
       int addressNumber) throws DfxException {
-    LOGGER.trace("calcBalance() ...");
+    LOGGER.trace("calcBalance()");
 
     try {
       BalanceDTO balanceDTO = databaseHelper.getBalanceDTOByAddressNumber(addressNumber);
@@ -207,7 +211,7 @@ public class BalanceBuilder {
   private BalanceDTO calcVout(
       int balanceBlockNumber,
       int addressNumber) throws DfxException {
-    LOGGER.trace("calcVout() ...");
+    LOGGER.trace("calcVout()");
 
     try {
       voutSelectStatement.setInt(1, balanceBlockNumber);
@@ -242,7 +246,7 @@ public class BalanceBuilder {
   private BalanceDTO calcVin(
       int balanceBlockNumber,
       int addressNumber) throws DfxException {
-    LOGGER.trace("calcVin() ...");
+    LOGGER.trace("calcVin()");
 
     try {
       vinSelectStatement.setInt(1, balanceBlockNumber);
@@ -275,7 +279,7 @@ public class BalanceBuilder {
    * 
    */
   private void insertBalance(@Nonnull BalanceDTO balanceDTO) throws DfxException {
-    LOGGER.trace("insertBalance() ...");
+    LOGGER.trace("insertBalance()");
 
     try {
       int addressNumber = balanceDTO.getAddressNumber();
@@ -300,7 +304,7 @@ public class BalanceBuilder {
    * 
    */
   private void updateBalance(@Nonnull BalanceDTO balanceDTO) throws DfxException {
-    LOGGER.trace("updateBalance() ...");
+    LOGGER.trace("updateBalance()");
 
     try {
       int addressNumber = balanceDTO.getAddressNumber();

@@ -48,6 +48,8 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
   public void run() {
     LOGGER.debug("run()");
 
+    long startTime = System.currentTimeMillis();
+
     isProcessing = true;
 
     try {
@@ -62,6 +64,8 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
       LOGGER.error("run", t);
     } finally {
       isProcessing = false;
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

@@ -57,7 +57,9 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
 
   @Override
   public void run() {
-    LOGGER.trace("run() ...");
+    LOGGER.debug("run()");
+
+    long startTime = System.currentTimeMillis();
 
     isProcessing = true;
 
@@ -70,6 +72,8 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
       LOGGER.error("run", t);
     } finally {
       isProcessing = false;
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -77,7 +81,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void doRun() {
-    LOGGER.trace("doRun() ...");
+    LOGGER.trace("doRun()");
 
     executeOpenTransaction();
   }
@@ -86,7 +90,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void executeOpenTransaction() {
-    LOGGER.trace("executeOpenTransaction() ...");
+    LOGGER.trace("executeOpenTransaction()");
 
     try {
       // ...
@@ -111,7 +115,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void checkErrorCounter() {
-    LOGGER.trace("checkErrorCounter() ...");
+    LOGGER.trace("checkErrorCounter()");
 
     if (2 < openTransactionErrorCounter) {
       LOGGER.error("Too many errors, will exit now");

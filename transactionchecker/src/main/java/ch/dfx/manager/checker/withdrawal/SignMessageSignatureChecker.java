@@ -49,7 +49,7 @@ public class SignMessageSignatureChecker {
    * 
    */
   public TransactionWithdrawalDTOList checkSignMessageSignature(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkSignMessageSignature() ...");
+    LOGGER.trace("checkSignMessageSignature()");
 
     TransactionWithdrawalDTOList checkedTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
 
@@ -88,7 +88,7 @@ public class SignMessageSignatureChecker {
    * 
    */
   private SignedMessageCheckDTOList createSignedMessageCheckDTOList(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("createSignedMessageCheckDTOList() ...");
+    LOGGER.trace("createSignedMessageCheckDTOList()");
 
     SignedMessageCheckDTOList signedMessageCheckDTOList = new SignedMessageCheckDTOList();
 
@@ -112,7 +112,7 @@ public class SignMessageSignatureChecker {
    * 
    */
   private SignedMessageCheckDTOList checkSignature(@Nonnull SignedMessageCheckDTOList uncheckedSignedMessageCheckDTOList) {
-    LOGGER.trace("checkSignature() ...");
+    LOGGER.trace("checkSignature()");
 
     try {
       writeSignatureCheckFile(uncheckedSignedMessageCheckDTOList);
@@ -133,7 +133,7 @@ public class SignMessageSignatureChecker {
    * 
    */
   private void writeSignatureCheckFile(@Nonnull SignedMessageCheckDTOList signedMessageCheckDTOList) throws DfxException {
-    LOGGER.trace("writeCheckFile() ...");
+    LOGGER.trace("writeCheckFile()");
 
     try {
       if (!signedMessageCheckDTOList.isEmpty()) {
@@ -149,7 +149,7 @@ public class SignMessageSignatureChecker {
    * 
    */
   private int executeSignatureCheck() throws DfxException {
-    LOGGER.trace("executeSignatureCheck() ...");
+    LOGGER.trace("executeSignatureCheck()");
 
     try {
       ProcessBuilder processBuilder = new ProcessBuilder();
@@ -194,7 +194,7 @@ public class SignMessageSignatureChecker {
    * 
    */
   private SignedMessageCheckDTOList readSignatureCheckFile() throws DfxException {
-    LOGGER.trace("readSignatureCheckFile() ...");
+    LOGGER.trace("readSignatureCheckFile()");
     return TransactionCheckerUtils.fromJson(jsonSignatureCheckFile.toFile(), SignedMessageCheckDTOList.class);
   }
 }

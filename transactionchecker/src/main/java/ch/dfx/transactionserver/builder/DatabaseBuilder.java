@@ -75,7 +75,9 @@ public class DatabaseBuilder {
    * 
    */
   public void build() throws DfxException {
-    LOGGER.trace("build() ...");
+    LOGGER.debug("build()");
+
+    long startTime = System.currentTimeMillis();
 
     Long blockCount = dataProvider.getBlockCount();
     LOGGER.debug("Block Count: " + blockCount);
@@ -124,6 +126,8 @@ public class DatabaseBuilder {
       throw new DfxException("build", e);
     } finally {
       databaseManager.closeConnection(connection);
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -131,7 +135,7 @@ public class DatabaseBuilder {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       // Block ...
@@ -179,7 +183,7 @@ public class DatabaseBuilder {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       blockInsertStatement.close();
@@ -201,7 +205,7 @@ public class DatabaseBuilder {
    * 
    */
   private BlockDTO createCacheBlockData(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("createCacheBlockData() ...");
+    LOGGER.trace("createCacheBlockData()");
 
     String blockHash = dataProvider.getBlockHash((long) nextBlockNumber);
     BlockDTO cacheBlockData = new BlockDTO(nextBlockNumber, blockHash);
@@ -227,7 +231,7 @@ public class DatabaseBuilder {
    * 
    */
   private List<String> getTransactionIdList(@Nonnull String blockHash) throws DfxException {
-    LOGGER.trace("getTransactionIdList() ...");
+    LOGGER.trace("getTransactionIdList()");
 
     try {
       List<String> transactionIdList = new ArrayList<>();
@@ -254,7 +258,7 @@ public class DatabaseBuilder {
       @Nonnull String transactionId,
       @Nonnull BlockDTO cacheBlockData,
       @Nonnull TransactionDTO cacheTransactionData) throws DfxException {
-    LOGGER.trace("fillAddressList() ...");
+    LOGGER.trace("fillAddressList()");
 
     try {
       Integer blockNumber = cacheTransactionData.getBlockNumber();
@@ -296,7 +300,7 @@ public class DatabaseBuilder {
       @Nonnull DefiTransactionVoutData transactionVoutData,
       @Nullable String coinbase,
       @Nonnull TransactionDTO cacheTransactionData) throws DfxException {
-    LOGGER.trace("addAddressTransactionOut() ...");
+    LOGGER.trace("addAddressTransactionOut()");
 
     DefiTransactionScriptPubKeyData transactionVoutScriptPubKeyData = transactionVoutData.getScriptPubKey();
 
@@ -334,7 +338,7 @@ public class DatabaseBuilder {
       @Nonnull DefiTransactionVinData transactionVinData,
       @Nonnull BlockDTO cacheBlockData,
       @Nonnull TransactionDTO cacheTransactionData) throws DfxException {
-    LOGGER.trace("addAddressTransactionIn() ...");
+    LOGGER.trace("addAddressTransactionIn()");
 
     try {
       String outTxid = transactionVinData.getTxid();
@@ -372,7 +376,7 @@ public class DatabaseBuilder {
       @Nonnull BlockDTO cacheBlockData,
       @Nonnull String outTxid,
       @Nonnull Long voutIndex) {
-    LOGGER.trace("getCacheAddressTransactionOutDataFromCurrentBlock() ...");
+    LOGGER.trace("getCacheAddressTransactionOutDataFromCurrentBlock()");
 
     AddressTransactionOutDTO cacheAddressTransactionOutData = null;
 
@@ -399,7 +403,7 @@ public class DatabaseBuilder {
   private AddressTransactionOutDTO getCacheAddressTransactionOutDataFromPreviousBlock(
       @Nonnull String outTxid,
       @Nonnull Long voutIndex) throws DfxException {
-    LOGGER.trace("getCacheAddressTransactionOutDataFromPreviousBlock() ...");
+    LOGGER.trace("getCacheAddressTransactionOutDataFromPreviousBlock()");
 
     try {
       transactionOutSelectStatement.setString(1, outTxid);
@@ -449,7 +453,7 @@ public class DatabaseBuilder {
   private AddressDTO getCacheAddressData(
       @Nonnull String address,
       @Nonnull String hex) throws DfxException {
-    LOGGER.trace("getCacheAddressData() ...");
+    LOGGER.trace("getCacheAddressData()");
 
     AddressDTO cacheAddressData = readAddress(address);
 
@@ -469,7 +473,7 @@ public class DatabaseBuilder {
    * 
    */
   private AddressDTO readAddress(@Nonnull String address) throws DfxException {
-    LOGGER.trace("readAddress() ...");
+    LOGGER.trace("readAddress()");
 
     try {
       AddressDTO cacheAddressData = null;
@@ -498,7 +502,7 @@ public class DatabaseBuilder {
    * 
    */
   private @Nullable String getTypeCoinbase(@Nonnull List<DefiTransactionVinData> transactionVinDataList) {
-    LOGGER.trace("getTypeCoinbase() ...");
+    LOGGER.trace("getTypeCoinbase()");
 
     String typeCoinbase = null;
 
@@ -515,7 +519,7 @@ public class DatabaseBuilder {
    * 
    */
   private int getNextBlockNumber(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("getNextBlockNumber() ...");
+    LOGGER.trace("getNextBlockNumber()");
 
     String sqlSelect =
         new StringBuilder()
@@ -529,7 +533,7 @@ public class DatabaseBuilder {
    * 
    */
   private int getNextAddressNumber(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("getNextAddressNumber() ...");
+    LOGGER.trace("getNextAddressNumber()");
 
     String sqlSelect =
         new StringBuilder()
@@ -545,7 +549,7 @@ public class DatabaseBuilder {
   private int getNextNumber(
       @Nonnull Connection connection,
       @Nonnull String sqlSelect) throws DfxException {
-    LOGGER.trace("getNextNumber() ...");
+    LOGGER.trace("getNextNumber()");
 
     try (Statement statement = connection.createStatement()) {
       int nextNumber = -1;
@@ -578,7 +582,7 @@ public class DatabaseBuilder {
    * 
    */
   private void saveAddress() throws DfxException {
-    LOGGER.trace("saveAddress() ...");
+    LOGGER.trace("saveAddress()");
 
     try {
       for (AddressDTO cacheAddressData : newAddressMap.values()) {
@@ -598,7 +602,7 @@ public class DatabaseBuilder {
    * 
    */
   private void saveBlock(@Nonnull BlockDTO cacheBlockData) throws DfxException {
-    LOGGER.trace("saveBlock() ...");
+    LOGGER.trace("saveBlock()");
 
     try {
       Integer blockNumber = cacheBlockData.getNumber();
@@ -622,7 +626,7 @@ public class DatabaseBuilder {
    */
   private void saveTransaction(
       @Nonnull TransactionDTO cacheTransactionData) throws DfxException {
-    LOGGER.trace("saveTransaction() ...");
+    LOGGER.trace("saveTransaction()");
 
     try {
       Integer blockNumber = cacheTransactionData.getBlockNumber();
@@ -651,7 +655,7 @@ public class DatabaseBuilder {
    * 
    */
   private void saveAddressTransactionOut(@Nonnull AddressTransactionOutDTO cacheAddressTransactionOutData) throws DfxException {
-    LOGGER.trace("saveAddressTransactionOut() ...");
+    LOGGER.trace("saveAddressTransactionOut()");
 
     try {
       addressTransactionOutInsertStatement.setInt(1, cacheAddressTransactionOutData.getBlockNumber());
@@ -671,7 +675,7 @@ public class DatabaseBuilder {
    * 
    */
   private void saveAddressTransactionIn(@Nonnull AddressTransactionInDTO cacheAddressTransactionInData) throws DfxException {
-    LOGGER.trace("saveAddressTransactionIn() ...");
+    LOGGER.trace("saveAddressTransactionIn()");
 
     try {
       addressTransactionInInsertStatement.setInt(1, cacheAddressTransactionInData.getBlockNumber());

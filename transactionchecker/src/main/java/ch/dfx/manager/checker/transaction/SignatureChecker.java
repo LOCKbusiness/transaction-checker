@@ -33,7 +33,7 @@ public class SignatureChecker extends TransactionChecker {
    * 
    */
   public OpenTransactionDTOList checkTransactionSignature(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
-    LOGGER.trace("checkTransactionSignature() ...");
+    LOGGER.trace("checkTransactionSignature()");
 
     OpenTransactionDTOList checkedOpenTransactionDTOList = new OpenTransactionDTOList();
 
@@ -50,7 +50,7 @@ public class SignatureChecker extends TransactionChecker {
    * 
    */
   private boolean doCheckTransactionSignature(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("doCheckTransactionSignature() ...");
+    LOGGER.trace("doCheckTransactionSignature()");
 
     boolean isValid;
 
@@ -73,7 +73,7 @@ public class SignatureChecker extends TransactionChecker {
    * 
    */
   private boolean validateIssuerSignature(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("validateIssurerSignature() ...");
+    LOGGER.trace("validateIssurerSignature()");
 
     String openTransactionIssuerSignature = openTransactionDTO.getIssuerSignature();
     String openTransactionHex = openTransactionDTO.getRawTx().getHex();

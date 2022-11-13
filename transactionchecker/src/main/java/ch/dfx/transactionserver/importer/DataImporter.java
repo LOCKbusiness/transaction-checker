@@ -53,7 +53,7 @@ public class DataImporter {
    * 
    */
   public void execute() throws DfxException {
-    LOGGER.trace("execute() ...");
+    LOGGER.trace("execute()");
 
     Connection connection = null;
 
@@ -108,7 +108,7 @@ public class DataImporter {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       String masternodeWhitelistInsertSql =
@@ -123,7 +123,7 @@ public class DataImporter {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       masternodeWhitelistInsertStatement.close();

@@ -29,7 +29,7 @@ public class DefiMessageHandler {
    * 
    */
   public String signMessage(@Nonnull String message) throws DfxException {
-    LOGGER.trace("signMessage() ...");
+    LOGGER.trace("signMessage()");
 
     String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
     String password = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_PASSWORD);
@@ -49,7 +49,7 @@ public class DefiMessageHandler {
       @Nonnull String verifyAddress,
       @Nonnull String signature,
       @Nonnull String message) throws DfxException {
-    LOGGER.trace("verifyMessage() ...");
+    LOGGER.trace("verifyMessage()");
     return dataProvider.verifyMessage(verifyAddress, signature, message);
   }
 }

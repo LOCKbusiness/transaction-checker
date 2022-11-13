@@ -51,7 +51,7 @@ public class SignMessageFormatChecker {
    * 
    */
   public TransactionWithdrawalDTOList checkSignMessageFormat(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkSignMessageFormat() ...");
+    LOGGER.trace("checkSignMessageFormat()");
 
     TransactionWithdrawalDTOList checkedTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
 
@@ -68,7 +68,7 @@ public class SignMessageFormatChecker {
    * 
    */
   private boolean checkSignMessageFormat(@Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) {
-    LOGGER.trace("checkSignMessageFormat() ...");
+    LOGGER.trace("checkSignMessageFormat()");
 
     // ...
     try {
@@ -152,7 +152,7 @@ public class SignMessageFormatChecker {
       @Nonnull BigDecimal signMessageAmount,
       @Nonnull BigDecimal pendingWithdrawalAmount,
       @Nonnull BigDecimal transactionOutAmount) {
-    LOGGER.trace("checkSignMessageAmount() ...");
+    LOGGER.trace("checkSignMessageAmount()");
 
     boolean isValid = false;
 
@@ -171,7 +171,7 @@ public class SignMessageFormatChecker {
   private BigDecimal getTransactionOutAmount(
       @Nonnull DefiTransactionData transactionData,
       @Nonnull String address) {
-    LOGGER.trace("getTransactionOutAmount() ...");
+    LOGGER.trace("getTransactionOutAmount()");
 
     BigDecimal outAmount = BigDecimal.ZERO;
 

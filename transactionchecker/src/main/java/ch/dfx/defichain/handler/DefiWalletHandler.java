@@ -36,7 +36,7 @@ public class DefiWalletHandler {
    * 
    */
   public void loadWallet(@Nonnull String wallet) throws DfxException {
-    LOGGER.trace("loadWallet() ...");
+    LOGGER.trace("loadWallet()");
 
     if (NetworkEnum.STAGNET != network) {
       List<String> walletList = dataProvider.listWallets();
@@ -56,7 +56,7 @@ public class DefiWalletHandler {
    * 
    */
   public void unloadWallet(@Nonnull String wallet) throws DfxException {
-    LOGGER.trace("unloadWallet() ...");
+    LOGGER.trace("unloadWallet()");
 
     if (NetworkEnum.STAGNET != network) {
       List<String> walletList = dataProvider.listWallets();

@@ -45,22 +45,28 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
   public void report() throws DfxException {
     LOGGER.debug("report()");
 
-    String googleRootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
-    String googleFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_BALANCE_SHEET);
+    long startTime = System.currentTimeMillis();
 
-    if (!StringUtils.isEmpty(googleFileName)) {
-      Connection connection = databaseManager.openConnection();
-      databaseHelper.openStatements(connection);
+    try {
+      String googleRootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
+      String googleFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_BALANCE_SHEET);
 
-      List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
-      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseHelper.getMasternodeWhitelistDTOList();
-      List<StakingDTO> stakingDTOList = databaseHelper.getStakingDTOList();
+      if (!StringUtils.isEmpty(googleFileName)) {
+        Connection connection = databaseManager.openConnection();
+        databaseHelper.openStatements(connection);
 
-      RowDataList rowDataList = createRowDataList(stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
-      writeExcel(googleRootPath, googleFileName, rowDataList);
+        List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
+        List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseHelper.getMasternodeWhitelistDTOList();
+        List<StakingDTO> stakingDTOList = databaseHelper.getStakingDTOList();
 
-      databaseHelper.closeStatements();
-      databaseManager.closeConnection(connection);
+        RowDataList rowDataList = createRowDataList(stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
+        writeExcel(googleRootPath, googleFileName, rowDataList);
+
+        databaseHelper.closeStatements();
+        databaseManager.closeConnection(connection);
+      }
+    } finally {
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

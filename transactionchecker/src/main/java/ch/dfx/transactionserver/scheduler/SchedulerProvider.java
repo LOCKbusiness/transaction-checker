@@ -48,7 +48,7 @@ public class SchedulerProvider {
       int initialDelay,
       long period,
       @Nonnull TimeUnit timeUnit) {
-    LOGGER.trace("add() ...");
+    LOGGER.trace("add()");
 
     UUID uuid = UUID.randomUUID();
 
@@ -97,7 +97,7 @@ public class SchedulerProvider {
    * 
    */
   public void exit(int exitCode) {
-    LOGGER.debug("exit() ...");
+    LOGGER.debug("exit()");
 
     try {
       Set<UUID> executorUuidSet = new HashSet<>(scheduledFutureMap.keySet());
@@ -114,7 +114,7 @@ public class SchedulerProvider {
    *
    */
   public void shutdown() {
-    LOGGER.debug("shutdown() ...");
+    LOGGER.debug("shutdown()");
 
     Set<UUID> executorUuidSet = new HashSet<>(scheduledFutureMap.keySet());
 

@@ -63,7 +63,7 @@ public class DatabaseHelper {
    * 
    */
   public void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       // Transaction ...
@@ -192,7 +192,7 @@ public class DatabaseHelper {
    * 
    */
   public void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       transactionByIdSelectStatement.close();
@@ -228,7 +228,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nullable TransactionDTO getTransactionDTOById(@Nonnull String transactionId) throws DfxException {
-    LOGGER.trace("getTransactionDTOById() ...");
+    LOGGER.trace("getTransactionDTOById()");
 
     try {
       TransactionDTO transactionDTO = null;
@@ -259,7 +259,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nullable AddressDTO getAddressDTOByNumber(int addressNumber) throws DfxException {
-    LOGGER.trace("getAddressDTOByNumber() ...");
+    LOGGER.trace("getAddressDTOByNumber()");
 
     try {
       addressByNumberSelectStatement.setInt(1, addressNumber);
@@ -276,7 +276,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nullable AddressDTO getAddressDTOByAddress(@Nonnull String address) throws DfxException {
-    LOGGER.trace("getAddressDTOByAddress() ...");
+    LOGGER.trace("getAddressDTOByAddress()");
 
     try {
       addressByAddressSelectStatement.setString(1, address);
@@ -293,7 +293,7 @@ public class DatabaseHelper {
    * 
    */
   private @Nullable AddressDTO getAddressDTO(@Nonnull PreparedStatement statement) throws DfxException {
-    LOGGER.trace("getAddressDTO() ...");
+    LOGGER.trace("getAddressDTO()");
 
     try {
       AddressDTO addressDTO = null;
@@ -321,7 +321,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<StakingAddressDTO> getStakingAddressDTOList() throws DfxException {
-    LOGGER.trace("getStakingAddressList() ...");
+    LOGGER.trace("getStakingAddressList()");
 
     try {
       List<StakingAddressDTO> stakingAddressDTOList = new ArrayList<>();
@@ -346,7 +346,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nullable StakingAddressDTO getStakingAddressDTOByLiquidityAddressNumber(int liquidityAddressNumber) throws DfxException {
-    LOGGER.trace("getStakingAddressDTOByLiquidityAddressNumber() ...");
+    LOGGER.trace("getStakingAddressDTOByLiquidityAddressNumber()");
 
     try {
       StakingAddressDTO stakingAddressDTO = null;
@@ -373,7 +373,7 @@ public class DatabaseHelper {
    * 
    */
   private StakingAddressDTO createStakingAddressDTO(@Nonnull ResultSet resultSet) throws DfxException {
-    LOGGER.trace("createStakingAddressDTO() ...");
+    LOGGER.trace("createStakingAddressDTO()");
 
     try {
       StakingAddressDTO stakingAddressDTO = new StakingAddressDTO();
@@ -399,7 +399,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<DepositDTO> getDepositDTOList() throws DfxException {
-    LOGGER.trace("getDepositDTOList() ...");
+    LOGGER.trace("getDepositDTOList()");
 
     try {
       return getDepositDTOList(depositSelectStatement);
@@ -412,7 +412,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<DepositDTO> getDepositDTOListByLiquidityAddressNumber(int liquidityAddressNumber) throws DfxException {
-    LOGGER.trace("getDepositDTOListByLiquidityAddressNumber() ...");
+    LOGGER.trace("getDepositDTOListByLiquidityAddressNumber()");
 
     try {
       depositByLiquidityAddressNumberSelectStatement.setInt(1, liquidityAddressNumber);
@@ -427,7 +427,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<DepositDTO> getDepositDTOList(@Nonnull PreparedStatement statement) throws DfxException {
-    LOGGER.trace("getDepositDTOList() ...");
+    LOGGER.trace("getDepositDTOList()");
 
     try {
       List<DepositDTO> depositDTOList = new ArrayList<>();
@@ -464,7 +464,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<BalanceDTO> getBalanceDTOList() throws DfxException {
-    LOGGER.trace("getBalanceDTOList() ...");
+    LOGGER.trace("getBalanceDTOList()");
 
     try {
       List<BalanceDTO> balanceDTOList = new ArrayList<>();
@@ -489,7 +489,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nullable BalanceDTO getBalanceDTOByAddressNumber(int addressNumber) throws DfxException {
-    LOGGER.trace("getBalanceDTOByAddressNumber() ...");
+    LOGGER.trace("getBalanceDTOByAddressNumber()");
 
     try {
       balanceByAddressNumberSelectStatement.setInt(1, addressNumber);
@@ -516,7 +516,7 @@ public class DatabaseHelper {
    * 
    */
   private BalanceDTO createBalanceDTO(@Nonnull ResultSet resultSet) throws DfxException {
-    LOGGER.trace("createBalanceDTO() ...");
+    LOGGER.trace("createBalanceDTO()");
 
     try {
       BalanceDTO balanceDTO = new BalanceDTO(resultSet.getInt("address_number"));
@@ -539,7 +539,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<StakingDTO> getStakingDTOList() throws DfxException {
-    LOGGER.trace("getStakingDTOList() ...");
+    LOGGER.trace("getStakingDTOList()");
 
     try {
       return getStakingDTOList(stakingSelectStatement);
@@ -552,7 +552,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<StakingDTO> getStakingDTOListByLiquidityAdressNumber(int liquidityAddressNumber) throws DfxException {
-    LOGGER.trace("getStakingDTOListByLiquidityAdressNumber() ...");
+    LOGGER.trace("getStakingDTOListByLiquidityAdressNumber()");
 
     try {
       stakingByLiquidityAddressNumberSelectStatement.setInt(1, liquidityAddressNumber);
@@ -569,7 +569,7 @@ public class DatabaseHelper {
   public @Nonnull List<StakingDTO> getStakingDTOListByLiquidityAdressNumberAndDepositAddressNumber(
       int liquidityAddressNumber,
       int depositAddressNumber) throws DfxException {
-    LOGGER.trace("getStakingDTOListByLiquidityAdressNumberAndDepositAddressNumber() ...");
+    LOGGER.trace("getStakingDTOListByLiquidityAdressNumberAndDepositAddressNumber()");
 
     try {
       stakingByLiquidityAddressNumberAndDepositAddressNumberSelectStatement.setInt(1, liquidityAddressNumber);
@@ -585,7 +585,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<StakingDTO> getStakingDTOListByDepositAddressNumber(int depositAddressNumber) throws DfxException {
-    LOGGER.trace("getStakingDTOListByDepositAddressNumber() ...");
+    LOGGER.trace("getStakingDTOListByDepositAddressNumber()");
 
     try {
       stakingByDepositAddressNumberSelectStatement.setInt(1, depositAddressNumber);
@@ -602,7 +602,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<StakingDTO> getStakingDTOListByCustomerAddressNumber(int customerAddressNumber) throws DfxException {
-    LOGGER.trace("getStakingDTOListByCustomerAddressNumber() ...");
+    LOGGER.trace("getStakingDTOListByCustomerAddressNumber()");
 
     try {
       stakingByCustomerAddressNumberSelectStatement.setInt(1, customerAddressNumber);
@@ -619,7 +619,7 @@ public class DatabaseHelper {
    * 
    */
   private @Nonnull List<StakingDTO> getStakingDTOList(@Nonnull PreparedStatement statement) throws DfxException {
-    LOGGER.trace("getStakingDTOList() ...");
+    LOGGER.trace("getStakingDTOList()");
 
     try {
       List<StakingDTO> stakingDTOList = new ArrayList<>();
@@ -658,7 +658,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<StakingWithdrawalReservedDTO> getStakingWithdrawalReservedDTOList() throws DfxException {
-    LOGGER.trace("getStakingWithdrawalReservedDTOList() ...");
+    LOGGER.trace("getStakingWithdrawalReservedDTOList()");
 
     try {
       List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = new ArrayList<>();
@@ -689,7 +689,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nonnull List<MasternodeWhitelistDTO> getMasternodeWhitelistDTOList() throws DfxException {
-    LOGGER.trace("getMasternodeWhitelistDTOList() ...");
+    LOGGER.trace("getMasternodeWhitelistDTOList()");
 
     try {
       List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = new ArrayList<>();
@@ -714,7 +714,7 @@ public class DatabaseHelper {
    * 
    */
   public @Nullable MasternodeWhitelistDTO getMasternodeWhitelistDTOByOwnerAddress(@Nonnull String ownerAddress) throws DfxException {
-    LOGGER.trace("getMasternodeWhitelistDTOByOwnerAddress() ...");
+    LOGGER.trace("getMasternodeWhitelistDTOByOwnerAddress()");
 
     try {
       MasternodeWhitelistDTO masternodeWhitelistDTO = null;
@@ -741,7 +741,7 @@ public class DatabaseHelper {
    * 
    */
   private MasternodeWhitelistDTO createMasternodeWhitelistDTO(@Nonnull ResultSet resultSet) throws DfxException {
-    LOGGER.trace("createMasternodeWhitelistDTO() ...");
+    LOGGER.trace("createMasternodeWhitelistDTO()");
 
     try {
       MasternodeWhitelistDTO masternodeWhitelistDTO =

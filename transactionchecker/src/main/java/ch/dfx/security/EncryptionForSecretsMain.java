@@ -106,7 +106,7 @@ public class EncryptionForSecretsMain {
   private static void doFileEncryption(
       @Nonnull File textInputFile,
       @Nonnull String password) throws DfxException {
-    LOGGER.trace("doFileEncryption() ...");
+    LOGGER.trace("doFileEncryption()");
 
     EncryptionForSecrets encryption = new EncryptionForSecrets();
 
@@ -124,7 +124,7 @@ public class EncryptionForSecretsMain {
   private static void doFileDecryption(
       @Nonnull File encryptedFile,
       @Nonnull String password) throws DfxException {
-    LOGGER.trace("doFileDecryption() ...");
+    LOGGER.trace("doFileDecryption()");
 
     EncryptionForSecrets encryption = new EncryptionForSecrets();
 

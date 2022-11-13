@@ -40,7 +40,7 @@ public abstract class TransactionChecker {
    * 
    */
   public void sendVerified(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("sendVerified() ...");
+    LOGGER.trace("sendVerified()");
 
     String openTransactionHex = openTransactionDTO.getRawTx().getHex();
     String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
@@ -55,7 +55,7 @@ public abstract class TransactionChecker {
    * 
    */
   public void sendInvalidated(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("sendInvalidated() ...");
+    LOGGER.trace("sendInvalidated()");
 
     String openTransactionHex = openTransactionDTO.getRawTx().getHex();
     String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
@@ -71,7 +71,7 @@ public abstract class TransactionChecker {
    * 
    */
   public @Nullable Integer getWithdrawalId(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("getWithdrawalId() ...");
+    LOGGER.trace("getWithdrawalId()");
 
     Integer withdrawalId = null;
 

@@ -144,7 +144,7 @@ public class OceanHandlerMain {
    * 
    */
   private List<DepositDTO> getDepositDTOList() throws DfxException {
-    LOGGER.debug("getDepositDTOList() ...");
+    LOGGER.debug("getDepositDTOList()");
 
     Connection connection = null;
 
@@ -170,7 +170,7 @@ public class OceanHandlerMain {
   private void readFromOcean(
       @Nonnull String testAddress,
       @Nonnull File jsonFile) throws DfxException {
-    LOGGER.debug("readFromOcean() ...");
+    LOGGER.debug("readFromOcean()");
 
     // ...
     OceanHandler oceanHandler = new OceanHandler();
@@ -201,7 +201,7 @@ public class OceanHandlerMain {
   private void readFromFile(
       @Nonnull String testAddress,
       @Nonnull File jsonFile) throws DfxException {
-    LOGGER.debug("readFromFile() ...");
+    LOGGER.debug("readFromFile()");
 
     OceanHandler oceanHandler = new OceanHandler();
     oceanHandler.setup(network, testAddress);
@@ -223,7 +223,7 @@ public class OceanHandlerMain {
    * 
    */
   private void analyze(ListTransactionsDTO transactionsDTOList) throws DfxException {
-    LOGGER.debug("analyze() ...");
+    LOGGER.debug("analyze()");
 
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File("logs", "ocean-transactions.txt")))) {
       List<String> txidList = new ArrayList<>();

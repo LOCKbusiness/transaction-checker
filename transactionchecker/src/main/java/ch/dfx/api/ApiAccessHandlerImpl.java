@@ -95,7 +95,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    */
   @Override
   public void signIn() {
-    LOGGER.trace("signIn() ...");
+    LOGGER.trace("signIn()");
 
     try {
       if (isAccessTokenExpired()) {
@@ -156,7 +156,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    * Check, if the current time is before the expired time.
    */
   private boolean isAccessTokenExpired() throws DfxException {
-    LOGGER.trace("isAccessTokenExpired() ...");
+    LOGGER.trace("isAccessTokenExpired()");
 
     try {
       boolean isExpired = true;
@@ -187,7 +187,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    */
   @Override
   public OpenTransactionDTOList getOpenTransactionDTOList() {
-    LOGGER.trace("getOpenTransactionDTOList() ...");
+    LOGGER.trace("getOpenTransactionDTOList()");
 
     OpenTransactionDTOList openTransactionDTOList = new OpenTransactionDTOList();
 
@@ -206,7 +206,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    * 
    */
   private void fillOpenTransactionDTOList(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
-    LOGGER.trace("fillOpenTransactionDTOList() ...");
+    LOGGER.trace("fillOpenTransactionDTOList()");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/open";
@@ -243,7 +243,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    */
   @Override
   public PendingWithdrawalDTOList getPendingWithdrawalDTOList() {
-    LOGGER.trace("getPendingWithdrawalDTOList() ...");
+    LOGGER.trace("getPendingWithdrawalDTOList()");
 
     PendingWithdrawalDTOList pendingWithdrawalDTOList = new PendingWithdrawalDTOList();
 
@@ -262,7 +262,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    * 
    */
   private void fillPendingWithdrawalDTOList(@Nonnull PendingWithdrawalDTOList pendingWithdrawalDTOList) {
-    LOGGER.trace("fillPendingWithdrawalDTOList() ...");
+    LOGGER.trace("fillPendingWithdrawalDTOList()");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/withdrawal/pending";
@@ -301,7 +301,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   public void sendOpenTransactionVerified(
       @Nonnull String openTransactionId,
       @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) {
-    LOGGER.trace("sendOpenTransactionVerified() ...");
+    LOGGER.trace("sendOpenTransactionVerified()");
 
     if (null != signInDTO) {
       doSendOpenTransactionVerified(openTransactionId, openTransactionVerifiedDTO);
@@ -318,7 +318,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   private void doSendOpenTransactionVerified(
       @Nonnull String openTransactionId,
       @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) {
-    LOGGER.trace("doSendOpenTransactionVerified() ...");
+    LOGGER.trace("doSendOpenTransactionVerified()");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/verified";
@@ -358,7 +358,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   public void sendOpenTransactionInvalidated(
       @Nonnull String openTransactionId,
       @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) {
-    LOGGER.trace("sendOpenTransactionInvalidated() ...");
+    LOGGER.trace("sendOpenTransactionInvalidated()");
 
     if (null != signInDTO) {
       doSendOpenTransactionInvalidated(openTransactionId, openTransactionInvalidatedDTO);
@@ -375,7 +375,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   private void doSendOpenTransactionInvalidated(
       @Nonnull String openTransactionId,
       @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) {
-    LOGGER.trace("doSendOpenTransactionInvalidated() ...");
+    LOGGER.trace("doSendOpenTransactionInvalidated()");
 
     try {
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/invalidated";
@@ -414,7 +414,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   private void logJSON(
       @Nonnull String type,
       @Nonnull String jsonString) {
-    LOGGER.trace("logJSON() ...");
+    LOGGER.trace("logJSON()");
 
     try {
       String fileName =
@@ -451,7 +451,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    * 
    */
   private HttpClient getHttpClient() {
-    LOGGER.trace("getHttpClient() ...");
+    LOGGER.trace("getHttpClient()");
 
     if (null == httpClient) {
       httpClient = HttpClientBuilder.create().build();

@@ -64,7 +64,9 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
 
   @Override
   public void run() {
-    LOGGER.trace("run() ...");
+    LOGGER.debug("run()");
+
+    long startTime = System.currentTimeMillis();
 
     isProcessing = true;
 
@@ -81,6 +83,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       LOGGER.error("run", t);
     } finally {
       isProcessing = false;
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -88,7 +92,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void doRun() {
-    LOGGER.trace("doRun() ...");
+    LOGGER.trace("doRun()");
 
     // ...
     executeDatabase();
@@ -108,7 +112,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void executeDatabase() {
-    LOGGER.trace("executeDatabase() ...");
+    LOGGER.trace("executeDatabase()");
 
     try {
       DatabaseBuilder databaseBuilder = new DatabaseBuilder(databaseManager);
@@ -126,7 +130,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void checkDatabase() {
-    LOGGER.trace("checkDatabase() ...");
+    LOGGER.trace("checkDatabase()");
 
     try {
       DatabaseChecker databaseChecker = new DatabaseChecker(databaseManager);
@@ -147,7 +151,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void executeDeposit() {
-    LOGGER.trace("executeDeposit() ...");
+    LOGGER.trace("executeDeposit()");
 
     try {
       DepositBuilder depositBuilder = new DepositBuilder(databaseManager);
@@ -165,7 +169,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void executeBalance() {
-    LOGGER.trace("executeBalance() ...");
+    LOGGER.trace("executeBalance()");
 
     try {
       BalanceBuilder balanceBuilder = new BalanceBuilder(databaseManager);
@@ -183,7 +187,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void executeStaking() {
-    LOGGER.trace("executeStaking() ...");
+    LOGGER.trace("executeStaking()");
 
     try {
       StakingBuilder stakingBuilder = new StakingBuilder(databaseManager);
@@ -201,7 +205,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void executeMasternode() {
-    LOGGER.trace("executeMasternode() ...");
+    LOGGER.trace("executeMasternode()");
 
     try {
       MasternodeBuilder masternodeBuilder = new MasternodeBuilder(databaseManager);
@@ -219,7 +223,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void executeStakingWithdrawalReservedCleaner() {
-    LOGGER.trace("executeStakingWithdrawalReservedCleaner() ...");
+    LOGGER.trace("executeStakingWithdrawalReservedCleaner()");
 
     try {
       StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(databaseManager);
@@ -237,7 +241,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void checkErrorCounter() {
-    LOGGER.trace("checkErrorCounter() ...");
+    LOGGER.trace("checkErrorCounter()");
 
     if (2 < databaseBuilderErrorCounter
         || 2 < depositBuilderErrorCounter
@@ -254,7 +258,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   private void checkProcessLockfile() {
-    LOGGER.trace("checkProcessLockfile() ...");
+    LOGGER.trace("checkProcessLockfile()");
 
     if (!processLockfile.exists()) {
       LOGGER.error("Process lockfile missing, will exit now");

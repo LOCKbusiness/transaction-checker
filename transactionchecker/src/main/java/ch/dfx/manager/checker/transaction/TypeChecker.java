@@ -30,7 +30,7 @@ public class TypeChecker extends TransactionChecker {
    * 
    */
   public OpenTransactionDTOList checkType(@Nonnull OpenTransactionDTOList openTransactionDTOList) {
-    LOGGER.trace("checkType() ...");
+    LOGGER.trace("checkType()");
 
     OpenTransactionDTOList checkedOpenTransactionDTOList = new OpenTransactionDTOList();
 
@@ -47,7 +47,7 @@ public class TypeChecker extends TransactionChecker {
    * 
    */
   private boolean doCheckType(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("doCheckType() ...");
+    LOGGER.trace("doCheckType()");
 
     boolean isValid;
 

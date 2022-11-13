@@ -40,7 +40,9 @@ public class DatabaseChecker {
    * 
    */
   public boolean check() throws DfxException {
-    LOGGER.trace("check() ...");
+    LOGGER.debug("check()");
+
+    long startTime = System.currentTimeMillis();
 
     Connection connection = null;
 
@@ -79,6 +81,8 @@ public class DatabaseChecker {
       throw new DfxException("check", e);
     } finally {
       databaseManager.closeConnection(connection);
+
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -86,7 +90,7 @@ public class DatabaseChecker {
    * 
    */
   private boolean checkBlockCount(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("checkBlockCount() ...");
+    LOGGER.trace("checkBlockCount()");
 
     long maxBlockNumber = getMaxBlockNumber(connection);
     long blockCount = dataProvider.getBlockCount();
@@ -98,7 +102,7 @@ public class DatabaseChecker {
    * 
    */
   private void openStatements(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("openStatements() ...");
+    LOGGER.trace("openStatements()");
 
     try {
       String transactionSelectSql = "SELECT * FROM public.transaction WHERE block_number=?";
@@ -112,7 +116,7 @@ public class DatabaseChecker {
    * 
    */
   private void closeStatements() throws DfxException {
-    LOGGER.trace("closeStatements() ...");
+    LOGGER.trace("closeStatements()");
 
     try {
       transactionSelectStatement.close();
@@ -125,7 +129,7 @@ public class DatabaseChecker {
    * 
    */
   private int getMaxBlockNumber(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("getMaxBlockNumber() ...");
+    LOGGER.trace("getMaxBlockNumber()");
 
     String sqlSelect =
         new StringBuilder()
@@ -141,7 +145,7 @@ public class DatabaseChecker {
   private int getMaxNumber(
       @Nonnull Connection connection,
       @Nonnull String sqlSelect) throws DfxException {
-    LOGGER.trace("getMaxNumber() ...");
+    LOGGER.trace("getMaxNumber()");
 
     try (Statement statement = connection.createStatement()) {
       int maxNumber = -1;
@@ -172,7 +176,7 @@ public class DatabaseChecker {
   private void cleanAll(
       @Nonnull Connection connection,
       @Nonnull Long blockNumber) throws DfxException {
-    LOGGER.trace("cleanAll() ...");
+    LOGGER.trace("cleanAll()");
 
     String addressTransactionInDeleteSql = "DELETE FROM public.address_transaction_in WHERE block_number >= " + blockNumber;
     clean(connection, addressTransactionInDeleteSql);
@@ -193,7 +197,7 @@ public class DatabaseChecker {
   private void clean(
       @Nonnull Connection connection,
       @Nonnull String sqlDelete) throws DfxException {
-    LOGGER.trace("clean() ...");
+    LOGGER.trace("clean()");
 
     try (Statement statement = connection.createStatement()) {
       statement.executeUpdate(sqlDelete);

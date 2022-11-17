@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,12 +61,15 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
     long startTime = System.currentTimeMillis();
 
+    Connection connection = null;
+
     try {
       String googleRootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
       String googleFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_BALANCE_SHEET);
 
       if (!StringUtils.isEmpty(googleFileName)) {
-        Connection connection = databaseManager.openConnection();
+        connection = databaseManager.openConnection();
+
         databaseHelper.openStatements(connection);
         openStatements(connection);
 
@@ -73,14 +77,15 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
         List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseHelper.getMasternodeWhitelistDTOList();
         List<StakingDTO> stakingDTOList = databaseHelper.getStakingDTOList();
 
-        RowDataList rowDataList = createRowDataList(stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
+        RowDataList rowDataList = createRowDataList(connection, stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
         writeExcel(googleRootPath, googleFileName, rowDataList);
 
         closeStatements();
         databaseHelper.closeStatements();
-        databaseManager.closeConnection(connection);
       }
     } finally {
+      databaseManager.closeConnection(connection);
+
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
@@ -101,7 +106,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
               + " at_out.vout"
               + " FROM public.address_transaction_in at_in"
               + " JOIN public.address_transaction_out at_out ON"
-              + " at_in.block_number = at_out .block_number"
+              + " at_in.block_number = at_out.block_number"
               + " AND at_in.transaction_number = at_out.transaction_number"
               + " AND at_in.address_number != at_out.address_number"
               + " WHERE"
@@ -136,6 +141,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    * 
    */
   private RowDataList createRowDataList(
+      @Nonnull Connection connection,
       @Nonnull List<StakingAddressDTO> stakingAddressDTOList,
       @Nonnull List<MasternodeWhitelistDTO> masternodeWhitelistDTOList,
       @Nonnull List<StakingDTO> stakingDTOList) throws DfxException {
@@ -144,22 +150,26 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     RowDataList rowDataList = new RowDataList();
 
     // ...
-    BigDecimal liquidityMasternodeBalance = BigDecimal.ZERO;
+    BigDecimal balance = BigDecimal.ZERO;
 
     // ...
     BigDecimal liquidityBalance = fillLiquidityBalance(stakingAddressDTOList, rowDataList);
-    liquidityMasternodeBalance = liquidityMasternodeBalance.add(liquidityBalance);
+    balance = balance.add(liquidityBalance);
 
     // ...
     BigDecimal masternodeBalance = fillMasternodeBalance(masternodeWhitelistDTOList, rowDataList);
-    liquidityMasternodeBalance = liquidityMasternodeBalance.add(masternodeBalance);
+    balance = balance.add(masternodeBalance);
 
+    BigDecimal totalNetworkFee = fillNetworkFee(connection, stakingAddressDTOList, rowDataList);
+    balance = balance.add(totalNetworkFee);
+
+    // ...
     BigDecimal otherBalance = fillWithDifferentOtherAmounts(stakingAddressDTOList, masternodeWhitelistDTOList, rowDataList);
-    liquidityMasternodeBalance = liquidityMasternodeBalance.add(otherBalance);
+    balance = balance.add(otherBalance);
 
     // ...
     BigDecimal stakingBalance = fillStakingBalance(stakingDTOList, rowDataList);
-    BigDecimal finalBalance = liquidityMasternodeBalance.add(stakingBalance);
+    BigDecimal finalBalance = balance.add(stakingBalance);
 
     // ...
     addEmptyLine(rowDataList);
@@ -299,25 +309,108 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
   /**
    * 
    */
+  private BigDecimal fillNetworkFee(
+      @Nonnull Connection connection,
+      @Nonnull List<StakingAddressDTO> stakingAddressDTOList,
+      @Nonnull RowDataList rowDataList) throws DfxException {
+    LOGGER.trace("fillWithDifferentOtherAmounts()");
+
+    BigDecimal totalNetworkFee = BigDecimal.ZERO;
+
+    for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
+      if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
+        totalNetworkFee = totalNetworkFee.add(
+            fillNetworkFee(connection, stakingAddressDTO.getLiquidityAddressNumber()));
+      }
+    }
+
+    // ...
+    addEmptyLine(rowDataList);
+
+    RowData rowData = new RowData();
+    rowData.addCellData(new CellData().setValue("Total Network Fee:"));
+    rowData.addCellData(new CellData().setValue(null));
+    rowData.addCellData(new CellData().setValue(null));
+    rowData.addCellData(new CellData().setValue(totalNetworkFee));
+
+    rowDataList.add(rowData);
+
+    return totalNetworkFee;
+  }
+
+  /**
+   * 
+   */
+  private BigDecimal fillNetworkFee(
+      @Nonnull Connection connection,
+      int liquidityAddressNumber) throws DfxException {
+    LOGGER.trace("fillNetworkFee()");
+
+    try {
+      BigDecimal networkFee = BigDecimal.ZERO;
+
+      // ...
+      String transactionFeeSelectSql =
+          "WITH LIQ_OUT AS ("
+              + " SELECT block_number, transaction_number FROM public.address_transaction_out"
+              + " WHERE address_number=" + liquidityAddressNumber
+              + " GROUP BY block_number, transaction_number"
+              + " ), AT_IN AS ("
+              + " SELECT sum(at_in.vin) AS sum_vin FROM public.address_transaction_in at_in"
+              + " JOIN LIQ_OUT liq_out ON"
+              + " at_in.block_number = liq_out.block_number"
+              + " AND at_in.transaction_number = liq_out.transaction_number"
+              + " ), AT_OUT AS ("
+              + " SELECT sum(at_out.vout) AS sum_vout FROM public.address_transaction_out at_out"
+              + " JOIN LIQ_OUT liq_out ON"
+              + " at_out.block_number = liq_out.block_number"
+              + " AND at_out.transaction_number = liq_out.transaction_number"
+              + " )"
+              + " SELECT"
+              + " at_in.sum_vin,"
+              + " at_out.sum_vout"
+              + " FROM AT_IN at_in JOIN AT_OUT at_out ON 1=1";
+      Statement statement = connection.createStatement();
+      ResultSet resultSet = statement.executeQuery(transactionFeeSelectSql);
+
+      while (resultSet.next()) {
+        BigDecimal sumVin = resultSet.getBigDecimal("sum_vin");
+        BigDecimal sumVout = resultSet.getBigDecimal("sum_vout");
+
+        networkFee = networkFee.add(sumVin.subtract(sumVout));
+      }
+
+      resultSet.close();
+      statement.close();
+
+      return networkFee;
+    } catch (Exception e) {
+      throw new DfxException("fillNetworkFee", e);
+    }
+  }
+
+  /**
+   * 
+   */
   private BigDecimal fillWithDifferentOtherAmounts(
       @Nonnull List<StakingAddressDTO> stakingAddressDTOList,
       @Nonnull List<MasternodeWhitelistDTO> masternodeWhitelistDTOList,
       @Nonnull RowDataList rowDataList) throws DfxException {
     LOGGER.trace("fillWithDifferentOtherAmounts()");
 
-    Set<Integer> rewardAddressNumberSet = createRewardAddressNumberSet(stakingAddressDTOList);
-    Set<Integer> masternodeAddressNumberSet = createMasternodeAddressNumberSet(masternodeWhitelistDTOList);
-
-    BigDecimal totalDifferentOtherAmount = BigDecimal.ZERO;
+    ArrayListMultimap<String, Integer> groupAddressMap = ArrayListMultimap.create();
+    Map<String, BigDecimal> groupVoutMap = new HashMap<>();
 
     for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
       if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
-        totalDifferentOtherAmount = totalDifferentOtherAmount.subtract(
-            fillWithDifferentOtherAmounts(stakingAddressDTO.getLiquidityAddressNumber(), rewardAddressNumberSet, masternodeAddressNumberSet, rowDataList));
+        fillWithDifferentOtherAmounts(stakingAddressDTO.getLiquidityAddressNumber(), groupAddressMap, groupVoutMap);
       }
     }
 
-    return totalDifferentOtherAmount;
+    Set<Integer> rewardAddressNumberSet = createRewardAddressNumberSet(stakingAddressDTOList);
+    Set<Integer> masternodeAddressNumberSet = createMasternodeAddressNumberSet(masternodeWhitelistDTOList);
+
+    return fillWithDifferentOtherAmounts(groupAddressMap, groupVoutMap, rewardAddressNumberSet, masternodeAddressNumberSet, rowDataList);
   }
 
   /**
@@ -354,18 +447,14 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
   /**
    * 
    */
-  private BigDecimal fillWithDifferentOtherAmounts(
+  private void fillWithDifferentOtherAmounts(
       int liquidityAddressNumber,
-      @Nonnull Set<Integer> rewardAddressNumberSet,
-      @Nonnull Set<Integer> masternodeAddressNumberSet,
-      @Nonnull RowDataList rowDataList) throws DfxException {
+      @Nonnull ArrayListMultimap<String, Integer> groupAddressMap,
+      @Nonnull Map<String, BigDecimal> groupVoutMap) throws DfxException {
     LOGGER.trace("fillWithDifferentOtherAmounts()");
 
     try {
       transactionVoutSelectStatement.setInt(1, liquidityAddressNumber);
-
-      ArrayListMultimap<String, Integer> groupAddressMap = ArrayListMultimap.create();
-      Map<String, BigDecimal> groupVoutMap = new HashMap<>();
 
       ResultSet resultSet = transactionVoutSelectStatement.executeQuery();
 
@@ -380,72 +469,84 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
       }
 
       resultSet.close();
-
-      // ...
-      BigDecimal masternodePaybackFee = BigDecimal.ZERO;
-      BigDecimal masternodeResignReturn = BigDecimal.ZERO;
-      BigDecimal unknownAmount = BigDecimal.ZERO;
-
-      for (Entry<String, BigDecimal> groupVoutMapEntry : groupVoutMap.entrySet()) {
-        String group = groupVoutMapEntry.getKey();
-        BigDecimal vout = groupVoutMapEntry.getValue();
-
-        boolean addressFound = false;
-
-        for (Integer addressNumber : groupAddressMap.get(group)) {
-          if (rewardAddressNumberSet.contains(addressNumber)) {
-            masternodePaybackFee = masternodePaybackFee.subtract(vout);
-            addressFound = true;
-            break;
-          } else if (masternodeAddressNumberSet.contains(addressNumber)) {
-            masternodeResignReturn = masternodeResignReturn.subtract(vout);
-            addressFound = true;
-            break;
-          }
-        }
-
-        if (!addressFound) {
-          unknownAmount = unknownAmount.subtract(vout);
-        }
-      }
-
-      // ...
-      BigDecimal differentOtherAmount = BigDecimal.ZERO;
-      differentOtherAmount = differentOtherAmount.subtract(masternodePaybackFee);
-      differentOtherAmount = differentOtherAmount.subtract(masternodeResignReturn);
-      differentOtherAmount = differentOtherAmount.subtract(unknownAmount);
-
-      // ...
-      addEmptyLine(rowDataList);
-
-      RowData rowData1 = new RowData();
-      rowData1.addCellData(new CellData().setValue("Masternode Payback Fee:"));
-      rowData1.addCellData(new CellData().setValue(null));
-      rowData1.addCellData(new CellData().setValue(null));
-      rowData1.addCellData(new CellData().setValue(masternodePaybackFee));
-
-      rowDataList.add(rowData1);
-
-      RowData rowData2 = new RowData();
-      rowData2.addCellData(new CellData().setValue("Masternode Resign Return:"));
-      rowData2.addCellData(new CellData().setValue(null));
-      rowData2.addCellData(new CellData().setValue(null));
-      rowData2.addCellData(new CellData().setValue(masternodeResignReturn));
-
-      rowDataList.add(rowData2);
-
-      RowData rowData3 = new RowData();
-      rowData3.addCellData(new CellData().setValue("Unknown Amount:"));
-      rowData3.addCellData(new CellData().setValue(null));
-      rowData3.addCellData(new CellData().setValue(null));
-      rowData3.addCellData(new CellData().setValue(unknownAmount));
-
-      rowDataList.add(rowData3);
-
-      return differentOtherAmount;
     } catch (Exception e) {
       throw new DfxException("fillWithDifferentOtherAmounts", e);
     }
+  }
+
+  /**
+   * 
+   */
+  private BigDecimal fillWithDifferentOtherAmounts(
+      @Nonnull ArrayListMultimap<String, Integer> groupAddressMap,
+      @Nonnull Map<String, BigDecimal> groupVoutMap,
+      @Nonnull Set<Integer> rewardAddressNumberSet,
+      @Nonnull Set<Integer> masternodeAddressNumberSet,
+      @Nonnull RowDataList rowDataList) {
+    LOGGER.trace("fillWithDifferentOtherAmounts()");
+
+    // ...
+    BigDecimal masternodePaybackFee = BigDecimal.ZERO;
+    BigDecimal masternodeResignReturn = BigDecimal.ZERO;
+    BigDecimal unknownAmount = BigDecimal.ZERO;
+
+    for (Entry<String, BigDecimal> groupVoutMapEntry : groupVoutMap.entrySet()) {
+      String group = groupVoutMapEntry.getKey();
+      BigDecimal vout = groupVoutMapEntry.getValue();
+
+      boolean addressFound = false;
+
+      for (Integer addressNumber : groupAddressMap.get(group)) {
+        if (rewardAddressNumberSet.contains(addressNumber)) {
+          masternodePaybackFee = masternodePaybackFee.subtract(vout);
+          addressFound = true;
+          break;
+        } else if (masternodeAddressNumberSet.contains(addressNumber)) {
+          masternodeResignReturn = masternodeResignReturn.subtract(vout);
+          addressFound = true;
+          break;
+        }
+      }
+
+      if (!addressFound) {
+        unknownAmount = unknownAmount.subtract(vout);
+      }
+    }
+
+    // ...
+    BigDecimal differentOtherAmount = BigDecimal.ZERO;
+    differentOtherAmount = differentOtherAmount.add(masternodePaybackFee);
+    differentOtherAmount = differentOtherAmount.add(masternodeResignReturn);
+    differentOtherAmount = differentOtherAmount.add(unknownAmount);
+
+    // ...
+    addEmptyLine(rowDataList);
+
+    RowData rowData1 = new RowData();
+    rowData1.addCellData(new CellData().setValue("Masternode Payback Fee:"));
+    rowData1.addCellData(new CellData().setValue(null));
+    rowData1.addCellData(new CellData().setValue(null));
+    rowData1.addCellData(new CellData().setValue(masternodePaybackFee));
+
+    rowDataList.add(rowData1);
+
+    RowData rowData2 = new RowData();
+    rowData2.addCellData(new CellData().setValue("Masternode Resign Return:"));
+    rowData2.addCellData(new CellData().setValue(null));
+    rowData2.addCellData(new CellData().setValue(null));
+    rowData2.addCellData(new CellData().setValue(masternodeResignReturn));
+
+    rowDataList.add(rowData2);
+
+    RowData rowData3 = new RowData();
+    rowData3.addCellData(new CellData().setValue("Unknown Amount:"));
+    rowData3.addCellData(new CellData().setValue(null));
+    rowData3.addCellData(new CellData().setValue(null));
+    rowData3.addCellData(new CellData().setValue(unknownAmount));
+
+    rowDataList.add(rowData3);
+
+    return differentOtherAmount;
   }
 
   /**

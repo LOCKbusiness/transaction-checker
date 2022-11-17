@@ -252,7 +252,6 @@ public class DatabaseHelper {
     } catch (Exception e) {
       throw new DfxException("getTransactionDTOById", e);
     }
-
   }
 
   /**
@@ -426,7 +425,7 @@ public class DatabaseHelper {
   /**
    * 
    */
-  public @Nonnull List<DepositDTO> getDepositDTOList(@Nonnull PreparedStatement statement) throws DfxException {
+  private @Nonnull List<DepositDTO> getDepositDTOList(@Nonnull PreparedStatement statement) throws DfxException {
     LOGGER.trace("getDepositDTOList()");
 
     try {

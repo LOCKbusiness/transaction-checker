@@ -156,6 +156,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     try {
       DepositBuilder depositBuilder = new DepositBuilder(databaseManager);
       depositBuilder.build();
+
+      depositBuilderErrorCounter = 0;
     } catch (DfxException e) {
       depositBuilderErrorCounter++;
       LOGGER.error("Deposit Builder: errorCounter=" + depositBuilderErrorCounter, e.getMessage());
@@ -174,6 +176,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     try {
       BalanceBuilder balanceBuilder = new BalanceBuilder(databaseManager);
       balanceBuilder.build();
+
+      balanceBuilderErrorCounter = 0;
     } catch (DfxException e) {
       balanceBuilderErrorCounter++;
       LOGGER.error("Balance Builder: errorCounter=" + balanceBuilderErrorCounter, e.getMessage());
@@ -192,6 +196,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     try {
       StakingBuilder stakingBuilder = new StakingBuilder(databaseManager);
       stakingBuilder.build();
+
+      stakingBuilderErrorCounter = 0;
     } catch (DfxException e) {
       stakingBuilderErrorCounter++;
       LOGGER.error("Staking Builder: errorCounter=" + stakingBuilderErrorCounter, e.getMessage());
@@ -210,6 +216,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     try {
       MasternodeBuilder masternodeBuilder = new MasternodeBuilder(databaseManager);
       masternodeBuilder.build();
+
+      masternodeBuilderErrorCounter = 0;
     } catch (DfxException e) {
       masternodeBuilderErrorCounter++;
       LOGGER.error("Masternode Builder: errorCounter=" + masternodeBuilderErrorCounter, e.getMessage());
@@ -228,11 +236,13 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     try {
       StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(databaseManager);
       stakingWithdrawalReservedCleaner.clean();
+
+      stakingWithdrawalReservedCleanerErrorCounter = 0;
     } catch (DfxException e) {
       stakingWithdrawalReservedCleanerErrorCounter++;
       LOGGER.error("StakingWithdrawalReserved Cleaner: errorCounter=" + stakingWithdrawalReservedCleanerErrorCounter, e.getMessage());
     } catch (Exception e) {
-      masternodeBuilderErrorCounter++;
+      stakingWithdrawalReservedCleanerErrorCounter++;
       LOGGER.error("StakingWithdrawalReserved Cleaner: errorCounter=" + stakingWithdrawalReservedCleanerErrorCounter, e);
     }
   }

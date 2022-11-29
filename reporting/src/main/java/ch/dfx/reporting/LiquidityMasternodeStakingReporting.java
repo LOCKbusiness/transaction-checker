@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,17 +41,27 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
   private static final Logger LOGGER = LogManager.getLogger(LiquidityMasternodeStakingReporting.class);
 
   // ...
+  private static final DecimalFormat GERMAN_DECIMAL_FORMAT = new DecimalFormat("#,##0.00000000");
+
+  // ...
   private static final int MASTERNODE_BALANCE = 20000;
   private static final int MASTERNODE_FEE = 10;
 
   // ...
   private PreparedStatement transactionVoutSelectStatement = null;
 
+  // ...
+  private final List<String> logInfoList;
+
   /**
    * 
    */
-  public LiquidityMasternodeStakingReporting(@Nonnull H2DBManager databaseManager) {
+  public LiquidityMasternodeStakingReporting(
+      @Nonnull H2DBManager databaseManager,
+      @Nonnull List<String> logInfoList) {
     super(databaseManager);
+
+    this.logInfoList = logInfoList;
   }
 
   /**
@@ -218,6 +229,9 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
     rowDataList.add(rowData);
 
+    // ...
+    logInfoList.add("Liquidity Balance:    " + GERMAN_DECIMAL_FORMAT.format(liquidityBalance));
+
     return liquidityBalance;
   }
 
@@ -246,6 +260,9 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     enabledRowData.addCellData(new CellData().setValue(masternodeBalance));
 
     rowDataList.add(enabledRowData);
+
+    // ...
+    logInfoList.add("Masternode:             " + numberOfEnabledMasternodes);
 
     // pre enabled ...
     long numberOfPreEnabledMasternodes = masternodeWhitelistDTOList.stream().filter(dto -> "PRE_ENABLED".equals(dto.getState())).count();
@@ -575,6 +592,9 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     rowData.addCellData(new CellData().setValue(stakingBalance));
 
     rowDataList.add(rowData);
+
+    // ...
+    logInfoList.add("Staking Balance:      " + GERMAN_DECIMAL_FORMAT.format(stakingBalance));
 
     return stakingBalance;
   }

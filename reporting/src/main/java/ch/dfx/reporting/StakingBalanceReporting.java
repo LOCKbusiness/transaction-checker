@@ -29,11 +29,18 @@ import ch.dfx.transactionserver.database.H2DBManager;
 public class StakingBalanceReporting extends Reporting {
   private static final Logger LOGGER = LogManager.getLogger(StakingBalanceReporting.class);
 
+  // ...
+  private final List<String> logInfoList;
+
   /**
    * 
    */
-  public StakingBalanceReporting(@Nonnull H2DBManager databaseManager) {
+  public StakingBalanceReporting(
+      @Nonnull H2DBManager databaseManager,
+      @Nonnull List<String> logInfoList) {
     super(databaseManager);
+
+    this.logInfoList = logInfoList;
   }
 
   /**
@@ -96,6 +103,9 @@ public class StakingBalanceReporting extends Reporting {
 
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOListByLiquidityAddressNumber(stakingAddressDTO.getLiquidityAddressNumber());
     LOGGER.debug("Number of Deposit Addresses: " + depositDTOList.size());
+
+    // ...
+    logInfoList.add("Deposit Addresses: " + depositDTOList.size());
 
     // ...
     depositDTOList.sort(new Comparator<DepositDTO>() {

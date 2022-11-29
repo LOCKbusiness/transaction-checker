@@ -4,6 +4,19 @@ package ch.dfx.common.enumeration;
  * 
  */
 public enum PropertyEnum {
+  // AZURE Instrumentation ...
+  APPLICATIONINSIGHTS_CONNECTION_STRING,
+
+  // E-Mail ...
+  EMAIL_USER,
+  EMAIL_PASSWORD,
+  EMAIL_FROM,
+  EMAIL_TO,
+
+  // Telegram ...
+  TELEGRAM_TOKEN,
+  TELEGRAM_CHAT_ID,
+
   // General ...
   RAW_TRANSACTION_MAX_SIZE,
 

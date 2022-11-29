@@ -2,11 +2,11 @@
 <Configuration status="warn" name="httpserver" packages="ch.dfx.httpserver">
   <Appenders>
     <Console name="MyConsole" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p [%t] %c{1}: %m%n" />
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t] %c{1}: %m%n" />
     </Console>
     
     <File name="MyFile" fileName="logs/${sys:logFilename}.log" append="false">
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p [%t] %c{1}: %m%n" />
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t] %c{1}: %m%n" />
     </File>
   </Appenders>
   

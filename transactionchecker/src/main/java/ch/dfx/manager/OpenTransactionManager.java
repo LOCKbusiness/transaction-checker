@@ -104,7 +104,7 @@ public class OpenTransactionManager {
     PendingWithdrawalDTOList apiPendingWithdrawalDTOList = apiAccessHandler.getPendingWithdrawalDTOList();
 
     // ...
-    LOGGER.debug(
+    LOGGER.info(
         "[API] Transaction / Withdrawal Size: "
             + apiOpenTransactionDTOList.size() + " / " + apiPendingWithdrawalDTOList.size());
 
@@ -117,7 +117,7 @@ public class OpenTransactionManager {
 
     processOpenTransactionAndWithdrawal(workOpenTransactionDTOList, apiPendingWithdrawalDTOList);
 
-    LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+    LOGGER.info("[OpenTransactionManager] runtime: " + (System.currentTimeMillis() - startTime));
   }
 
   /**

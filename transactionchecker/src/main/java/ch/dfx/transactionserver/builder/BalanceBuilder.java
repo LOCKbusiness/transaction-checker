@@ -76,7 +76,7 @@ public class BalanceBuilder {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[BalanceBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -285,7 +285,7 @@ public class BalanceBuilder {
       int addressNumber = balanceDTO.getAddressNumber();
       int blockNumber = balanceDTO.getBlockNumber();
 
-      LOGGER.debug(
+      LOGGER.info(
           "[INSERT] Address / Block: "
               + addressNumber + " / " + blockNumber);
 
@@ -310,7 +310,7 @@ public class BalanceBuilder {
       int addressNumber = balanceDTO.getAddressNumber();
       int blockNumber = balanceDTO.getBlockNumber();
 
-      LOGGER.debug(
+      LOGGER.info(
           "[UPDATE] Address / Block: "
               + addressNumber + " / " + blockNumber);
 

@@ -65,7 +65,7 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
     } finally {
       isProcessing = false;
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[ProcessInfoProvider] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

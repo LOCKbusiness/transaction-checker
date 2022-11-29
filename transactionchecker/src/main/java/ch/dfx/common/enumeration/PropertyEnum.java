@@ -4,9 +4,6 @@ package ch.dfx.common.enumeration;
  * 
  */
 public enum PropertyEnum {
-  // AZURE Instrumentation ...
-  APPLICATIONINSIGHTS_CONNECTION_STRING,
-
   // E-Mail ...
   EMAIL_USER,
   EMAIL_PASSWORD,

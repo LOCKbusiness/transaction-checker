@@ -56,8 +56,7 @@ public class MessageEventProvider implements SchedulerProviderRunnable {
     List<MessageEvent> messageEventList = messageEventCollector.getMessageEventList();
 
     for (MessageEvent messageEvent : messageEventList) {
-      LOGGER.debug("[MESSAGE]");
-      LOGGER.debug(messageEvent);
+      LOGGER.info("[MESSAGE] " + messageEvent);
     }
   }
 }

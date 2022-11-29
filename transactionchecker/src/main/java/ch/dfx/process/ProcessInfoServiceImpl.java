@@ -46,9 +46,9 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
     long heapUsedSize = processInfoDTO.getHeapUsedSize();
     long heapCapacity = (heapUsedSize * 100 / heapMaxSize);
 
-    LOGGER.debug("Memory Max Size:  " + (heapMaxSize / MB));
-    LOGGER.debug("Memory Used Size: " + (heapUsedSize / MB));
-    LOGGER.debug("Memory Capacity:  " + heapCapacity + "%");
+    LOGGER.info("Memory Max Size:  " + (heapMaxSize / MB));
+    LOGGER.info("Memory Used Size: " + (heapUsedSize / MB));
+    LOGGER.info("Memory Capacity:  " + heapCapacity + "%");
 
     if (heapCapacity >= MEMORY_WATERMARK_CRITICAL) {
       String message = createMemoryMessage(heapUsedSize, heapCapacity);
@@ -66,9 +66,9 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
     long diskUsedSpace = diskTotalSpace - diskFreeSpace;
     long diskCapacity = (diskUsedSpace * 100 / diskTotalSpace);
 
-    LOGGER.debug("Disk Max Space:  " + (diskTotalSpace / GB));
-    LOGGER.debug("Disk Used Space: " + (diskUsedSpace / GB));
-    LOGGER.debug("Disk Capacity:   " + diskCapacity + "%");
+    LOGGER.info("Disk Max Space:  " + (diskTotalSpace / GB));
+    LOGGER.info("Disk Used Space: " + (diskUsedSpace / GB));
+    LOGGER.info("Disk Capacity:   " + diskCapacity + "%");
 
     if (diskCapacity >= DISK_WATERMARK_CRITICAL) {
       String message = createDiskMessage(diskUsedSpace, diskCapacity);

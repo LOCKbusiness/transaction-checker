@@ -72,7 +72,7 @@ public class StakingWithdrawalReservedCleaner {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[StakingWithdrawalReservedCleaner] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -170,7 +170,7 @@ public class StakingWithdrawalReservedCleaner {
       String transactionId = stakingWithdrawalReservedDTO.getTransactionId();
       String customerAddress = stakingWithdrawalReservedDTO.getCustomerAddress();
 
-      LOGGER.debug(
+      LOGGER.info(
           "[DELETE] Withdrawal Id / Transaction Id / Customer Address: "
               + withdrawalId + " / " + transactionId + " / " + customerAddress);
 

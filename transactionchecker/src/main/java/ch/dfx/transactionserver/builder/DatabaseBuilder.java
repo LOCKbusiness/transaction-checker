@@ -80,7 +80,7 @@ public class DatabaseBuilder {
     long startTime = System.currentTimeMillis();
 
     Long blockCount = dataProvider.getBlockCount();
-    LOGGER.debug("Block Count: " + blockCount);
+    LOGGER.info("[DatabaseBuilder] Block Count: " + blockCount);
 
     Connection connection = null;
 
@@ -105,7 +105,7 @@ public class DatabaseBuilder {
         }
 
         if (nextBlockNumber <= blockCount) {
-          LOGGER.debug("Block: " + nextBlockNumber);
+          LOGGER.info("[DatabaseBuilder] Block: " + nextBlockNumber);
 
           BlockDTO cacheBlockData = createCacheBlockData(connection);
 
@@ -127,7 +127,7 @@ public class DatabaseBuilder {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[DatabaseBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

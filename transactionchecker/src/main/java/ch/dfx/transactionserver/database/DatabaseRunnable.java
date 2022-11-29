@@ -84,7 +84,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     } finally {
       isProcessing = false;
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[DatabaseRunnable] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

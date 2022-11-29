@@ -80,6 +80,8 @@ public class TransactionServerMain {
       LOGGER.debug("Network: " + network);
       LOGGER.debug("Environment: " + environment);
 
+      LOGGER.info("[START] LOCK Transaction Server");
+
       // ...
       TransactionServerMain transactionServer = new TransactionServerMain(network);
 
@@ -224,7 +226,7 @@ public class TransactionServerMain {
 
     deleteProcessLockfile();
 
-    LOGGER.debug("finish");
+    LOGGER.info("[END] LOCK Transaction Server");
 
     LogManager.shutdown();
   }

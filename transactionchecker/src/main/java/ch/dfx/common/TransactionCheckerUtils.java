@@ -47,8 +47,6 @@ import ch.dfx.security.EncryptionForSecrets;
 public class TransactionCheckerUtils {
   private static final Logger LOGGER = LogManager.getLogger(TransactionCheckerUtils.class);
 
-  private static final boolean DEBUG_SECRET = false;
-
   public static final SimpleDateFormat LOGFILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
 
   public static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("0.00000000");
@@ -220,11 +218,6 @@ public class TransactionCheckerUtils {
 
     String username = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_RPC_USERNAME);
     String password = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_RPC_PASSWORD);
-
-    if (DEBUG_SECRET) {
-      LOGGER.debug("DFI Username:" + username);
-      LOGGER.debug("DFI Password:" + password);
-    }
 
     UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
 

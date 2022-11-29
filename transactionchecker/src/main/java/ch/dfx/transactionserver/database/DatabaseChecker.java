@@ -53,16 +53,16 @@ public class DatabaseChecker {
       long maxBlockNumber = getMaxBlockNumber(connection);
       long minBlockNumber = maxBlockNumber - 100;
 
-      LOGGER.debug("Block Check: " + minBlockNumber + " to " + maxBlockNumber);
+      LOGGER.info("[DatabaseChecker] Block Check: " + minBlockNumber + " to " + maxBlockNumber);
 
       for (long blockNumber = minBlockNumber; blockNumber <= maxBlockNumber; blockNumber++) {
         List<String> transactionListFromChain = getTransactionListFromChain(dataProvider, blockNumber);
         List<String> transactionListFromDB = getTransactionListFromDB(blockNumber);
 
         if (!transactionListFromChain.equals(transactionListFromDB)) {
-          LOGGER.debug("Check Block: " + blockNumber + " / " + transactionListFromChain.size() + " / " + transactionListFromDB.size());
-          LOGGER.debug("Transactions in Chain:    " + transactionListFromChain);
-          LOGGER.debug("Transactions in Database: " + transactionListFromDB);
+          LOGGER.info("[DatabaseChecker] Check Block: " + blockNumber + " / " + transactionListFromChain.size() + " / " + transactionListFromDB.size());
+          LOGGER.info("[DatabaseChecker] Transactions in Chain:    " + transactionListFromChain);
+          LOGGER.info("[DatabaseChecker] Transactions in Database: " + transactionListFromDB);
           cleanAll(connection, blockNumber);
 
           connection.commit();
@@ -82,7 +82,7 @@ public class DatabaseChecker {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[DatabaseChecker] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

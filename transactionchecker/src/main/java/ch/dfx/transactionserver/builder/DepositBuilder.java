@@ -40,7 +40,7 @@ public class DepositBuilder {
   private final DatabaseHelper databaseHelper;
 
   /**
-   * Test: tf1q4w2vk08ewe38vqwa3p62ndjw72589fkzzruvzr
+   * 
    */
   public DepositBuilder(@Nonnull H2DBManager databaseManager) {
     this.databaseManager = databaseManager;
@@ -77,7 +77,7 @@ public class DepositBuilder {
 
       for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
         if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
-          LOGGER.debug("Liquidity Address: " + stakingAddressDTO.getLiquidityAddress());
+          LOGGER.info("[DepositBuilder] Liquidity Address: " + stakingAddressDTO.getLiquidityAddress());
           List<DepositDTO> depositDTOList = getDepositDTOList(stakingAddressDTO, depositAddressNumberSet);
 
           for (DepositDTO depositDTO : depositDTOList) {
@@ -109,7 +109,7 @@ public class DepositBuilder {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[DepositBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -336,7 +336,7 @@ public class DepositBuilder {
       int depositAddressNumber = depositDTO.getDepositAddressNumber();
       int customerAddressNumber = depositDTO.getCustomerAddressNumber();
 
-      LOGGER.debug(
+      LOGGER.info(
           "[INSERT] Liquidity Address / Deposit Address / Customer Address: "
               + liquidityAddressNumber + " / " + depositAddressNumber + " / " + customerAddressNumber);
 

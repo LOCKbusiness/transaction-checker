@@ -78,7 +78,7 @@ public class MasternodeBuilder {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[MasternodeBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -246,7 +246,7 @@ public class MasternodeBuilder {
     try {
       String ownerAddress = masternodeWhitelistDTO.getOwnerAddress();
 
-      LOGGER.debug("[UPDATE] Owner Address: " + ownerAddress);
+      LOGGER.info("[UPDATE] Owner Address: " + ownerAddress);
 
       masternodeUpdateStatement.setString(1, masternodeWhitelistDTO.getTransactionId());
       masternodeUpdateStatement.setString(2, masternodeWhitelistDTO.getOperatorAddress());

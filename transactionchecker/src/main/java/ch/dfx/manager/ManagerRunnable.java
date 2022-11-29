@@ -73,7 +73,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
     } finally {
       isProcessing = false;
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[ManagerRunnable] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

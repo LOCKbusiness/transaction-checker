@@ -81,7 +81,7 @@ public class SignatureChecker extends TransactionChecker {
     String verifyAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_VERIFY_ADDRESS);
 
     Boolean isValid = messageHandler.verifyMessage(verifyAddress, openTransactionIssuerSignature, openTransactionHex);
-    LOGGER.debug("Open Transaction Id: " + openTransactionDTO.getId() + " / " + isValid);
+    LOGGER.info("Open Transaction Id: " + openTransactionDTO.getId() + " / " + isValid);
 
     return BooleanUtils.isTrue(isValid);
   }

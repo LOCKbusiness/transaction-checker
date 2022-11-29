@@ -71,7 +71,11 @@ public class TransactionServerWatchdogMain {
       TransactionCheckerUtils.loadConfigProperties(network, environment);
 
       // ...
-      LOGGER.debug("Start");
+      LOGGER.debug("=".repeat(80));
+      LOGGER.debug("Network: " + network);
+      LOGGER.debug("Environment: " + environment);
+
+      LOGGER.info("[START] LOCK Transaction Server Watchdog");
 
       // ...
       MessageEventBus.getInstance().register(new MessageEventCollector());
@@ -84,10 +88,7 @@ public class TransactionServerWatchdogMain {
         transactionServerWatchdogMain.runProcess();
         Thread.sleep(30 * 1000);
       }
-    } catch (
-
-    Throwable t) {
-      // TODO: SEND MESSAGE TO EXTERNAL RECEIVER ...
+    } catch (Throwable t) {
       LOGGER.error("Fatal Error", t);
       System.exit(-1);
     }
@@ -258,7 +259,7 @@ public class TransactionServerWatchdogMain {
 
     deleteProcessLockfile();
 
-    LOGGER.debug("finish");
+    LOGGER.info("[END] LOCK Transaction Server Watchdog");
 
     LogManager.shutdown();
   }

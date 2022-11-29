@@ -261,9 +261,6 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
     rowDataList.add(enabledRowData);
 
-    // ...
-    logInfoList.add("Masternode:             " + numberOfEnabledMasternodes);
-
     // pre enabled ...
     long numberOfPreEnabledMasternodes = masternodeWhitelistDTOList.stream().filter(dto -> "PRE_ENABLED".equals(dto.getState())).count();
     BigDecimal preEnabledMasternodeBalance = BigDecimal.valueOf(MASTERNODE_BALANCE).multiply(BigDecimal.valueOf(numberOfPreEnabledMasternodes));
@@ -277,6 +274,9 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     preEnabledRowData.addCellData(new CellData().setValue(preEnabledMasternodeBalance));
 
     rowDataList.add(preEnabledRowData);
+
+    // ...
+    logInfoList.add("Masternode:             " + numberOfEnabledMasternodes + " (+ " + numberOfPreEnabledMasternodes + ")");
 
     // pre resigned ...
     long numberOfPreResignedMasternodes = masternodeWhitelistDTOList.stream().filter(dto -> "PRE_RESIGNED".equals(dto.getState())).count();

@@ -77,7 +77,7 @@ public class StakingBuilder {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.info("[StakingBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -373,10 +373,10 @@ public class StakingBuilder {
       int lastInBlockNumber = stakingDTO.getLastInBlockNumber();
       int lastOutBlockNumber = stakingDTO.getLastOutBlockNumber();
 
-      LOGGER.debug(
+      LOGGER.info(
           "[INSERT] Liquidity / Deposit / Customer Address: "
               + liquidityAddressNumber + " / " + depositAddressNumber + " / " + customerAddressNumber);
-      LOGGER.debug(
+      LOGGER.info(
           "[INSERT] Last In / Last Out Block: "
               + lastInBlockNumber + " / " + lastOutBlockNumber);
 
@@ -406,10 +406,10 @@ public class StakingBuilder {
       int lastInBlockNumber = stakingDTO.getLastInBlockNumber();
       int lastOutBlockNumber = stakingDTO.getLastOutBlockNumber();
 
-      LOGGER.debug(
+      LOGGER.info(
           "[UPDATE] Liquidity / Deposit / Customer Address: "
               + liquidityAddressNumber + " / " + depositAddressNumber + " / " + customerAddressNumber);
-      LOGGER.debug(
+      LOGGER.info(
           "[UPDATE] Last In / Last Out Block: "
               + lastInBlockNumber + " / " + lastOutBlockNumber);
 

@@ -9,7 +9,7 @@
         <jar destfile="${dir.jarfile}/transactionserver.jar">
             <manifest>
                 <attribute name="Main-Class" value="ch.dfx.transactionserver.TransactionServerMain"/>
-                <attribute name="Class-Path" value=". transactionserver_lib/commons-lang3-3.12.0.jar transactionserver_lib/commons-text-1.9.jar transactionserver_lib/commons-io-2.11.0.jar transactionserver_lib/httpclient-4.5.13.jar transactionserver_lib/commons-logging-1.2.jar transactionserver_lib/commons-codec-1.11.jar transactionserver_lib/httpcore-4.4.15.jar transactionserver_lib/httpmime-4.5.13.jar transactionserver_lib/gson-2.8.7.jar transactionserver_lib/guava-31.1-jre.jar transactionserver_lib/failureaccess-1.0.1.jar transactionserver_lib/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar transactionserver_lib/checker-qual-3.12.0.jar transactionserver_lib/error_prone_annotations-2.11.0.jar transactionserver_lib/j2objc-annotations-1.3.jar transactionserver_lib/mail-1.5.0-b01.jar transactionserver_lib/activation-1.1.jar transactionserver_lib/log4j-api-2.19.0.jar transactionserver_lib/log4j-core-2.19.0.jar transactionserver_lib/log4j-slf4j-impl-2.19.0.jar transactionserver_lib/slf4j-api-1.7.25.jar transactionserver_lib/h2-2.1.214.jar transactionserver_lib/jsr305-3.0.2.jar"/>
+                <attribute name="Class-Path" value=". transactionserver_lib/commons-lang3-3.12.0.jar transactionserver_lib/commons-text-1.9.jar transactionserver_lib/commons-io-2.11.0.jar transactionserver_lib/httpclient-4.5.13.jar transactionserver_lib/commons-logging-1.2.jar transactionserver_lib/commons-codec-1.11.jar transactionserver_lib/httpcore-4.4.15.jar transactionserver_lib/httpmime-4.5.13.jar transactionserver_lib/gson-2.8.7.jar transactionserver_lib/guava-31.1-jre.jar transactionserver_lib/failureaccess-1.0.1.jar transactionserver_lib/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar transactionserver_lib/checker-qual-3.12.0.jar transactionserver_lib/error_prone_annotations-2.11.0.jar transactionserver_lib/j2objc-annotations-1.3.jar transactionserver_lib/mail-1.5.0-b01.jar transactionserver_lib/activation-1.1.jar transactionserver_lib/log4j-api-2.19.0.jar transactionserver_lib/log4j-core-2.19.0.jar transactionserver_lib/h2-2.1.214.jar transactionserver_lib/jsr305-3.0.2.jar"/>
             </manifest>
             <fileset dir="${dir.buildfile}/target/classes"/>
         </jar>
@@ -36,8 +36,6 @@
         <copy file="${maven_directory}/javax/activation/activation/1.1/activation-1.1.jar" todir="${dir.jarfile}/transactionserver_lib"/>
         <copy file="${maven_directory}/org/apache/logging/log4j/log4j-api/2.19.0/log4j-api-2.19.0.jar" todir="${dir.jarfile}/transactionserver_lib"/>
         <copy file="${maven_directory}/org/apache/logging/log4j/log4j-core/2.19.0/log4j-core-2.19.0.jar" todir="${dir.jarfile}/transactionserver_lib"/>
-        <copy file="${maven_directory}/org/apache/logging/log4j/log4j-slf4j-impl/2.19.0/log4j-slf4j-impl-2.19.0.jar" todir="${dir.jarfile}/transactionserver_lib"/>
-        <copy file="${maven_directory}/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar" todir="${dir.jarfile}/transactionserver_lib"/>
         <copy file="${maven_directory}/com/h2database/h2/2.1.214/h2-2.1.214.jar" todir="${dir.jarfile}/transactionserver_lib"/>
         <copy file="${maven_directory}/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar" todir="${dir.jarfile}/transactionserver_lib"/>
     </target>

@@ -1,16 +1,11 @@
 package ch.dfx.transactionserver.database;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.ResultSet;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import ch.dfx.common.errorhandling.DfxException;
 
 /**
  * 
@@ -30,50 +25,6 @@ public class DatabaseUtils {
       }
     } catch (Exception e) {
       LOGGER.error("rollback", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  public static int getIntOrDefault(
-      @Nonnull ResultSet resultSet,
-      @Nonnull String columnLabel,
-      int defaultValue) throws DfxException {
-    LOGGER.trace("getIntOrDefault()");
-
-    try {
-      int value = resultSet.getInt(columnLabel);
-
-      if (resultSet.wasNull()) {
-        value = defaultValue;
-      }
-
-      return value;
-    } catch (Exception e) {
-      throw new DfxException("getIntOrDefault", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  public static BigDecimal getBigDecimalOrDefault(
-      @Nonnull ResultSet resultSet,
-      @Nonnull String columnLabel,
-      BigDecimal defaultValue) throws DfxException {
-    LOGGER.trace("getBigDecimalOrDefault()");
-
-    try {
-      BigDecimal value = resultSet.getBigDecimal(columnLabel);
-
-      if (resultSet.wasNull()) {
-        value = defaultValue;
-      }
-
-      return value;
-    } catch (Exception e) {
-      throw new DfxException("getBigDecimalOrDefault", e);
     }
   }
 

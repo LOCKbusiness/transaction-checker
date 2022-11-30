@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
@@ -123,8 +122,7 @@ public class StakingBuilder {
               + " at_out.block_number = at_in.block_number"
               + " AND at_out.transaction_number = at_in.transaction_number"
               + " WHERE"
-              + " at_in.in_block_number>?"
-              + " AND at_out.address_number=?"
+              + " at_out.address_number=?"
               + " AND at_in.address_number=?";
       stakingVinSelectStatement = connection.prepareStatement(stakingVinSelectSql);
 
@@ -139,8 +137,7 @@ public class StakingBuilder {
               + " at_in.block_number = at_out.block_number"
               + " AND at_in.transaction_number = at_out.transaction_number"
               + " WHERE"
-              + " at_out.block_number>?"
-              + " AND at_in.address_number=?"
+              + " at_in.address_number=?"
               + " AND at_out.address_number=?";
       stakingVoutSelectStatement = connection.prepareStatement(stakingVoutSelectSql);
 
@@ -177,12 +174,7 @@ public class StakingBuilder {
     List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
 
     for (DepositDTO depositDTO : depositDTOList) {
-      int liquidityAddressNumber = depositDTO.getLiquidityAddressNumber();
-      StakingAddressDTO stakingAddressDTO = databaseHelper.getStakingAddressDTOByLiquidityAddressNumber(liquidityAddressNumber);
-
-      if (null != stakingAddressDTO) {
-        calcBalance(connection, stakingAddressDTO, depositDTO);
-      }
+      calcBalance(connection, depositDTO);
     }
   }
 
@@ -191,7 +183,6 @@ public class StakingBuilder {
    */
   private void calcBalance(
       @Nonnull Connection connection,
-      @Nonnull StakingAddressDTO stakingAddressDTO,
       @Nonnull DepositDTO depositDTO) throws DfxException {
     LOGGER.trace("calcBalance()");
 
@@ -209,7 +200,7 @@ public class StakingBuilder {
 
       // ...
       StakingDTO vinStakingDTO = calcVin(stakingLastInBlockNumber, liquidityAddressNumber, depositAddressNumber);
-      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, stakingAddressDTO.getStartBlockNumber(), liquidityAddressNumber, customerAddressNumber);
+      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, liquidityAddressNumber, customerAddressNumber);
 
       // ...
       int maxStakingLastInBlockNumber = stakingLastInBlockNumber;
@@ -220,16 +211,15 @@ public class StakingBuilder {
 
       // ...
       stakingDTO.setLastInBlockNumber(maxStakingLastInBlockNumber);
-      stakingDTO.addVin(vinStakingDTO.getVin());
+      stakingDTO.setVin(vinStakingDTO.getVin());
       stakingDTO.setLastOutBlockNumber(maxStakingLastOutBlockNumber);
-      stakingDTO.addVout(voutStakingDTO.getVout());
+      stakingDTO.setVout(voutStakingDTO.getVout());
 
       // ...
       if (-1 == stakingLastInBlockNumber
           && -1 == stakingLastOutBlockNumber) {
         insertStaking(stakingDTO);
-      } else if (maxStakingLastInBlockNumber > stakingLastInBlockNumber
-          || maxStakingLastOutBlockNumber > stakingLastOutBlockNumber) {
+      } else if (stakingDTO.isInternalStateChanged()) {
         updateStaking(stakingDTO);
       }
     } catch (DfxException e) {
@@ -258,11 +248,28 @@ public class StakingBuilder {
       ResultSet resultSet = stakingSelectStatement.executeQuery();
 
       if (resultSet.next()) {
-        stakingDTO.setLastInBlockNumber(DatabaseUtils.getIntOrDefault(resultSet, "last_in_block_number", -1));
-        stakingDTO.setVin(DatabaseUtils.getBigDecimalOrDefault(resultSet, "vin", BigDecimal.ZERO));
+        stakingDTO.setLastInBlockNumber(resultSet.getInt("last_in_block_number"));
+        stakingDTO.setLastOutBlockNumber(resultSet.getInt("last_out_block_number"));
 
-        stakingDTO.setLastOutBlockNumber(DatabaseUtils.getIntOrDefault(resultSet, "last_out_block_number", -1));
-        stakingDTO.setVout(DatabaseUtils.getBigDecimalOrDefault(resultSet, "vout", BigDecimal.ZERO));
+        // ...
+        BigDecimal vin = resultSet.getBigDecimal("vin");
+
+        if (0 == BigDecimal.ZERO.compareTo(vin)) {
+          vin = BigDecimal.ZERO;
+        }
+
+        stakingDTO.setVin(vin);
+
+        // ...
+        BigDecimal vout = resultSet.getBigDecimal("vout");
+
+        if (0 == BigDecimal.ZERO.compareTo(vout)) {
+          vout = BigDecimal.ZERO;
+        }
+
+        stakingDTO.setVout(vout);
+
+        stakingDTO.keepInternalState();
       }
 
       resultSet.close();
@@ -283,9 +290,8 @@ public class StakingBuilder {
     LOGGER.trace("calcVin()");
 
     try {
-      stakingVinSelectStatement.setInt(1, lastInBlockNumber);
-      stakingVinSelectStatement.setInt(2, liquidityAddressNumber);
-      stakingVinSelectStatement.setInt(3, depositAddressNumber);
+      stakingVinSelectStatement.setInt(1, liquidityAddressNumber);
+      stakingVinSelectStatement.setInt(2, depositAddressNumber);
 
       StakingDTO stakingDTO = new StakingDTO(liquidityAddressNumber, depositAddressNumber, -1);
 
@@ -320,17 +326,13 @@ public class StakingBuilder {
    */
   private StakingDTO calcVout(
       int lastOutBlockNumber,
-      int liquidityStartBlockNumber,
       int liquidityAddressNumber,
       int customerAddressNumber) throws DfxException {
     LOGGER.trace("calcVout()");
 
     try {
-      int useBlockNumber = -1 == lastOutBlockNumber ? liquidityStartBlockNumber - 1 : lastOutBlockNumber;
-
-      stakingVoutSelectStatement.setInt(1, useBlockNumber);
-      stakingVoutSelectStatement.setInt(2, liquidityAddressNumber);
-      stakingVoutSelectStatement.setInt(3, customerAddressNumber);
+      stakingVoutSelectStatement.setInt(1, liquidityAddressNumber);
+      stakingVoutSelectStatement.setInt(2, customerAddressNumber);
 
       StakingDTO stakingDTO = new StakingDTO(liquidityAddressNumber, -1, customerAddressNumber);
 

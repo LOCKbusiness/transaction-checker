@@ -45,6 +45,7 @@ public class TransactionServerWatchdogMain {
   private Registry registry = null;
 
   private final MessageEventCollector messageEventCollector;
+  private final MessageEventProvider messageEventProvider;
 
   /**
    *
@@ -75,8 +76,6 @@ public class TransactionServerWatchdogMain {
       LOGGER.debug("Network: " + network);
       LOGGER.debug("Environment: " + environment);
 
-      LOGGER.info("[START] LOCK Transaction Server Watchdog");
-
       // ...
       MessageEventBus.getInstance().register(new MessageEventCollector());
 
@@ -84,9 +83,15 @@ public class TransactionServerWatchdogMain {
       TransactionServerWatchdogMain transactionServerWatchdogMain = new TransactionServerWatchdogMain(network);
       transactionServerWatchdogMain.watchdog();
 
+      // ...
+      String startMessage = "[Transaction Check Server Watchdog] Process is running";
+      MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
+      LOGGER.info(startMessage);
+
+      // ...
       while (true) {
         transactionServerWatchdogMain.runProcess();
-        Thread.sleep(30 * 1000);
+        Thread.sleep(15 * 60 * 1000);
       }
     } catch (Throwable t) {
       LOGGER.error("Fatal Error", t);
@@ -101,6 +106,7 @@ public class TransactionServerWatchdogMain {
     this.network = network;
 
     this.messageEventCollector = new MessageEventCollector();
+    this.messageEventProvider = new MessageEventProvider(messageEventCollector);
   }
 
   /**
@@ -139,8 +145,7 @@ public class TransactionServerWatchdogMain {
     int runPeriodMessageEvent = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
 
     if (60 <= runPeriodMessageEvent) {
-      MessageEventProvider messageEventProvider = new MessageEventProvider(messageEventCollector);
-      SchedulerProvider.getInstance().add(messageEventProvider, 0, runPeriodMessageEvent, TimeUnit.SECONDS);
+      SchedulerProvider.getInstance().add(messageEventProvider, 30, runPeriodMessageEvent, TimeUnit.SECONDS);
     }
   }
 
@@ -259,8 +264,13 @@ public class TransactionServerWatchdogMain {
 
     deleteProcessLockfile();
 
-    LOGGER.info("[END] LOCK Transaction Server Watchdog");
+    // ...
+    String shutdownMessage = "[Transaction Check Server Watchdog] Process shutdown";
+    MessageEventBus.getInstance().postEvent(new MessageEvent(shutdownMessage));
+    LOGGER.info(shutdownMessage);
+    messageEventProvider.run();
 
+    // ...
     LogManager.shutdown();
   }
 
@@ -282,10 +292,6 @@ public class TransactionServerWatchdogMain {
       Process process = processBuilder.start();
 
       // ...
-      String startMessage = "[Transaction Check Server] Process is running";
-      MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
-      LOGGER.debug(startMessage);
-
       int exitCode = process.waitFor();
       LOGGER.debug("... Process exit code: " + exitCode);
 

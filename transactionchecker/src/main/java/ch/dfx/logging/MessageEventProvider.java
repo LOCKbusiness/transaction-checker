@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.notifier.TelegramNotifier;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
 /**
@@ -17,6 +18,7 @@ public class MessageEventProvider implements SchedulerProviderRunnable {
   private static final Logger LOGGER = LogManager.getLogger(MessageEventProvider.class);
 
   private final MessageEventCollector messageEventCollector;
+  private final TelegramNotifier telegramNotifier;
 
   private boolean isProcessing = false;
 
@@ -25,6 +27,8 @@ public class MessageEventProvider implements SchedulerProviderRunnable {
    */
   public MessageEventProvider(@Nonnull MessageEventCollector messageEventCollector) {
     this.messageEventCollector = messageEventCollector;
+
+    this.telegramNotifier = new TelegramNotifier();
   }
 
   @Override
@@ -57,6 +61,7 @@ public class MessageEventProvider implements SchedulerProviderRunnable {
 
     for (MessageEvent messageEvent : messageEventList) {
       LOGGER.info("[MESSAGE] " + messageEvent);
+      telegramNotifier.sendMessage(messageEvent.getMessage());
     }
   }
 }

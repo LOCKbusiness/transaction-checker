@@ -23,6 +23,7 @@ import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
 import ch.dfx.logging.MessageEventProvider;
+import ch.dfx.logging.events.MessageEvent;
 import ch.dfx.manager.ManagerRunnable;
 import ch.dfx.process.ProcessInfoProvider;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
@@ -45,6 +46,7 @@ public class TransactionServerMain {
   private final H2DBManager databaseManager;
 
   private final MessageEventCollector messageEventCollector;
+  private final MessageEventProvider messageEventProvider;
 
   // ...
   private Server tcpServer = null;
@@ -80,8 +82,6 @@ public class TransactionServerMain {
       LOGGER.debug("Network: " + network);
       LOGGER.debug("Environment: " + environment);
 
-      LOGGER.info("[START] LOCK Transaction Server");
-
       // ...
       TransactionServerMain transactionServer = new TransactionServerMain(network);
 
@@ -106,7 +106,9 @@ public class TransactionServerMain {
     this.network = network;
 
     this.databaseManager = new H2DBManagerImpl();
+
     this.messageEventCollector = new MessageEventCollector();
+    this.messageEventProvider = new MessageEventProvider(messageEventCollector);
   }
 
   /**
@@ -191,6 +193,11 @@ public class TransactionServerMain {
           SchedulerProvider.getInstance().add(processInfoProvider, 10, runPeriodWatchdog, TimeUnit.SECONDS);
         }
       }
+
+      // ...
+      String startMessage = "[Transaction Check Server] Process is running";
+      MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
+      LOGGER.info(startMessage);
     }
   }
 
@@ -205,8 +212,7 @@ public class TransactionServerMain {
     int runPeriodMessageEvent = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
 
     if (60 <= runPeriodMessageEvent) {
-      MessageEventProvider messageEventProvider = new MessageEventProvider(messageEventCollector);
-      SchedulerProvider.getInstance().add(messageEventProvider, 0, runPeriodMessageEvent, TimeUnit.SECONDS);
+      SchedulerProvider.getInstance().add(messageEventProvider, 30, runPeriodMessageEvent, TimeUnit.SECONDS);
     }
   }
 
@@ -226,8 +232,13 @@ public class TransactionServerMain {
 
     deleteProcessLockfile();
 
-    LOGGER.info("[END] LOCK Transaction Server");
+    // ...
+    String shutdownMessage = "[Transaction Check Server] Process shutdown";
+    MessageEventBus.getInstance().postEvent(new MessageEvent(shutdownMessage));
+    LOGGER.info(shutdownMessage);
+    messageEventProvider.run();
 
+    // ...
     LogManager.shutdown();
   }
 

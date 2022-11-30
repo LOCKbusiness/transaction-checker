@@ -22,10 +22,10 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
   private static final long MB = KB * 1024;
   private static final long GB = MB * 1024;
 
-  private static final long MEMORY_WATERMARK_WARNING = 80;
+  private static final long MEMORY_WATERMARK_HIGH = 80;
   private static final long MEMORY_WATERMARK_CRITICAL = 90;
 
-  private static final long DISK_WATERMARK_WARNING = 80;
+  private static final long DISK_WATERMARK_HIGH = 80;
   private static final long DISK_WATERMARK_CRITICAL = 90;
 
   /**
@@ -50,16 +50,6 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
     LOGGER.info("Memory Used Size: " + (heapUsedSize / MB));
     LOGGER.info("Memory Capacity:  " + heapCapacity + "%");
 
-    if (heapCapacity >= MEMORY_WATERMARK_CRITICAL) {
-      String message = createMemoryMessage(heapUsedSize, heapCapacity);
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
-      LOGGER.error(message);
-    } else if (heapCapacity >= MEMORY_WATERMARK_WARNING) {
-      String message = createMemoryMessage(heapUsedSize, heapCapacity);
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
-      LOGGER.warn(message);
-    }
-
     // ...
     long diskTotalSpace = processInfoDTO.getDiskTotalSpace();
     long diskFreeSpace = processInfoDTO.getDiskFreeSpace();
@@ -70,34 +60,52 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
     LOGGER.info("Disk Used Space: " + (diskUsedSpace / GB));
     LOGGER.info("Disk Capacity:   " + diskCapacity + "%");
 
+    // ...
+    String memoryMessage = createMemoryMessage(heapMaxSize, heapUsedSize, heapCapacity);
+    String diskMessage = createDiskMessage(diskTotalSpace, diskUsedSpace, diskCapacity);
+    MessageEventBus.getInstance().postEvent(new MessageEvent(memoryMessage + "\n" + diskMessage));
+
+    // ...
+    if (heapCapacity >= MEMORY_WATERMARK_CRITICAL) {
+      MessageEventBus.getInstance().postEvent(new MessageEvent("[ERROR] Critical Memory Watermark reached"));
+      LOGGER.error(memoryMessage);
+    } else if (heapCapacity >= MEMORY_WATERMARK_HIGH) {
+      MessageEventBus.getInstance().postEvent(new MessageEvent("[WARN] High Memory Watermark reached"));
+      LOGGER.warn(memoryMessage);
+    }
+
     if (diskCapacity >= DISK_WATERMARK_CRITICAL) {
-      String message = createDiskMessage(diskUsedSpace, diskCapacity);
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
-      LOGGER.error(message);
-    } else if (diskCapacity >= DISK_WATERMARK_WARNING) {
-      String message = createDiskMessage(diskUsedSpace, diskCapacity);
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
-      LOGGER.warn(message);
+      MessageEventBus.getInstance().postEvent(new MessageEvent("[ERROR] Critical Disk Watermark reached"));
+      LOGGER.error(diskMessage);
+    } else if (diskCapacity >= DISK_WATERMARK_HIGH) {
+      MessageEventBus.getInstance().postEvent(new MessageEvent("[WARN] High Disk Watermark reached"));
+      LOGGER.warn(diskMessage);
     }
   }
 
   /**
    * 
    */
-  private String createMemoryMessage(long heapUsedSize, long heapCapacity) {
+  private String createMemoryMessage(
+      long heapMaxSize,
+      long heapUsedSize,
+      long heapCapacity) {
     return new StringBuilder()
-        .append("[Memory]: consumption is ").append(heapCapacity).append("%")
-        .append(" (").append((heapUsedSize / MB)).append(" MB)")
+        .append("[Memory] ").append(heapCapacity).append("%")
+        .append(" (").append((heapUsedSize / MB)).append(" MB / ").append((heapMaxSize / MB)).append(" MB)")
         .toString();
   }
 
   /**
    * 
    */
-  private String createDiskMessage(long diskUsedSpace, long diskCapacity) {
+  private String createDiskMessage(
+      long diskTotalSpace,
+      long diskUsedSpace,
+      long diskCapacity) {
     return new StringBuilder()
-        .append("[Disk]: consumption is ").append(diskCapacity).append("%")
-        .append(" (").append((diskUsedSpace / GB)).append(" GB)")
+        .append("[Disk] ").append(diskCapacity).append("%")
+        .append(" (").append((diskUsedSpace / GB)).append(" GB / ").append((diskTotalSpace / GB)).append(" GB)")
         .toString();
   }
 }

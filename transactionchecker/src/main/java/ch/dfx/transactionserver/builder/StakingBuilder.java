@@ -137,7 +137,8 @@ public class StakingBuilder {
               + " at_in.block_number = at_out.block_number"
               + " AND at_in.transaction_number = at_out.transaction_number"
               + " WHERE"
-              + " at_in.address_number=?"
+              + " at_in.block_number>?"
+              + " AND at_in.address_number=?"
               + " AND at_out.address_number=?";
       stakingVoutSelectStatement = connection.prepareStatement(stakingVoutSelectSql);
 
@@ -199,8 +200,11 @@ public class StakingBuilder {
       int stakingLastOutBlockNumber = stakingDTO.getLastOutBlockNumber();
 
       // ...
+      int voutStartBlockNumber = (-1 == stakingLastOutBlockNumber ? stakingLastInBlockNumber - 1 : stakingLastOutBlockNumber);
+
+      // ...
       StakingDTO vinStakingDTO = calcVin(stakingLastInBlockNumber, liquidityAddressNumber, depositAddressNumber);
-      StakingDTO voutStakingDTO = calcVout(stakingLastOutBlockNumber, liquidityAddressNumber, customerAddressNumber);
+      StakingDTO voutStakingDTO = calcVout(voutStartBlockNumber, stakingLastOutBlockNumber, liquidityAddressNumber, customerAddressNumber);
 
       // ...
       int maxStakingLastInBlockNumber = stakingLastInBlockNumber;
@@ -212,8 +216,9 @@ public class StakingBuilder {
       // ...
       stakingDTO.setLastInBlockNumber(maxStakingLastInBlockNumber);
       stakingDTO.setVin(vinStakingDTO.getVin());
+
       stakingDTO.setLastOutBlockNumber(maxStakingLastOutBlockNumber);
-      stakingDTO.setVout(voutStakingDTO.getVout());
+      stakingDTO.addVout(voutStakingDTO.getVout());
 
       // ...
       if (-1 == stakingLastInBlockNumber
@@ -325,14 +330,16 @@ public class StakingBuilder {
    * 
    */
   private StakingDTO calcVout(
+      int voutStartBlockNumber,
       int lastOutBlockNumber,
       int liquidityAddressNumber,
       int customerAddressNumber) throws DfxException {
     LOGGER.trace("calcVout()");
 
     try {
-      stakingVoutSelectStatement.setInt(1, liquidityAddressNumber);
-      stakingVoutSelectStatement.setInt(2, customerAddressNumber);
+      stakingVoutSelectStatement.setInt(1, voutStartBlockNumber);
+      stakingVoutSelectStatement.setInt(2, liquidityAddressNumber);
+      stakingVoutSelectStatement.setInt(3, customerAddressNumber);
 
       StakingDTO stakingDTO = new StakingDTO(liquidityAddressNumber, -1, customerAddressNumber);
 

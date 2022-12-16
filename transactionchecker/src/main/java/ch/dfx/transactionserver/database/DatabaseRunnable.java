@@ -254,7 +254,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     try {
       StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(network, databaseManager);
       stakingWithdrawalReservedCleaner.clean(TokenEnum.DFI);
-//      stakingWithdrawalReservedCleaner.clean(TokenEnum.DUSD);
+      stakingWithdrawalReservedCleaner.clean(TokenEnum.DUSD);
 
       stakingWithdrawalReservedCleanerErrorCounter = 0;
     } catch (DfxException e) {

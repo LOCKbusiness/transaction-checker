@@ -1,5 +1,6 @@
 package ch.dfx;
 
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -14,6 +15,7 @@ import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 
 /**
  * 
@@ -82,12 +84,9 @@ public class ReportingMain {
     int runPeriodReport = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_REPORT, 600);
     LOGGER.debug("run period report: " + runPeriodReport);
 
-    ReportingRunnable reporting = new ReportingRunnable(network, databaseManager);
-    reporting.run();
-
-//    if (60 <= runPeriodReport) {
-//      ReportingRunnable reporting = new ReportingRunnable(network, databaseManager);
-//      SchedulerProvider.getInstance().add(reporting, 5, runPeriodReport, TimeUnit.SECONDS);
-//    }
+    if (60 <= runPeriodReport) {
+      ReportingRunnable reporting = new ReportingRunnable(network, databaseManager);
+      SchedulerProvider.getInstance().add(reporting, 5, runPeriodReport, TimeUnit.SECONDS);
+    }
   }
 }

@@ -2,19 +2,17 @@ package ch.dfx.transactionserver.data;
 
 import java.math.BigDecimal;
 
-import javax.annotation.Nonnull;
-
 /**
  * 
  */
 public class AddressTransactionInDTO extends DatabaseDTO {
-  private final Integer blockNumber;
-  private final Integer transactionNumber;
-  private final Integer vinNumber;
-  private final Integer addressNumber;
+  private final int blockNumber;
+  private final int transactionNumber;
+  private final int vinNumber;
+  private final int addressNumber;
 
-  private final Integer inBlockNumber;
-  private final Integer inTransactionNumber;
+  private final int inBlockNumber;
+  private final int inTransactionNumber;
 
   private BigDecimal vin = null;
 
@@ -22,12 +20,12 @@ public class AddressTransactionInDTO extends DatabaseDTO {
    * 
    */
   public AddressTransactionInDTO(
-      @Nonnull Integer blockNumber,
-      @Nonnull Integer transactionNumber,
-      @Nonnull Integer vinNumber,
-      @Nonnull Integer addressNumber,
-      @Nonnull Integer inBlockNumber,
-      @Nonnull Integer inTransactionNumber) {
+      int blockNumber,
+      int transactionNumber,
+      int vinNumber,
+      int addressNumber,
+      int inBlockNumber,
+      int inTransactionNumber) {
     this.blockNumber = blockNumber;
     this.transactionNumber = transactionNumber;
     this.vinNumber = vinNumber;
@@ -36,27 +34,27 @@ public class AddressTransactionInDTO extends DatabaseDTO {
     this.inTransactionNumber = inTransactionNumber;
   }
 
-  public Integer getBlockNumber() {
+  public int getBlockNumber() {
     return blockNumber;
   }
 
-  public Integer getTransactionNumber() {
+  public int getTransactionNumber() {
     return transactionNumber;
   }
 
-  public Integer getVinNumber() {
+  public int getVinNumber() {
     return vinNumber;
   }
 
-  public Integer getAddressNumber() {
+  public int getAddressNumber() {
     return addressNumber;
   }
 
-  public Integer getInBlockNumber() {
+  public int getInBlockNumber() {
     return inBlockNumber;
   }
 
-  public Integer getInTransactionNumber() {
+  public int getInTransactionNumber() {
     return inTransactionNumber;
   }
 

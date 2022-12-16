@@ -1,5 +1,7 @@
 package ch.dfx.manager.checker.withdrawal;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,14 +19,17 @@ import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
 import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
+import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.manager.ManagerUtils;
 import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.data.StakingWithdrawalReservedDTO;
-import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -37,15 +42,24 @@ public class StakingBalanceChecker {
   private PreparedStatement stakingWithdrawalReservedInsertStatement = null;
 
   // ...
+  private final NetworkEnum network;
+
   private final H2DBManager databaseManager;
-  private final DatabaseHelper databaseHelper;
+
+  private final DatabaseBlockHelper databaseBlockHelper;
+  private final DatabaseBalanceHelper databaseBalanceHelper;
 
   /**
    * 
    */
-  public StakingBalanceChecker(@Nonnull H2DBManager databaseManager) {
+  public StakingBalanceChecker(
+      @Nonnull NetworkEnum network,
+      @Nonnull H2DBManager databaseManager) {
+    this.network = network;
     this.databaseManager = databaseManager;
-    this.databaseHelper = new DatabaseHelper();
+
+    this.databaseBlockHelper = new DatabaseBlockHelper(network);
+    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
   }
 
   /**
@@ -62,15 +76,19 @@ public class StakingBalanceChecker {
       try {
         connection = databaseManager.openConnection();
 
-        databaseHelper.openStatements(connection);
+        databaseBlockHelper.openStatements(connection);
+        databaseBalanceHelper.openStatements(connection);
+        openStatements(connection);
 
         for (TransactionWithdrawalDTO transactionWithdrawalDTO : transactionWithdrawalDTOList) {
-          if (checkStakingBalance(transactionWithdrawalDTO)) {
+          if (checkStakingBalance(connection, transactionWithdrawalDTO)) {
             checkedTransactionWithdrawalDTOList.add(transactionWithdrawalDTO);
           }
         }
 
-        databaseHelper.closeStatements();
+        closeStatements();
+        databaseBalanceHelper.closeStatements();
+        databaseBlockHelper.closeStatements();
       } catch (Exception e) {
         LOGGER.error("checkStakingBalance", e);
       } finally {
@@ -84,97 +102,21 @@ public class StakingBalanceChecker {
   /**
    * 
    */
-  private boolean checkStakingBalance(@Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) {
-    LOGGER.trace("checkStakingBalance()");
-
-    try {
-      String customerAddress = transactionWithdrawalDTO.getCustomerAddress();
-
-      PendingWithdrawalDTO pendingWithdrawalDTO = transactionWithdrawalDTO.getPendingWithdrawalDTO();
-      BigDecimal withdrawalAmount = pendingWithdrawalDTO.getAmount();
-
-      AddressDTO addressDTO = databaseHelper.getAddressDTOByAddress(customerAddress);
-
-      if (null == addressDTO) {
-        return false;
-      }
-
-      int customerAddressNumber = addressDTO.getNumber();
-
-      // ...
-      BigDecimal stakingBalance = BigDecimal.ZERO;
-
-      List<StakingDTO> stakingDTOList = databaseHelper.getStakingDTOListByCustomerAddressNumber(customerAddressNumber);
-
-      for (StakingDTO stakingDTO : stakingDTOList) {
-        stakingBalance = stakingBalance.add(stakingDTO.getVin().subtract(stakingDTO.getVout()));
-      }
-
-      if (-1 == stakingBalance.compareTo(withdrawalAmount)) {
-        ManagerUtils.setWithdrawalCheckInvalidReason(transactionWithdrawalDTO, "invalid balance");
-        return false;
-      }
-
-      transactionWithdrawalDTO.setState(TransactionWithdrawalStateEnum.BALANCE_CHECKED);
-
-      return true;
-    } catch (Exception e) {
-      LOGGER.error("checkStakingBalance", e);
-      ManagerUtils.setWithdrawalCheckInvalidReason(transactionWithdrawalDTO, e.getMessage());
-      return false;
-    }
-  }
-
-  /**
-   * 
-   */
-  public TransactionWithdrawalDTOList checkStakingBalanceNew(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
-    LOGGER.trace("checkStakingBalance()");
-
-    TransactionWithdrawalDTOList checkedTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
-
-    if (!transactionWithdrawalDTOList.isEmpty()) {
-      Connection connection = null;
-
-      try {
-        connection = databaseManager.openConnection();
-
-        databaseHelper.openStatements(connection);
-        openStatementsNew(connection);
-
-        for (TransactionWithdrawalDTO transactionWithdrawalDTO : transactionWithdrawalDTOList) {
-          if (checkStakingBalanceNew(connection, transactionWithdrawalDTO)) {
-            checkedTransactionWithdrawalDTOList.add(transactionWithdrawalDTO);
-          }
-        }
-
-        closeStatementsNew();
-        databaseHelper.closeStatements();
-      } catch (Exception e) {
-        LOGGER.error("checkStakingBalance", e);
-      } finally {
-        databaseManager.closeConnection(connection);
-      }
-    }
-
-    return checkedTransactionWithdrawalDTOList;
-  }
-
-  /**
-   * 
-   */
-  private void openStatementsNew(@Nonnull Connection connection) throws DfxException {
+  private void openStatements(@Nonnull Connection connection) throws DfxException {
     LOGGER.trace("openStatements()");
 
     try {
-      String stakingWithdrawalReservedSelectByCustomerAddressSql = "SELECT * FROM public.staking_withdrawal_reserved WHERE customer_address=?";
-      stakingWithdrawalReservedSelectByCustomerAddressStatement = connection.prepareStatement(stakingWithdrawalReservedSelectByCustomerAddressSql);
+      String stakingWithdrawalReservedSelectByCustomerAddressSql =
+          "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".staking_withdrawal_reserved WHERE token_number=? AND customer_address=?";
+      stakingWithdrawalReservedSelectByCustomerAddressStatement =
+          connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingWithdrawalReservedSelectByCustomerAddressSql));
 
       String stakingWithdrawalReservedInsertSql =
-          "INSERT INTO public.staking_withdrawal_reserved"
-              + " (withdrawal_id, transaction_id, customer_address, vout)"
-              + " VALUES (?, ?, ?, ?)";
-      stakingWithdrawalReservedInsertStatement = connection.prepareStatement(stakingWithdrawalReservedInsertSql);
+          "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".staking_withdrawal_reserved"
+              + " (token_number, withdrawal_id, transaction_id, customer_address, vout)"
+              + " VALUES (?, ?, ?, ?, ?)";
+      stakingWithdrawalReservedInsertStatement =
+          connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingWithdrawalReservedInsertSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -183,7 +125,7 @@ public class StakingBalanceChecker {
   /**
    * 
    */
-  private void closeStatementsNew() throws DfxException {
+  private void closeStatements() throws DfxException {
     LOGGER.trace("closeStatements()");
 
     try {
@@ -197,7 +139,7 @@ public class StakingBalanceChecker {
   /**
    * 
    */
-  private boolean checkStakingBalanceNew(
+  private boolean checkStakingBalance(
       @Nonnull Connection connection,
       @Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) {
     LOGGER.trace("checkStakingBalance()");
@@ -225,7 +167,7 @@ public class StakingBalanceChecker {
       BigDecimal totalWithdrawal = stakingWithdrawalReservedVout.add(withdrawalAmount);
 
       // ...
-      BigDecimal stakingBalance = getStakingBalanceNew(transactionWithdrawalDTO);
+      BigDecimal stakingBalance = getStakingBalance(transactionWithdrawalDTO);
 
       // ...
       if (-1 == stakingBalance.compareTo(totalWithdrawal)) {
@@ -234,7 +176,7 @@ public class StakingBalanceChecker {
       }
 
       if (!isTransactionIdInReservedList) {
-        insertStakingWithdrawalReservedNew(connection, transactionWithdrawalDTO);
+        insertStakingWithdrawalReserved(connection, transactionWithdrawalDTO);
       }
 
       transactionWithdrawalDTO.setState(TransactionWithdrawalStateEnum.BALANCE_CHECKED);
@@ -258,13 +200,16 @@ public class StakingBalanceChecker {
     try {
       List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = new ArrayList<>();
 
+      TokenEnum token = transactionWithdrawalDTO.getPendingWithdrawalDTO().getToken();
+
       String customerAddress = transactionWithdrawalDTO.getCustomerAddress();
-      stakingWithdrawalReservedSelectByCustomerAddressStatement.setString(1, customerAddress);
+      stakingWithdrawalReservedSelectByCustomerAddressStatement.setInt(1, token.getNumber());
+      stakingWithdrawalReservedSelectByCustomerAddressStatement.setString(2, customerAddress);
 
       ResultSet resultSet = stakingWithdrawalReservedSelectByCustomerAddressStatement.executeQuery();
 
       while (resultSet.next()) {
-        StakingWithdrawalReservedDTO stakingWithdrawalReservedDTO = new StakingWithdrawalReservedDTO();
+        StakingWithdrawalReservedDTO stakingWithdrawalReservedDTO = new StakingWithdrawalReservedDTO(token.getNumber());
 
         stakingWithdrawalReservedDTO.setWithdrawalId(resultSet.getInt("withdrawal_id"));
         stakingWithdrawalReservedDTO.setTransactionId(resultSet.getString("transaction_id"));
@@ -285,18 +230,20 @@ public class StakingBalanceChecker {
   /**
    * 
    */
-  private BigDecimal getStakingBalanceNew(@Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) throws DfxException {
+  private BigDecimal getStakingBalance(
+      @Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) throws DfxException {
     LOGGER.trace("getStakingBalance()");
 
     BigDecimal stakingBalance = BigDecimal.ZERO;
 
     String customerAddress = transactionWithdrawalDTO.getCustomerAddress();
-    AddressDTO addressDTO = databaseHelper.getAddressDTOByAddress(customerAddress);
+    AddressDTO addressDTO = databaseBlockHelper.getAddressDTOByAddress(customerAddress);
 
     if (null != addressDTO) {
+      TokenEnum token = transactionWithdrawalDTO.getPendingWithdrawalDTO().getToken();
       int customerAddressNumber = addressDTO.getNumber();
 
-      List<StakingDTO> stakingDTOList = databaseHelper.getStakingDTOListByCustomerAddressNumber(customerAddressNumber);
+      List<StakingDTO> stakingDTOList = databaseBalanceHelper.getStakingDTOListByCustomerAddressNumber(token, customerAddressNumber);
 
       for (StakingDTO stakingDTO : stakingDTOList) {
         stakingBalance = stakingBalance.add(stakingDTO.getVin().subtract(stakingDTO.getVout()));
@@ -309,7 +256,7 @@ public class StakingBalanceChecker {
   /**
    * 
    */
-  private void insertStakingWithdrawalReservedNew(
+  private void insertStakingWithdrawalReserved(
       @Nonnull Connection connection,
       @Nonnull TransactionWithdrawalDTO transactionWithdrawalDTO) throws DfxException {
     LOGGER.trace("insertStakingWithdrawalReserved()");
@@ -318,10 +265,13 @@ public class StakingBalanceChecker {
       OpenTransactionDTO openTransactionDTO = transactionWithdrawalDTO.getOpenTransactionDTO();
       PendingWithdrawalDTO pendingWithdrawalDTO = transactionWithdrawalDTO.getPendingWithdrawalDTO();
 
-      stakingWithdrawalReservedInsertStatement.setInt(1, pendingWithdrawalDTO.getId());
-      stakingWithdrawalReservedInsertStatement.setString(2, openTransactionDTO.getId());
-      stakingWithdrawalReservedInsertStatement.setString(3, transactionWithdrawalDTO.getCustomerAddress());
-      stakingWithdrawalReservedInsertStatement.setBigDecimal(4, pendingWithdrawalDTO.getAmount());
+      TokenEnum token = pendingWithdrawalDTO.getToken();
+
+      stakingWithdrawalReservedInsertStatement.setInt(1, token.getNumber());
+      stakingWithdrawalReservedInsertStatement.setInt(2, pendingWithdrawalDTO.getId());
+      stakingWithdrawalReservedInsertStatement.setString(3, openTransactionDTO.getId());
+      stakingWithdrawalReservedInsertStatement.setString(4, transactionWithdrawalDTO.getCustomerAddress());
+      stakingWithdrawalReservedInsertStatement.setBigDecimal(5, pendingWithdrawalDTO.getAmount());
 
       stakingWithdrawalReservedInsertStatement.execute();
 

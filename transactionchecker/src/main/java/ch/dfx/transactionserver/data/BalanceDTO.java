@@ -8,18 +8,30 @@ import javax.annotation.Nonnull;
  * 
  */
 public class BalanceDTO extends DatabaseDTO {
+  private final int tokenNumber;
+
   private final int addressNumber;
+
   private int blockNumber = -1;
   private int transactionCount = 0;
 
   private BigDecimal vout = BigDecimal.ZERO;
   private BigDecimal vin = BigDecimal.ZERO;
 
+  private String address = null;
+
   /**
    * 
    */
-  public BalanceDTO(int addressNumber) {
+  public BalanceDTO(
+      int tokenNumber,
+      int addressNumber) {
+    this.tokenNumber = tokenNumber;
     this.addressNumber = addressNumber;
+  }
+
+  public int getTokenNumber() {
+    return tokenNumber;
   }
 
   public int getAddressNumber() {
@@ -68,5 +80,13 @@ public class BalanceDTO extends DatabaseDTO {
 
   public void addVin(@Nonnull BigDecimal vin) {
     this.vin = this.vin.add(vin);
+  }
+
+  public String getAddress() {
+    return address;
+  }
+
+  public void setAddress(String address) {
+    this.address = address;
   }
 }

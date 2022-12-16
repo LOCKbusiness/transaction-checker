@@ -1,5 +1,7 @@
 package ch.dfx.transactionserver;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,6 +21,7 @@ import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.block.DefiBlockData;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
@@ -34,6 +37,8 @@ public class TransactionSupervisonMain {
   private PreparedStatement transactionSelectStatement = null;
 
   // ...
+  private final NetworkEnum network;
+
   private final H2DBManager databaseManager;
 
   private int diffCounter = 0;
@@ -92,7 +97,7 @@ public class TransactionSupervisonMain {
       if (-1 != startblock
           && -1 != endblock
           && startblock < endblock) {
-        TransactionSupervisonMain transactionSupervison = new TransactionSupervisonMain();
+        TransactionSupervisonMain transactionSupervison = new TransactionSupervisonMain(network);
         transactionSupervison.checkTransaction(startblock, endblock);
       }
     } catch (Exception e) {
@@ -104,7 +109,9 @@ public class TransactionSupervisonMain {
   /**
    * 
    */
-  public TransactionSupervisonMain() {
+  public TransactionSupervisonMain(@Nonnull NetworkEnum network) {
+    this.network = network;
+
     this.databaseManager = new H2DBManagerImpl();
   }
 
@@ -162,8 +169,8 @@ public class TransactionSupervisonMain {
     LOGGER.trace("openStatements()");
 
     try {
-      String transactionSelectSql = "SELECT * FROM public.transaction WHERE block_number=?";
-      transactionSelectStatement = connection.prepareStatement(transactionSelectSql);
+      String transactionSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction WHERE block_number=?";
+      transactionSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionSelectSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }

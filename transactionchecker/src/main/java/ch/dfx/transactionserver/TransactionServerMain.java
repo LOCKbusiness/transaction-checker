@@ -135,7 +135,7 @@ public class TransactionServerMain {
     if (createProcessLockfile()) {
       startDatabaseServer();
 
-      DatabaseBuilder databaseBuilder = new DatabaseBuilder(databaseManager);
+      DatabaseBuilder databaseBuilder = new DatabaseBuilder(network, databaseManager);
       databaseBuilder.build();
 
       shutdown();
@@ -178,13 +178,13 @@ public class TransactionServerMain {
       LOGGER.debug("run period watchdog: " + runPeriodWatchdog);
 
       if (30 <= runPeriodDatabase) {
-        DatabaseRunnable databaseRunnable = new DatabaseRunnable(databaseManager, getProcessLockfile(), isServerOnly);
+        DatabaseRunnable databaseRunnable = new DatabaseRunnable(network, databaseManager, getProcessLockfile(), isServerOnly);
         SchedulerProvider.getInstance().add(databaseRunnable, 5, runPeriodDatabase, TimeUnit.SECONDS);
       }
 
       if (!isServerOnly) {
         if (10 <= runPeriodAPI) {
-          ManagerRunnable managerRunnable = new ManagerRunnable(databaseManager, network);
+          ManagerRunnable managerRunnable = new ManagerRunnable(network, databaseManager);
           SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
         }
 
@@ -334,9 +334,9 @@ public class TransactionServerMain {
       tcpServer = Server.createTcpServer("-tcpPort", tcpPort, "-baseDir", databaseDirectory, "-tcpAllowOthers");
       tcpServer.start();
 
-      LOGGER.info("=====================================");
+      LOGGER.debug("=====================================");
       LOGGER.info("Transaction Server started: Port " + tcpPort);
-      LOGGER.info("=====================================");
+      LOGGER.debug("=====================================");
     } catch (Exception e) {
       throw new DfxException("startDatabaseServer", e);
     }
@@ -352,8 +352,8 @@ public class TransactionServerMain {
       tcpServer.stop();
     }
 
-    LOGGER.info("==========================");
+    LOGGER.debug("==========================");
     LOGGER.info("Transaction Server stopped");
-    LOGGER.info("==========================");
+    LOGGER.debug("==========================");
   }
 }

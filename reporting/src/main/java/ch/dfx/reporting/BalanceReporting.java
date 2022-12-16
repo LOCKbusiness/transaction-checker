@@ -4,20 +4,20 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.excel.data.CellData;
+import ch.dfx.excel.data.CellDataList;
 import ch.dfx.excel.data.RowData;
 import ch.dfx.excel.data.RowDataList;
-import ch.dfx.transactionserver.data.BalanceDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
@@ -26,19 +26,22 @@ import ch.dfx.transactionserver.database.H2DBManager;
 /**
  * 
  */
-public class StakingBalanceReporting extends Reporting {
-  private static final Logger LOGGER = LogManager.getLogger(StakingBalanceReporting.class);
+public class BalanceReporting extends Reporting {
+  private static final Logger LOGGER = LogManager.getLogger(BalanceReporting.class);
 
   // ...
   private final List<String> logInfoList;
 
+  private BigDecimal totalBalance = null;
+
   /**
    * 
    */
-  public StakingBalanceReporting(
+  public BalanceReporting(
+      @Nonnull NetworkEnum network,
       @Nonnull H2DBManager databaseManager,
       @Nonnull List<String> logInfoList) {
-    super(databaseManager);
+    super(network, databaseManager);
 
     this.logInfoList = logInfoList;
   }
@@ -46,29 +49,41 @@ public class StakingBalanceReporting extends Reporting {
   /**
    * 
    */
-  public void report() throws DfxException {
+  public void report(
+      @Nonnull TokenEnum token,
+      @Nonnull String rootPath,
+      @Nonnull String fileName,
+      @Nonnull String sheet) throws DfxException {
     LOGGER.debug("report()");
+
+    Objects.requireNonNull(rootPath, "null 'rootPath' not allowed");
+    Objects.requireNonNull(fileName, "null 'fileName' not allowed");
+    Objects.requireNonNull(sheet, "null 'sheet' not allowed");
 
     long startTime = System.currentTimeMillis();
 
+    Connection connection = null;
+
     try {
-      String googleRootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
-      String googleFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STAKING_BALANCE_SHEET);
+      connection = databaseManager.openConnection();
 
-      if (!StringUtils.isEmpty(googleFileName)) {
-        Connection connection = databaseManager.openConnection();
-        databaseHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection);
 
-        List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
+      totalBalance = BigDecimal.ZERO;
 
-        RowDataList rowDataList = createRowDataList(stakingAddressDTOList);
-        writeExcel(googleRootPath, googleFileName, rowDataList);
+      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
 
-        databaseHelper.closeStatements();
-        databaseManager.closeConnection(connection);
-      }
+      RowDataList rowDataList = createRowDataList(token, stakingAddressDTOList);
 
+      CellDataList cellDataList = new CellDataList();
+      cellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setValue(totalBalance));
+
+      writeExcel(rootPath, fileName, sheet, rowDataList, cellDataList);
+
+      databaseBalanceHelper.closeStatements();
     } finally {
+      databaseManager.closeConnection(connection);
+
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
@@ -76,7 +91,9 @@ public class StakingBalanceReporting extends Reporting {
   /**
    * 
    */
-  private RowDataList createRowDataList(@Nonnull List<StakingAddressDTO> stakingAddressDTOList) throws DfxException {
+  private RowDataList createRowDataList(
+      @Nonnull TokenEnum token,
+      @Nonnull List<StakingAddressDTO> stakingAddressDTOList) throws DfxException {
     LOGGER.trace("createRowDataList()");
 
     RowDataList rowDataList = new RowDataList();
@@ -86,7 +103,7 @@ public class StakingBalanceReporting extends Reporting {
       if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
         LOGGER.debug("Liquidity Address: " + stakingAddressDTO.getLiquidityAddress());
 
-        addDeposit(stakingAddressDTO, rowDataList);
+        addDeposit(token, stakingAddressDTO, rowDataList);
       }
     }
 
@@ -97,11 +114,13 @@ public class StakingBalanceReporting extends Reporting {
    * 
    */
   private void addDeposit(
+      @Nonnull TokenEnum token,
       @Nonnull StakingAddressDTO stakingAddressDTO,
       @Nonnull RowDataList rowDataList) throws DfxException {
     LOGGER.trace("addDeposit()");
 
-    List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOListByLiquidityAddressNumber(stakingAddressDTO.getLiquidityAddressNumber());
+    List<DepositDTO> depositDTOList =
+        databaseBalanceHelper.getDepositDTOListByLiquidityAddressNumber(token, stakingAddressDTO.getLiquidityAddressNumber());
     LOGGER.debug("Number of Deposit Addresses: " + depositDTOList.size());
 
     // ...
@@ -118,11 +137,10 @@ public class StakingBalanceReporting extends Reporting {
     // ...
     for (DepositDTO depositDTO : depositDTOList) {
       RowData rowData = new RowData();
-      rowData.addCellData(new CellData().setValue(depositDTO.getDepositAddress()));
       rowData.addCellData(new CellData().setValue(depositDTO.getCustomerAddress()));
+      rowData.addCellData(new CellData().setValue(depositDTO.getDepositAddress()));
 
-      addBalance(depositDTO, rowData);
-      addStaking(stakingAddressDTO, depositDTO, rowData);
+      addStaking(token, stakingAddressDTO, depositDTO, rowData);
 
       rowDataList.add(rowData);
     }
@@ -131,32 +149,8 @@ public class StakingBalanceReporting extends Reporting {
   /**
    * 
    */
-  private void addBalance(
-      @Nonnull DepositDTO depositDTO,
-      @Nonnull RowData rowData) throws DfxException {
-    LOGGER.trace("addBalance()");
-
-    BalanceDTO balanceDTO = databaseHelper.getBalanceDTOByAddressNumber(depositDTO.getDepositAddressNumber());
-
-    BigDecimal vout = BigDecimal.ZERO;
-    BigDecimal vin = BigDecimal.ZERO;
-
-    if (null != balanceDTO) {
-      vin = vin.add(balanceDTO.getVin());
-      vout = vout.add(balanceDTO.getVout());
-    }
-
-    BigDecimal balance = vout.subtract(vin);
-
-    rowData.addCellData(new CellData().setValue(balance));
-    rowData.addCellData(new CellData().setValue(vout));
-    rowData.addCellData(new CellData().setValue(vin));
-  }
-
-  /**
-   * 
-   */
   private void addStaking(
+      @Nonnull TokenEnum token,
       @Nonnull StakingAddressDTO stakingAddressDTO,
       @Nonnull DepositDTO depositDTO,
       @Nonnull RowData rowData) throws DfxException {
@@ -166,8 +160,8 @@ public class StakingBalanceReporting extends Reporting {
     BigDecimal totalVout = BigDecimal.ZERO;
 
     List<StakingDTO> stakingDTOList =
-        databaseHelper.getStakingDTOListByLiquidityAdressNumberAndDepositAddressNumber(
-            stakingAddressDTO.getLiquidityAddressNumber(), depositDTO.getDepositAddressNumber());
+        databaseBalanceHelper.getStakingDTOListByLiquidityAdressNumberAndDepositAddressNumber(
+            token, stakingAddressDTO.getLiquidityAddressNumber(), depositDTO.getDepositAddressNumber());
 
     for (StakingDTO stakingDTO : stakingDTOList) {
       totalVin = totalVin.add(stakingDTO.getVin());
@@ -175,9 +169,8 @@ public class StakingBalanceReporting extends Reporting {
     }
 
     BigDecimal balance = totalVin.subtract(totalVout);
-
     rowData.addCellData(new CellData().setValue(balance));
-    rowData.addCellData(new CellData().setValue(totalVin));
-    rowData.addCellData(new CellData().setValue(totalVout));
+
+    totalBalance = totalBalance.add(balance);
   }
 }

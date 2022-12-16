@@ -33,6 +33,7 @@ import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
 import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
@@ -46,8 +47,8 @@ import ch.dfx.manager.checker.transaction.SizeChecker;
 import ch.dfx.manager.checker.transaction.TypeChecker;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
-import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 
 /**
  * 
@@ -60,7 +61,7 @@ public class OpenTransactionManager {
   private final H2DBManager databaseManager;
   private final DefiDataProvider dataProvider;
 
-  private final DatabaseHelper dataHelper;
+  private final DatabaseBalanceHelper dataHelper;
   private final DefiMessageHandler messageHandler;
   private final WithdrawalManager withdrawalManager;
 
@@ -81,13 +82,13 @@ public class OpenTransactionManager {
     this.databaseManager = databaseManager;
     this.dataProvider = dataProvider;
 
-    this.dataHelper = new DatabaseHelper();
+    this.dataHelper = new DatabaseBalanceHelper(network);
     this.messageHandler = new DefiMessageHandler(dataProvider);
     this.withdrawalManager = new WithdrawalManager(network, databaseManager, dataProvider);
 
     this.typeChecker = new TypeChecker(apiAccessHandler, dataProvider);
     this.sizeChecker = new SizeChecker(apiAccessHandler, dataProvider);
-    this.duplicateChecker = new DuplicateChecker(apiAccessHandler, dataProvider, databaseManager);
+    this.duplicateChecker = new DuplicateChecker(network, apiAccessHandler, dataProvider, databaseManager);
     this.signatureChecker = new SignatureChecker(apiAccessHandler, dataProvider);
   }
 
@@ -104,7 +105,7 @@ public class OpenTransactionManager {
     PendingWithdrawalDTOList apiPendingWithdrawalDTOList = apiAccessHandler.getPendingWithdrawalDTOList();
 
     // ...
-    LOGGER.info(
+    LOGGER.debug(
         "[API] Transaction / Withdrawal Size: "
             + apiOpenTransactionDTOList.size() + " / " + apiPendingWithdrawalDTOList.size());
 
@@ -117,7 +118,7 @@ public class OpenTransactionManager {
 
     processOpenTransactionAndWithdrawal(workOpenTransactionDTOList, apiPendingWithdrawalDTOList);
 
-    LOGGER.info("[OpenTransactionManager] runtime: " + (System.currentTimeMillis() - startTime));
+    LOGGER.debug("[OpenTransactionManager] runtime: " + (System.currentTimeMillis() - startTime));
   }
 
   /**
@@ -228,6 +229,9 @@ public class OpenTransactionManager {
 
     // Amount ...
     pendingWithdrawalDTO.setAmount(TransactionCheckerUtils.zeroIfNull(pendingWithdrawalDTO.getAmount()));
+
+    // Token ...
+    pendingWithdrawalDTO.setToken(TokenEnum.createWithText(pendingWithdrawalDTO.getAsset(), TokenEnum.DFI));
   }
 
   /**
@@ -352,7 +356,8 @@ public class OpenTransactionManager {
   /**
    * 
    */
-  private void processOpenYieldMaschineTransaction(@Nonnull OpenTransactionDTOList yieldMaschineOpenTransactionDTOList) throws DfxException {
+  private void processOpenYieldMaschineTransaction(
+      @Nonnull OpenTransactionDTOList yieldMaschineOpenTransactionDTOList) throws DfxException {
     LOGGER.trace("processOpenYieldMaschineTransaction()");
 
     for (OpenTransactionDTO openTransactionDTO : yieldMaschineOpenTransactionDTOList) {
@@ -397,7 +402,7 @@ public class OpenTransactionManager {
   /**
    * 
    */
-  private boolean checkMasternodeWhitelist(List<String> voutAddressList) {
+  private boolean checkMasternodeWhitelist(@Nonnull List<String> voutAddressList) {
     // ...
     boolean isValid;
 
@@ -415,7 +420,9 @@ public class OpenTransactionManager {
 
       // ...
       Set<String> liquidityAddressSet = new HashSet<>();
-      List<StakingAddressDTO> stakingAddressDTOList = dataHelper.getStakingAddressDTOList();
+      List<StakingAddressDTO> stakingAddressDTOList = dataHelper.getStakingAddressDTOList(TokenEnum.DFI);
+      stakingAddressDTOList.addAll(dataHelper.getStakingAddressDTOList(TokenEnum.DUSD));
+
       stakingAddressDTOList.forEach(dto -> liquidityAddressSet.add(dto.getLiquidityAddress()));
 
       // ...

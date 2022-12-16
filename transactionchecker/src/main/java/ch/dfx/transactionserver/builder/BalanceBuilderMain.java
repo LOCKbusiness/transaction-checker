@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
@@ -51,8 +52,8 @@ public class BalanceBuilderMain {
       H2DBManager databaseManager = new H2DBManagerImpl();
 
       // ...
-      BalanceBuilder balanceBuilder = new BalanceBuilder(databaseManager);
-      balanceBuilder.build();
+      BalanceBuilder balanceBuilder = new BalanceBuilder(network, databaseManager);
+      balanceBuilder.build(TokenEnum.DFI);
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

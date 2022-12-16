@@ -17,14 +17,15 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.ocean.data.ListTransactionsDTO;
 import ch.dfx.ocean.data.TransactionsDTO;
 import ch.dfx.ocean.data.TransactionsDetailDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 
 /**
  * The application is used to check the stored deposit balances.
@@ -53,7 +54,7 @@ public class OceanHandlerMain {
 
   // ...
   private final H2DBManager databaseManager;
-  private final DatabaseHelper databaseHelper;
+  private final DatabaseBalanceHelper databaseBalanceHelper;
 
   /**
    * 
@@ -88,7 +89,7 @@ public class OceanHandlerMain {
     OceanHandlerMain oceanHandler = new OceanHandlerMain(network);
 
     // ...
-    List<DepositDTO> depositDTOList = oceanHandler.getDepositDTOList();
+    List<DepositDTO> depositDTOList = oceanHandler.getDepositDTOList(TokenEnum.DFI);
 
     for (DepositDTO depositDTO : depositDTOList) {
       String depositAddress = depositDTO.getDepositAddress();
@@ -112,7 +113,7 @@ public class OceanHandlerMain {
     this.network = network;
 
     this.databaseManager = new H2DBManagerImpl();
-    this.databaseHelper = new DatabaseHelper();
+    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
   }
 
   /**
@@ -143,18 +144,18 @@ public class OceanHandlerMain {
   /**
    * 
    */
-  private List<DepositDTO> getDepositDTOList() throws DfxException {
+  private List<DepositDTO> getDepositDTOList(@Nonnull TokenEnum token) throws DfxException {
     LOGGER.debug("getDepositDTOList()");
 
     Connection connection = null;
 
     try {
       connection = databaseManager.openConnection();
-      databaseHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection);
 
-      List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
+      List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList(token);
 
-      databaseHelper.closeStatements();
+      databaseBalanceHelper.closeStatements();
 
       return depositDTOList;
     } catch (Exception e) {

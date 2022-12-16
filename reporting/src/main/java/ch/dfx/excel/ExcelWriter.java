@@ -4,11 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.annotation.Nonnull;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
@@ -28,8 +29,7 @@ import ch.dfx.excel.data.RowDataList;
  * 
  */
 public class ExcelWriter {
-  // ...
-  private static final SimpleDateFormat SHEETNAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+  private static final Logger LOGGER = LogManager.getLogger(ExcelWriter.class);
 
   // ...
   private Workbook workbook = null;
@@ -51,10 +51,14 @@ public class ExcelWriter {
   /**
    * 
    */
-  public void openWorkbook(@Nonnull File excelFile) throws DfxException {
+  public void openWorkbook(
+      @Nonnull File excelFile,
+      @Nonnull String sheetName) throws DfxException {
+    LOGGER.trace("openWorkbook()");
+
     try (FileInputStream inputStream = new FileInputStream(excelFile)) {
       workbook = WorkbookFactory.create(inputStream);
-      sheet = workbook.getSheetAt(0);
+      sheet = workbook.getSheet(sheetName);
 
       initializeStyles();
       cleanSheet();
@@ -67,6 +71,8 @@ public class ExcelWriter {
    * 
    */
   private void initializeStyles() {
+    LOGGER.trace("initializeStyles()");
+
     // ...
     boldCellStyle = workbook.createCellStyle();
     boldFont = workbook.createFont();
@@ -86,23 +92,40 @@ public class ExcelWriter {
    * 
    */
   private void cleanSheet() {
-    if (null != sheet) {
-      for (int rowNum = sheet.getPhysicalNumberOfRows(); rowNum > 0; rowNum--) {
-        Row row = sheet.getRow(rowNum);
+    LOGGER.trace("cleanSheet()");
 
-        if (null != row) {
-          sheet.removeRow(row);
-        }
+    for (int rowNum = sheet.getPhysicalNumberOfRows(); rowNum > 1; rowNum--) {
+      Row row = sheet.getRow(rowNum);
+
+      if (null != row) {
+        sheet.removeRow(row);
       }
     }
 
-    workbook.setSheetName(0, SHEETNAME_DATE_FORMAT.format(new Date()));
+    // ...
+    Row firstRow = sheet.getRow(0);
+
+    // B1: Timestamp
+    Cell timestampCell = firstRow.getCell(1);
+
+    if (null != timestampCell) {
+      timestampCell.setCellValue(new Date());
+    }
+
+    // C1: Total
+    Cell totalCell = firstRow.getCell(2);
+
+    if (null != totalCell) {
+      totalCell.setCellValue(0);
+    }
   }
 
   /**
    * 
    */
   public void writeWorkbook(@Nonnull File excelFile) throws DfxException {
+    LOGGER.trace("writeWorkbook()");
+
     try (FileOutputStream outputStream = new FileOutputStream(excelFile)) {
       workbook.write(outputStream);
       workbook.close();
@@ -115,11 +138,13 @@ public class ExcelWriter {
    * 
    */
   public void insertRowData(@Nonnull RowDataList rowDataList) throws DfxException {
-    for (int rowNumber = 0; rowNumber < rowDataList.size(); rowNumber++) {
-      Row row = sheet.createRow(rowNumber + 1);
+    LOGGER.trace("insertRowData()");
+
+    for (int rowIndex = 0; rowIndex < rowDataList.size(); rowIndex++) {
+      Row row = sheet.createRow(rowIndex + 2);
       row.setHeightInPoints(16f);
 
-      RowData rowData = rowDataList.get(rowNumber);
+      RowData rowData = rowDataList.get(rowIndex);
       insertCellData(row, rowData);
     }
   }
@@ -127,12 +152,64 @@ public class ExcelWriter {
   /**
    * 
    */
+  public void insertCellData(@Nonnull CellDataList cellDataList) throws DfxException {
+    LOGGER.trace("insertCellData()");
+
+    for (CellData cellData : cellDataList) {
+      int rowIndex = cellData.getRowIndex();
+      int cellIndex = cellData.getCellIndex();
+
+      if (-1 != rowIndex
+          && -1 != cellIndex) {
+        Cell cell = getOrCreateCell(rowIndex, cellIndex);
+        setCellValue(cell, cellData);
+      }
+    }
+  }
+
+  /**
+   * 
+   */
+  private Row getOrCreateRow(int rowIndex) {
+    LOGGER.trace("getOrCreateRow()");
+
+    Row row = sheet.getRow(rowIndex);
+
+    if (null == row) {
+      row = sheet.createRow(rowIndex);
+    }
+
+    return row;
+  }
+
+  /**
+   * 
+   */
+  private Cell getOrCreateCell(int rowIndex, int cellIndex) {
+    LOGGER.trace("getOrCreateCell()");
+
+    Row row = getOrCreateRow(rowIndex);
+
+    Cell cell = row.getCell(cellIndex);
+
+    if (null == cell) {
+      cell = row.createCell(cellIndex);
+    }
+
+    return cell;
+  }
+
+  /**
+   * 
+   */
   private void insertCellData(@Nonnull Row row, @Nonnull RowData rowData) throws DfxException {
+    LOGGER.trace("insertCellData()");
+
     CellDataList cellDataList = rowData.getCellDataList();
 
-    for (int cellNumber = 0; cellNumber < cellDataList.size(); cellNumber++) {
-      Cell cell = row.createCell(cellNumber);
-      CellData cellData = cellDataList.get(cellNumber);
+    for (int cellIndex = 0; cellIndex < cellDataList.size(); cellIndex++) {
+      Cell cell = row.createCell(cellIndex);
+      CellData cellData = cellDataList.get(cellIndex);
 
       setCellValue(cell, cellData);
     }
@@ -144,6 +221,8 @@ public class ExcelWriter {
   private void setCellValue(
       @Nonnull Cell cell,
       @Nonnull CellData cellData) throws DfxException {
+    LOGGER.trace("setCellValue()");
+
     Object value = cellData.getValue();
 
     if (cellData.isBold()) {

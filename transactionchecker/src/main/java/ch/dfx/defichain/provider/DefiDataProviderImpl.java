@@ -11,6 +11,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -55,6 +56,18 @@ import ch.dfx.defichain.provider.typeadapter.CustomTypeAdapter;
 public class DefiDataProviderImpl implements DefiDataProvider {
   private static final Logger LOGGER = LogManager.getLogger(DefiDataProviderImpl.class);
 
+  // OP_RETURN ...
+  private static final byte OP_RETURN = 0x6a;
+  private static final byte OP_PUSHDATA1 = 0x4c;
+  private static final byte OP_PUSHDATA2 = 0x4d;
+  private static final byte OP_PUSHDATA4 = 0x4e;
+
+  // DfTx: 44665478 ...
+  private static final byte[] DFTX_BYTES = {
+      0x44, 0x66, 0x54, 0x78
+  };
+
+  // ...
   private final HttpClient httpClient;
   private final HttpPost httpPost;
 
@@ -260,14 +273,19 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    * 
    */
   @Override
-  public DefiCustomData decodeCustomTransaction(@Nonnull String hexString) throws DfxException {
+  public DefiCustomData decodeCustomTransaction(
+      @Nonnull String hexString) throws DfxException {
     LOGGER.trace("decodeCustomTransaction()");
 
     DefiCustomData customData = null;
 
-    List<Object> paramList = Arrays.asList(hexString);
-
+    List<Object> paramList = Arrays.asList(hexString, true);
     Object wrapperObject = getData("decodecustomtx", paramList, DefiCustomResultWrapperData.class);
+
+    if (wrapperObject instanceof DefiStringResultData) {
+      paramList = Arrays.asList(hexString);
+      wrapperObject = getData("decodecustomtx", paramList, DefiCustomResultWrapperData.class);
+    }
 
     if (wrapperObject instanceof DefiCustomResultData) {
       customData = ((DefiCustomResultData) wrapperObject).getResult();
@@ -277,6 +295,50 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     }
 
     return customData;
+  }
+
+  /**
+   * OP_CODE | HEX | DESCRIPTION
+   * -------------|-------------|----------------------------------------------------------------------
+   * N/A | 0x01-0x4b | The next opcode bytes is data to be pushed onto the stack
+   * OP_PUSHDATA1 | 0x4c | The next byte contains the number of bytes to be pushed onto the stack.
+   * OP_PUSHDATA2 | 0x4d | The next 2 bytes contain the number of bytes to be pushed onto the stack in LE order.
+   * OP_PUSHDATA4 | 0x4e | The next 4 bytes contain the number of bytes to be pushed onto the stack in LE order.
+   */
+  @Override
+  public byte getCustomType(@Nonnull String scriptPubKeyHexString) throws DfxException {
+    LOGGER.trace("getCustomType()");
+
+    try {
+      byte customType = 0x00;
+
+      byte[] byteArray = Hex.decodeHex(scriptPubKeyHexString);
+      int offset = 0;
+
+      if (byteArray[offset++] == OP_RETURN) {
+        byte opPushData = byteArray[offset++];
+
+        if (opPushData == OP_PUSHDATA1) {
+          offset += 1;
+        } else if (opPushData == OP_PUSHDATA2) {
+          offset += 2;
+        } else if (opPushData == OP_PUSHDATA4) {
+          offset += 4;
+        }
+
+        // DfTx ...
+        if (byteArray[offset++] == DFTX_BYTES[0]
+            && byteArray[offset++] == DFTX_BYTES[1]
+            && byteArray[offset++] == DFTX_BYTES[2]
+            && byteArray[offset++] == DFTX_BYTES[3]) {
+          customType = byteArray[offset];
+        }
+      }
+
+      return customType;
+    } catch (Exception e) {
+      throw new DfxException("getCustomType", e);
+    }
   }
 
   /**

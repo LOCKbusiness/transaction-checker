@@ -84,9 +84,9 @@ public class HttpServerMain {
 
       httpServer.start();
 
-      LOGGER.info("=========================================");
+      LOGGER.debug("=========================================");
       LOGGER.info("HTTP Server started: Port " + PORT);
-      LOGGER.info("=========================================");
+      LOGGER.debug("=========================================");
     } catch (Exception e) {
       LOGGER.error("Fatal Error ...", e);
     }

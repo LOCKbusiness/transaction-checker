@@ -8,9 +8,13 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.enumeration.TokenEnum;
+import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.logging.notifier.TelegramNotifier;
+import ch.dfx.reporting.BalanceReporting;
 import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
-import ch.dfx.reporting.StakingBalanceReporting;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
@@ -21,6 +25,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   private static final Logger LOGGER = LogManager.getLogger(ReportingRunnable.class);
 
   // ...
+  private final NetworkEnum network;
   private final H2DBManager databaseManager;
 
   private boolean isProcessing = false;
@@ -28,7 +33,10 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  public ReportingRunnable(@Nonnull H2DBManager databaseManager) {
+  public ReportingRunnable(
+      @Nonnull NetworkEnum network,
+      @Nonnull H2DBManager databaseManager) {
+    this.network = network;
     this.databaseManager = databaseManager;
   }
 
@@ -77,8 +85,14 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeStakingBalanceReport() ...");
 
     try {
-      StakingBalanceReporting stakingBalanceReporting = new StakingBalanceReporting(databaseManager, logInfoList);
-      stakingBalanceReporting.report();
+      String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
+      String balanceFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_FILENAME);
+      String stakingBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_STAKING_SHEET);
+      String yieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_YIELDMACHINE_SHEET);
+
+      BalanceReporting stakingBalanceReporting = new BalanceReporting(network, databaseManager, logInfoList);
+      stakingBalanceReporting.report(TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
+      stakingBalanceReporting.report(TokenEnum.DUSD, rootPath, balanceFileName, yieldmachineBalanceSheet);
     } catch (Exception e) {
       LOGGER.error("executeStakingBalanceReport", e);
     }
@@ -91,8 +105,12 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeLiquidityMasternodeStakingBalanceReport() ...");
 
     try {
-      LiquidityMasternodeStakingReporting liquidityMasternodeStakingReporting = new LiquidityMasternodeStakingReporting(databaseManager, logInfoList);
-      liquidityMasternodeStakingReporting.report();
+      String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
+      String checkFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_FILENAME);
+      String checkSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_SHEET);
+
+      LiquidityMasternodeStakingReporting liquidityMasternodeStakingReporting = new LiquidityMasternodeStakingReporting(network, databaseManager, logInfoList);
+      liquidityMasternodeStakingReporting.report(TokenEnum.DFI, rootPath, checkFileName, checkSheet);
     } catch (Exception e) {
       LOGGER.error("executeLiquidityMasternodeStakingBalanceReport", e);
     }

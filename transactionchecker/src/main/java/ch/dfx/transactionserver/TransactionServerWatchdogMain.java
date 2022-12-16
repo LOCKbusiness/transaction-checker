@@ -181,9 +181,9 @@ public class TransactionServerWatchdogMain {
 //
 //      httpServer.start();
 //
-//      LOGGER.info("==============================");
+//      LOGGER.debug("==============================");
 //      LOGGER.info("HTTP Server started: Port " + PORT);
-//      LOGGER.info("==============================");
+//      LOGGER.debug("==============================");
 //    } catch (Throwable t) {
 //      throw new DfxException("startHttpServer", t);
 //    }
@@ -200,9 +200,9 @@ public class TransactionServerWatchdogMain {
 //        httpServer.stop();
 //      }
 //
-//      LOGGER.info("===================");
+//      LOGGER.debug("===================");
 //      LOGGER.info("HTTP Server stopped");
-//      LOGGER.info("===================");
+//      LOGGER.debug("===================");
 //    } catch (Throwable t) {
 //      LOGGER.error("stopHttpServer", t);
 //    }
@@ -224,9 +224,9 @@ public class TransactionServerWatchdogMain {
 
       registry.rebind(ProcessInfoService.class.getSimpleName(), processInfoService);
 
-      LOGGER.info("=============================");
+      LOGGER.debug("=============================");
       LOGGER.info("RMI Server started: Port " + rmiPort);
-      LOGGER.info("=============================");
+      LOGGER.debug("=============================");
     } catch (Throwable t) {
       throw new DfxException("startRMI", t);
     }
@@ -243,9 +243,9 @@ public class TransactionServerWatchdogMain {
         registry.unbind(ProcessInfoService.class.getSimpleName());
       }
 
-      LOGGER.info("===========");
+      LOGGER.debug("===========");
       LOGGER.info("RMI stopped");
-      LOGGER.info("===========");
+      LOGGER.debug("===========");
     } catch (Throwable t) {
       LOGGER.error("stopRMI", t);
     }

@@ -1,5 +1,7 @@
 package ch.dfx.transactionserver.cleaner;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -15,6 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ch.dfx.TestUtils;
+import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
 import ch.dfx.logging.events.MessageEvent;
@@ -64,10 +68,10 @@ public class StakingWithdrawalReservedCleanerTest {
 
   @Before
   public void before() {
-    TestUtils.sqlDelete("public.transaction", "txid='abcde'");
+    TestUtils.sqlDelete(TOKEN_PUBLIC_SCHEMA, "transaction", "txid='abcde'");
 
-    TestUtils.sqlDelete("public.staking_withdrawal_reserved", "customer_address='" + CUSTOMER_ADDRESS + "'");
-    TestUtils.sqlDelete("public.staking", "liquidity_address_number=1 AND deposit_address_number=2 AND customer_address_number=4");
+    TestUtils.sqlDelete(TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "customer_address='" + CUSTOMER_ADDRESS + "'");
+    TestUtils.sqlDelete(TOKEN_NETWORK_SCHEMA, "staking", "liquidity_address_number=1 AND deposit_address_number=2 AND customer_address_number=4");
 
     messageEventCollector.getMessageEventList();
   }
@@ -80,15 +84,16 @@ public class StakingWithdrawalReservedCleanerTest {
       String testTime = LocalDateTime.now().minusHours(5).format(TestUtils.SQL_DATETIME_FORMATTER);
 
       TestUtils.sqlInsert(
-          "public.staking_withdrawal_reserved",
-          "withdrawal_id, transaction_id, customer_address, vout, create_time",
-          "1, 'abcde', '" + CUSTOMER_ADDRESS + "', 1.50000000, '" + testTime + "'");
+          TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved",
+          "token_number, withdrawal_id, transaction_id, customer_address, vout, create_time",
+          "0, 1, 'abcde', '" + CUSTOMER_ADDRESS + "', 1.50000000, '" + testTime + "'");
 
-      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(databaseManagerMock);
-      stakingWithdrawalReservedCleaner.clean();
+      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
+          new StakingWithdrawalReservedCleaner(NetworkEnum.TESTNET, databaseManagerMock);
+      stakingWithdrawalReservedCleaner.clean(TokenEnum.DFI);
 
       List<Map<String, Object>> reservedAfterDataList =
-          TestUtils.sqlSelect("public.staking_withdrawal_reserved", "withdrawal_id=1");
+          TestUtils.sqlSelect(TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND withdrawal_id=1");
 
       assertEquals("staking_withdrawal_reserved Size", 1, reservedAfterDataList.size());
 
@@ -114,15 +119,16 @@ public class StakingWithdrawalReservedCleanerTest {
       String testTime = LocalDateTime.now().minusHours(25).format(TestUtils.SQL_DATETIME_FORMATTER);
 
       TestUtils.sqlInsert(
-          "public.staking_withdrawal_reserved",
-          "withdrawal_id, transaction_id, customer_address, vout, create_time",
-          "1, 'abcde', '" + CUSTOMER_ADDRESS + "', 0.12345678, '" + testTime + "'");
+          TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved",
+          "token_number, withdrawal_id, transaction_id, customer_address, vout, create_time",
+          "0, 1, 'abcde', '" + CUSTOMER_ADDRESS + "', 0.12345678, '" + testTime + "'");
 
-      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(databaseManagerMock);
-      stakingWithdrawalReservedCleaner.clean();
+      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
+          new StakingWithdrawalReservedCleaner(NetworkEnum.TESTNET, databaseManagerMock);
+      stakingWithdrawalReservedCleaner.clean(TokenEnum.DFI);
 
       List<Map<String, Object>> reservedAfterDataList =
-          TestUtils.sqlSelect("public.staking_withdrawal_reserved", "withdrawal_id=1");
+          TestUtils.sqlSelect(TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND withdrawal_id=1");
 
       assertEquals("staking_withdrawal_reserved Size", 1, reservedAfterDataList.size());
 
@@ -139,7 +145,7 @@ public class StakingWithdrawalReservedCleanerTest {
       assertEquals(
           "Message",
           "Staking Withdrawal Reserved: 25 hours overtime:"
-              + " withdrawalId=1 / transactionId=abcde / vout=0.12345678",
+              + " tokenNumber=0 / withdrawalId=1 / transactionId=abcde / vout=0.12345678",
           messageEventList.get(0).getMessage());
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
@@ -154,20 +160,22 @@ public class StakingWithdrawalReservedCleanerTest {
       String testTime = LocalDateTime.now().minusHours(100).format(TestUtils.SQL_DATETIME_FORMATTER);
 
       TestUtils.sqlInsert(
-          "public.staking_withdrawal_reserved",
-          "withdrawal_id, transaction_id, customer_address, vout, create_time",
-          "1, 'abcde', '" + CUSTOMER_ADDRESS + "', 0.12345678, '" + testTime + "'");
+          TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved",
+          "token_number, withdrawal_id, transaction_id, customer_address, vout, create_time",
+          "0, 1, 'abcde', '" + CUSTOMER_ADDRESS + "', 0.12345678, '" + testTime + "'");
 
       TestUtils.sqlInsert(
-          "public.transaction",
-          "block_number, number, txid",
-          "1, 1, 'abcde'");
+          TOKEN_PUBLIC_SCHEMA,
+          "transaction",
+          "block_number, number, txid, custom_type_code",
+          "1, 1, 'abcde', 0");
 
-      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(databaseManagerMock);
-      stakingWithdrawalReservedCleaner.clean();
+      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
+          new StakingWithdrawalReservedCleaner(NetworkEnum.TESTNET, databaseManagerMock);
+      stakingWithdrawalReservedCleaner.clean(TokenEnum.DFI);
 
       List<Map<String, Object>> reservedAfterDataList =
-          TestUtils.sqlSelect("public.staking_withdrawal_reserved", "withdrawal_id=1");
+          TestUtils.sqlSelect(TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND withdrawal_id=1");
 
       assertEquals("staking_withdrawal_reserved Size", 0, reservedAfterDataList.size());
 

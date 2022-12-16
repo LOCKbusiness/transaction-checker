@@ -1,12 +1,12 @@
 package ch.dfx.transactionserver.builder;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
@@ -34,6 +35,9 @@ import ch.dfx.transactionserver.data.BlockDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
+import ch.dfx.transactionserver.handler.DatabaseAddressHandler;
 
 /**
  * 
@@ -41,34 +45,43 @@ import ch.dfx.transactionserver.database.H2DBManager;
 public class DatabaseBuilder {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseBuilder.class);
 
-  private PreparedStatement blockInsertStatement = null;
-  private PreparedStatement transactionInsertStatement = null;
-  private PreparedStatement addressInsertStatement = null;
-
-  private PreparedStatement addressTransactionOutInsertStatement = null;
-  private PreparedStatement addressTransactionInInsertStatement = null;
-
-  private PreparedStatement addressSelectStatement = null;
+  // ...
   private PreparedStatement transactionOutSelectStatement = null;
   private PreparedStatement addressTransactionOutSelectStatement = null;
 
   // ...
+  private final NetworkEnum network;
+
   private final H2DBManager databaseManager;
+
+  private final DatabaseBlockHelper databaseBlockHelper;
+  private final DatabaseBalanceHelper databaseBalanceHelper;
+  private final DatabaseAddressHandler databaseAddressHandler;
+
+  private final DatabaseCustomTransactionBuilder customTransactionBuilder;
+
   private final DefiDataProvider dataProvider;
 
-  private final Map<String, AddressDTO> newAddressMap;
-
+  // ...
   private int nextBlockNumber = 0;
-  private int nextAddressNumber = 0;
 
   /**
    * 
    */
-  public DatabaseBuilder(@Nonnull H2DBManager databaseManager) {
+  public DatabaseBuilder(
+      @Nonnull NetworkEnum network,
+      @Nonnull H2DBManager databaseManager) {
+    this.network = network;
     this.databaseManager = databaseManager;
-    this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-    this.newAddressMap = new LinkedHashMap<>();
+    this.databaseBlockHelper = new DatabaseBlockHelper(network);
+    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseAddressHandler = new DatabaseAddressHandler(network);
+
+    this.customTransactionBuilder =
+        new DatabaseCustomTransactionBuilder(network, databaseBlockHelper, databaseAddressHandler);
+
+    this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
 
   /**
@@ -80,17 +93,23 @@ public class DatabaseBuilder {
     long startTime = System.currentTimeMillis();
 
     Long blockCount = dataProvider.getBlockCount();
-    LOGGER.info("[DatabaseBuilder] Block Count: " + blockCount);
+    LOGGER.debug("[DatabaseBuilder] Block Count: " + blockCount);
 
     Connection connection = null;
 
     try {
       connection = databaseManager.openConnection();
+
+      databaseBlockHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       // ...
-      nextBlockNumber = getNextBlockNumber(connection);
-      nextAddressNumber = getNextAddressNumber(connection);
+      customTransactionBuilder.fillCustomTypeCodeToNumberMap(connection);
+      databaseAddressHandler.setup(connection);
+
+      // ...
+      nextBlockNumber = DatabaseUtils.getNextBlockNumber(network, connection);
 
       // ...
       int syncLoop = Integer.parseInt(ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SYNC_LOOP));
@@ -105,20 +124,25 @@ public class DatabaseBuilder {
         }
 
         if (nextBlockNumber <= blockCount) {
-          LOGGER.info("[DatabaseBuilder] Block: " + nextBlockNumber);
+          LOGGER.debug("[DatabaseBuilder] Block: " + nextBlockNumber);
 
-          BlockDTO cacheBlockData = createCacheBlockData(connection);
+          BlockDTO blockDTO = createBlockDTO(connection);
 
-          saveAddress();
-          saveBlock(cacheBlockData);
+          // ...
+          Map<String, AddressDTO> newAddressMap = databaseAddressHandler.getNewAddressMap();
+          databaseBlockHelper.saveAddress(newAddressMap);
+          databaseAddressHandler.reset();
+
+          databaseBlockHelper.saveBlock(blockDTO);
         }
       }
 
       closeStatements();
+      databaseBalanceHelper.closeStatements();
+      databaseBlockHelper.closeStatements();
 
       connection.commit();
     } catch (DfxException e) {
-
       DatabaseUtils.rollback(connection);
       throw e;
     } catch (Exception e) {
@@ -127,7 +151,7 @@ public class DatabaseBuilder {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.info("[DatabaseBuilder] runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.debug("[DatabaseBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -138,42 +162,13 @@ public class DatabaseBuilder {
     LOGGER.trace("openStatements()");
 
     try {
-      // Block ...
-      String blockInsertSql = "INSERT INTO public.block (number, hash) VALUES (?, ?)";
-      blockInsertStatement = connection.prepareStatement(blockInsertSql);
-
-      // Transaction ...
-      String transactionInsertSql = "INSERT INTO public.transaction (block_number, number, txid) VALUES (?, ?, ?)";
-      transactionInsertStatement = connection.prepareStatement(transactionInsertSql);
-
-      // Address ...
-      String addressInsertSql = "INSERT INTO public.address (number, address, hex) VALUES (?, ?, ?)";
-      addressInsertStatement = connection.prepareStatement(addressInsertSql);
-
       // Address / Transaction / Out ...
-      String addressTransactionOutInsertSql =
-          "INSERT INTO public.address_transaction_out"
-              + " (block_number, transaction_number, vout_number, address_number, vout, type)"
-              + " VALUES (?, ?, ?, ?, ?, ?)";
-      addressTransactionOutInsertStatement = connection.prepareStatement(addressTransactionOutInsertSql);
+      String transactionOutSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction WHERE txid=?";
+      transactionOutSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionOutSelectSql));
 
-      // Address / Transaction / In ...
-      String addressTransactionInInsertSql =
-          "INSERT INTO public.address_transaction_in"
-              + " (block_number, transaction_number, vin_number, address_number, in_block_number, in_transaction_number, vin)"
-              + " VALUES (?, ?, ?, ?, ?, ?, ?)";
-      addressTransactionInInsertStatement = connection.prepareStatement(addressTransactionInInsertSql);
-
-      // Address ...
-      String addressSelectSql = "SELECT * FROM public.address WHERE address=?";
-      addressSelectStatement = connection.prepareStatement(addressSelectSql);
-
-      // Address / Transaction / Out ...
-      String transactionOutSelectSql = "SELECT * FROM public.transaction WHERE txid=?";
-      transactionOutSelectStatement = connection.prepareStatement(transactionOutSelectSql);
-
-      String addressTransactionOutSelectSql = "SELECT * FROM public.address_transaction_out WHERE block_number=? and transaction_number=? and vout_number=?";
-      addressTransactionOutSelectStatement = connection.prepareStatement(addressTransactionOutSelectSql);
+      String addressTransactionOutSelectSql =
+          "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out WHERE block_number=? and transaction_number=? and vout_number=?";
+      addressTransactionOutSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, addressTransactionOutSelectSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -186,14 +181,6 @@ public class DatabaseBuilder {
     LOGGER.trace("closeStatements()");
 
     try {
-      blockInsertStatement.close();
-      transactionInsertStatement.close();
-      addressInsertStatement.close();
-
-      addressTransactionOutInsertStatement.close();
-      addressTransactionInInsertStatement.close();
-
-      addressSelectStatement.close();
       transactionOutSelectStatement.close();
       addressTransactionOutSelectStatement.close();
     } catch (Exception e) {
@@ -204,27 +191,31 @@ public class DatabaseBuilder {
   /**
    * 
    */
-  private BlockDTO createCacheBlockData(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("createCacheBlockData()");
+  private BlockDTO createBlockDTO(@Nonnull Connection connection) throws DfxException {
+    LOGGER.trace("createBlockDTO()");
 
     String blockHash = dataProvider.getBlockHash((long) nextBlockNumber);
-    BlockDTO cacheBlockData = new BlockDTO(nextBlockNumber, blockHash);
+    BlockDTO blockDTO = new BlockDTO(nextBlockNumber, blockHash);
 
     List<String> transactionIdList = getTransactionIdList(blockHash);
 
     for (int i = 0; i < transactionIdList.size(); i++) {
       String transactionId = transactionIdList.get(i);
 
-      TransactionDTO cacheTransactionData = new TransactionDTO(nextBlockNumber, i, transactionId);
+      TransactionDTO transactionDTO = new TransactionDTO(nextBlockNumber, i, transactionId);
 
-      fillAddressList(blockHash, transactionId, cacheBlockData, cacheTransactionData);
+      DefiTransactionData transactionData = dataProvider.getTransaction(transactionId, blockHash);
 
-      cacheBlockData.addTransactionDTO(cacheTransactionData);
+      fillAddressList(transactionData, blockDTO, transactionDTO);
+
+      customTransactionBuilder.fillCustomTransactionInfo(transactionData, transactionDTO);
+
+      blockDTO.addTransactionDTO(transactionDTO);
     }
 
     nextBlockNumber++;
 
-    return cacheBlockData;
+    return blockDTO;
   }
 
   /**
@@ -254,17 +245,14 @@ public class DatabaseBuilder {
    * 
    */
   private void fillAddressList(
-      @Nonnull String blockHash,
-      @Nonnull String transactionId,
-      @Nonnull BlockDTO cacheBlockData,
-      @Nonnull TransactionDTO cacheTransactionData) throws DfxException {
+      @Nonnull DefiTransactionData transactionData,
+      @Nonnull BlockDTO blockDTO,
+      @Nonnull TransactionDTO transactionDTO) throws DfxException {
     LOGGER.trace("fillAddressList()");
 
     try {
-      Integer blockNumber = cacheTransactionData.getBlockNumber();
-      Integer transactionNumber = cacheTransactionData.getNumber();
-
-      DefiTransactionData transactionData = dataProvider.getTransaction(transactionId, blockHash);
+      Integer blockNumber = transactionDTO.getBlockNumber();
+      Integer transactionNumber = transactionDTO.getNumber();
 
       // ...
       List<DefiTransactionVinData> transactionVinDataList = transactionData.getVin();
@@ -274,14 +262,14 @@ public class DatabaseBuilder {
       List<DefiTransactionVoutData> transactionVoutDataList = transactionData.getVout();
 
       for (DefiTransactionVoutData transactionVoutData : transactionVoutDataList) {
-        addAddressTransactionOut(blockNumber, transactionNumber, transactionVoutData, coinbase, cacheTransactionData);
+        addAddressTransactionOut(blockNumber, transactionNumber, transactionVoutData, coinbase, transactionDTO);
       }
 
       // vin ...
       if (null == coinbase) {
         for (int i = 0; i < transactionVinDataList.size(); i++) {
           DefiTransactionVinData transactionVinData = transactionVinDataList.get(i);
-          addAddressTransactionIn(blockNumber, transactionNumber, i, transactionVinData, cacheBlockData, cacheTransactionData);
+          addAddressTransactionIn(blockNumber, transactionNumber, i, transactionVinData, blockDTO, transactionDTO);
         }
       }
     } catch (DfxException e) {
@@ -299,31 +287,31 @@ public class DatabaseBuilder {
       @Nonnull Integer transactionNumber,
       @Nonnull DefiTransactionVoutData transactionVoutData,
       @Nullable String coinbase,
-      @Nonnull TransactionDTO cacheTransactionData) throws DfxException {
+      @Nonnull TransactionDTO transactionDTO) throws DfxException {
     LOGGER.trace("addAddressTransactionOut()");
 
     DefiTransactionScriptPubKeyData transactionVoutScriptPubKeyData = transactionVoutData.getScriptPubKey();
 
     Integer index = transactionVoutData.getN().intValue();
-    String hex = transactionVoutScriptPubKeyData.getHex();
 
+    // ...
     List<String> addressList = transactionVoutScriptPubKeyData.getAddresses();
 
     if (null != addressList) {
       for (String address : addressList) {
-        AddressDTO cacheAddressData = getCacheAddressData(address, hex);
-        Integer addressNumber = cacheAddressData.getNumber();
+        AddressDTO addressDTO = databaseAddressHandler.getAddressDTO(databaseBlockHelper, address);
+        Integer addressNumber = addressDTO.getNumber();
 
-        AddressTransactionOutDTO cacheAddressTransactionOutData =
+        AddressTransactionOutDTO addressTransactionOutDTO =
             new AddressTransactionOutDTO(blockNumber, transactionNumber, index, addressNumber);
 
-        cacheAddressTransactionOutData.setVout(transactionVoutData.getValue());
+        addressTransactionOutDTO.setVout(transactionVoutData.getValue());
 
         if (null != coinbase) {
-          cacheAddressTransactionOutData.setType(coinbase);
+          addressTransactionOutDTO.setType(coinbase);
         }
 
-        cacheTransactionData.addAddressTransactionOutDTO(cacheAddressTransactionOutData);
+        transactionDTO.addAddressTransactionOutDTO(addressTransactionOutDTO);
       }
     }
   }
@@ -336,32 +324,32 @@ public class DatabaseBuilder {
       @Nonnull Integer transactionNumber,
       @Nonnull Integer inIndex,
       @Nonnull DefiTransactionVinData transactionVinData,
-      @Nonnull BlockDTO cacheBlockData,
-      @Nonnull TransactionDTO cacheTransactionData) throws DfxException {
+      @Nonnull BlockDTO blockDTO,
+      @Nonnull TransactionDTO transactionDTO) throws DfxException {
     LOGGER.trace("addAddressTransactionIn()");
 
     try {
       String outTxid = transactionVinData.getTxid();
       Long voutIndex = transactionVinData.getVout();
 
-      AddressTransactionOutDTO cacheAddressTransactionOutData =
-          getCacheAddressTransactionOutDataFromCurrentBlock(cacheBlockData, outTxid, voutIndex);
+      AddressTransactionOutDTO addressTransactionOutDTO =
+          getAddressTransactionOutDTOFromCurrentBlock(blockDTO, outTxid, voutIndex);
 
-      if (null == cacheAddressTransactionOutData) {
-        cacheAddressTransactionOutData = getCacheAddressTransactionOutDataFromPreviousBlock(outTxid, voutIndex);
+      if (null == addressTransactionOutDTO) {
+        addressTransactionOutDTO = getAddressTransactionOutDTOFromPreviousBlock(outTxid, voutIndex);
       }
 
       // ...
-      Integer addressNumber = cacheAddressTransactionOutData.getAddressNumber();
-      Integer inBlockNumber = cacheAddressTransactionOutData.getBlockNumber();
-      Integer inTransactionNumber = cacheAddressTransactionOutData.getTransactionNumber();
+      Integer addressNumber = addressTransactionOutDTO.getAddressNumber();
+      Integer inBlockNumber = addressTransactionOutDTO.getBlockNumber();
+      Integer inTransactionNumber = addressTransactionOutDTO.getTransactionNumber();
 
-      AddressTransactionInDTO cacheAddressTransactionInData =
+      AddressTransactionInDTO addressTransactionInDTO =
           new AddressTransactionInDTO(blockNumber, transactionNumber, inIndex, addressNumber, inBlockNumber, inTransactionNumber);
 
-      cacheAddressTransactionInData.setVin(cacheAddressTransactionOutData.getVout());
+      addressTransactionInDTO.setVin(addressTransactionOutDTO.getVout());
 
-      cacheTransactionData.addAddressTransactionInDTO(cacheAddressTransactionInData);
+      transactionDTO.addAddressTransactionInDTO(addressTransactionInDTO);
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
@@ -372,38 +360,38 @@ public class DatabaseBuilder {
   /**
    * 
    */
-  private @Nullable AddressTransactionOutDTO getCacheAddressTransactionOutDataFromCurrentBlock(
-      @Nonnull BlockDTO cacheBlockData,
+  private @Nullable AddressTransactionOutDTO getAddressTransactionOutDTOFromCurrentBlock(
+      @Nonnull BlockDTO blockDTO,
       @Nonnull String outTxid,
       @Nonnull Long voutIndex) {
-    LOGGER.trace("getCacheAddressTransactionOutDataFromCurrentBlock()");
+    LOGGER.trace("getAddressTransactionOutDTOFromCurrentBlock()");
 
-    AddressTransactionOutDTO cacheAddressTransactionOutData = null;
+    AddressTransactionOutDTO addressTransactionOutDTO = null;
 
-    Optional<TransactionDTO> optionalCacheTransactionData =
-        cacheBlockData.getTransactionDTOList().stream().filter(data -> outTxid.equals(data.getTransactionId())).findFirst();
+    Optional<TransactionDTO> optionalTransactionDTO =
+        blockDTO.getTransactionDTOList().stream().filter(data -> outTxid.equals(data.getTransactionId())).findFirst();
 
-    if (optionalCacheTransactionData.isPresent()) {
-      TransactionDTO cacheTransactionData = optionalCacheTransactionData.get();
+    if (optionalTransactionDTO.isPresent()) {
+      TransactionDTO transactionDTO = optionalTransactionDTO.get();
 
-      Optional<AddressTransactionOutDTO> optionalCacheAddressTransactionOutData =
-          cacheTransactionData.getAddressTransactionOutDTOList().stream().filter(data -> voutIndex.intValue() == data.getVoutNumber().intValue()).findFirst();
+      Optional<AddressTransactionOutDTO> optionalAddressTransactionOutDTO =
+          transactionDTO.getAddressTransactionOutDTOList().stream().filter(data -> voutIndex.intValue() == data.getVoutNumber()).findFirst();
 
-      if (optionalCacheAddressTransactionOutData.isPresent()) {
-        cacheAddressTransactionOutData = optionalCacheAddressTransactionOutData.get();
+      if (optionalAddressTransactionOutDTO.isPresent()) {
+        addressTransactionOutDTO = optionalAddressTransactionOutDTO.get();
       }
     }
 
-    return cacheAddressTransactionOutData;
+    return addressTransactionOutDTO;
   }
 
   /**
    * 
    */
-  private AddressTransactionOutDTO getCacheAddressTransactionOutDataFromPreviousBlock(
+  private AddressTransactionOutDTO getAddressTransactionOutDTOFromPreviousBlock(
       @Nonnull String outTxid,
       @Nonnull Long voutIndex) throws DfxException {
-    LOGGER.trace("getCacheAddressTransactionOutDataFromPreviousBlock()");
+    LOGGER.trace("getAddressTransactionOutDTOFromPreviousBlock()");
 
     try {
       transactionOutSelectStatement.setString(1, outTxid);
@@ -435,66 +423,15 @@ public class DatabaseBuilder {
 
       resultSet2.close();
 
-      AddressTransactionOutDTO cacheAddressTransactionOutData =
+      AddressTransactionOutDTO addressTransactionOutDTO =
           new AddressTransactionOutDTO(inBlockNumber, inTransactionNumber, voutIndex.intValue(), addressNumber);
-      cacheAddressTransactionOutData.setVout(vout);
+      addressTransactionOutDTO.setVout(vout);
 
-      return cacheAddressTransactionOutData;
+      return addressTransactionOutDTO;
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
-      throw new DfxException("getCacheAddressTransactionOutDataFromPreviousBlock", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private AddressDTO getCacheAddressData(
-      @Nonnull String address,
-      @Nonnull String hex) throws DfxException {
-    LOGGER.trace("getCacheAddressData()");
-
-    AddressDTO cacheAddressData = readAddress(address);
-
-    if (null == cacheAddressData) {
-      cacheAddressData = newAddressMap.get(address);
-    }
-
-    if (null == cacheAddressData) {
-      cacheAddressData = new AddressDTO(nextAddressNumber++, address, hex);
-      newAddressMap.put(address, cacheAddressData);
-    }
-
-    return cacheAddressData;
-  }
-
-  /**
-   * 
-   */
-  private AddressDTO readAddress(@Nonnull String address) throws DfxException {
-    LOGGER.trace("readAddress()");
-
-    try {
-      AddressDTO cacheAddressData = null;
-
-      addressSelectStatement.setString(1, address);
-
-      ResultSet resultSet = addressSelectStatement.executeQuery();
-
-      if (resultSet.next()) {
-        int addressNumber = resultSet.getInt(1);
-        // String address = resultSet.getString(2);
-        String hex = resultSet.getString(3);
-
-        cacheAddressData = new AddressDTO(addressNumber, address, hex);
-      }
-
-      resultSet.close();
-
-      return cacheAddressData;
-    } catch (Exception e) {
-      throw new DfxException("readAddress", e);
+      throw new DfxException("getAddressTransactionOutDTOFromPreviousBlock", e);
     }
   }
 
@@ -513,183 +450,5 @@ public class DatabaseBuilder {
     }
 
     return typeCoinbase;
-  }
-
-  /**
-   * 
-   */
-  private int getNextBlockNumber(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("getNextBlockNumber()");
-
-    String sqlSelect =
-        new StringBuilder()
-            .append("SELECT MAX(number) FROM public.block")
-            .toString();
-
-    return getNextNumber(connection, sqlSelect);
-  }
-
-  /**
-   * 
-   */
-  private int getNextAddressNumber(@Nonnull Connection connection) throws DfxException {
-    LOGGER.trace("getNextAddressNumber()");
-
-    String sqlSelect =
-        new StringBuilder()
-            .append("SELECT MAX(number) FROM public.address")
-            .toString();
-
-    return getNextNumber(connection, sqlSelect);
-  }
-
-  /**
-   * 
-   */
-  private int getNextNumber(
-      @Nonnull Connection connection,
-      @Nonnull String sqlSelect) throws DfxException {
-    LOGGER.trace("getNextNumber()");
-
-    try (Statement statement = connection.createStatement()) {
-      int nextNumber = -1;
-
-      ResultSet resultSet = statement.executeQuery(sqlSelect);
-
-      if (resultSet.next()) {
-        nextNumber = resultSet.getInt(1);
-
-        if (!resultSet.wasNull()) {
-          nextNumber++;
-        }
-      }
-
-      resultSet.close();
-
-      if (-1 == nextNumber) {
-        throw new DfxException("next number not found ...");
-      }
-
-      return nextNumber;
-    } catch (DfxException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new DfxException("getNextNumber", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void saveAddress() throws DfxException {
-    LOGGER.trace("saveAddress()");
-
-    try {
-      for (AddressDTO cacheAddressData : newAddressMap.values()) {
-        addressInsertStatement.setLong(1, cacheAddressData.getNumber());
-        addressInsertStatement.setString(2, cacheAddressData.getAddress());
-        addressInsertStatement.setString(3, cacheAddressData.getHex());
-        addressInsertStatement.execute();
-      }
-
-      newAddressMap.clear();
-    } catch (Exception e) {
-      throw new DfxException("saveAddress", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void saveBlock(@Nonnull BlockDTO cacheBlockData) throws DfxException {
-    LOGGER.trace("saveBlock()");
-
-    try {
-      Integer blockNumber = cacheBlockData.getNumber();
-
-      blockInsertStatement.setInt(1, blockNumber);
-      blockInsertStatement.setString(2, cacheBlockData.getHash());
-      blockInsertStatement.execute();
-
-      for (TransactionDTO cacheTransactionData : cacheBlockData.getTransactionDTOList()) {
-        saveTransaction(cacheTransactionData);
-      }
-    } catch (DfxException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new DfxException("saveBlock", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void saveTransaction(
-      @Nonnull TransactionDTO cacheTransactionData) throws DfxException {
-    LOGGER.trace("saveTransaction()");
-
-    try {
-      Integer blockNumber = cacheTransactionData.getBlockNumber();
-      Integer transactionNumber = cacheTransactionData.getNumber();
-
-      transactionInsertStatement.setLong(1, blockNumber);
-      transactionInsertStatement.setLong(2, transactionNumber);
-      transactionInsertStatement.setString(3, cacheTransactionData.getTransactionId());
-      transactionInsertStatement.execute();
-
-      for (AddressTransactionOutDTO cacheAddressTransactionOutData : cacheTransactionData.getAddressTransactionOutDTOList()) {
-        saveAddressTransactionOut(cacheAddressTransactionOutData);
-      }
-
-      for (AddressTransactionInDTO cacheAddressTransactionInData : cacheTransactionData.getAddressTransactionInDTOList()) {
-        saveAddressTransactionIn(cacheAddressTransactionInData);
-      }
-    } catch (DfxException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new DfxException("saveTransaction", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void saveAddressTransactionOut(@Nonnull AddressTransactionOutDTO cacheAddressTransactionOutData) throws DfxException {
-    LOGGER.trace("saveAddressTransactionOut()");
-
-    try {
-      addressTransactionOutInsertStatement.setInt(1, cacheAddressTransactionOutData.getBlockNumber());
-      addressTransactionOutInsertStatement.setInt(2, cacheAddressTransactionOutData.getTransactionNumber());
-      addressTransactionOutInsertStatement.setInt(3, cacheAddressTransactionOutData.getVoutNumber());
-      addressTransactionOutInsertStatement.setInt(4, cacheAddressTransactionOutData.getAddressNumber());
-
-      addressTransactionOutInsertStatement.setBigDecimal(5, cacheAddressTransactionOutData.getVout());
-      addressTransactionOutInsertStatement.setString(6, cacheAddressTransactionOutData.getType());
-      addressTransactionOutInsertStatement.execute();
-    } catch (Exception e) {
-      throw new DfxException("saveAddressTransactionOut", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void saveAddressTransactionIn(@Nonnull AddressTransactionInDTO cacheAddressTransactionInData) throws DfxException {
-    LOGGER.trace("saveAddressTransactionIn()");
-
-    try {
-      addressTransactionInInsertStatement.setInt(1, cacheAddressTransactionInData.getBlockNumber());
-      addressTransactionInInsertStatement.setInt(2, cacheAddressTransactionInData.getTransactionNumber());
-      addressTransactionInInsertStatement.setInt(3, cacheAddressTransactionInData.getVinNumber());
-      addressTransactionInInsertStatement.setInt(4, cacheAddressTransactionInData.getAddressNumber());
-
-      addressTransactionInInsertStatement.setInt(5, cacheAddressTransactionInData.getInBlockNumber());
-      addressTransactionInInsertStatement.setInt(6, cacheAddressTransactionInData.getInTransactionNumber());
-
-      addressTransactionInInsertStatement.setBigDecimal(7, cacheAddressTransactionInData.getVin());
-      addressTransactionInInsertStatement.execute();
-    } catch (Exception e) {
-      throw new DfxException("saveAddressTransactionIn", e);
-    }
   }
 }

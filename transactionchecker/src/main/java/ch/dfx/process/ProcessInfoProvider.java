@@ -35,7 +35,7 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
    * 
    */
   public ProcessInfoProvider() {
-    // this.httpClient = HttpClientBuilder.create().build();
+    // this.httpClient = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build();
     this.memoryMXBean = ManagementFactory.getMemoryMXBean();
   }
 
@@ -65,7 +65,7 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
     } finally {
       isProcessing = false;
 
-      LOGGER.info("[ProcessInfoProvider] runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.debug("[ProcessInfoProvider] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -114,9 +114,9 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
       processInfoService =
           (ProcessInfoService) registry.lookup(ProcessInfoService.class.getSimpleName());
 
-      LOGGER.info("=============================");
+      LOGGER.debug("=============================");
       LOGGER.info("RMI Client started: Port " + rmiPort);
-      LOGGER.info("=============================");
+      LOGGER.debug("=============================");
     } catch (Exception e) {
       throw new DfxException("startRMI", e);
     }

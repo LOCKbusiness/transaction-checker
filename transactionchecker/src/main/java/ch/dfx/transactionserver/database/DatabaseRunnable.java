@@ -8,6 +8,8 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.builder.BalanceBuilder;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
@@ -17,6 +19,9 @@ import ch.dfx.transactionserver.builder.StakingBuilder;
 import ch.dfx.transactionserver.cleaner.StakingWithdrawalReservedCleaner;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
+import ch.dfx.transactionserver.ymbuilder.YmBalanceBuilder;
+import ch.dfx.transactionserver.ymbuilder.YmDepositBuilder;
+import ch.dfx.transactionserver.ymbuilder.YmStakingBuilder;
 
 /**
  * 
@@ -25,6 +30,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseRunnable.class);
 
   // ...
+  private final NetworkEnum network;
   private final H2DBManager databaseManager;
 
   // ...
@@ -46,12 +52,15 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
    * 
    */
   public DatabaseRunnable(
+      @Nonnull NetworkEnum network,
       @Nonnull H2DBManager databaseManager,
       @Nonnull File processLockfile,
       boolean isServerOnly) {
+    Objects.requireNonNull(databaseManager, "null network is not allowed");
     Objects.requireNonNull(databaseManager, "null databaseManager is not allowed");
     Objects.requireNonNull(processLockfile, "null processLockfile is not allowed");
 
+    this.network = network;
     this.databaseManager = databaseManager;
     this.processLockfile = processLockfile;
     this.isServerOnly = isServerOnly;
@@ -84,7 +93,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     } finally {
       isProcessing = false;
 
-      LOGGER.info("[DatabaseRunnable] runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.debug("[DatabaseRunnable] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -115,7 +124,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeDatabase()");
 
     try {
-      DatabaseBuilder databaseBuilder = new DatabaseBuilder(databaseManager);
+      DatabaseBuilder databaseBuilder = new DatabaseBuilder(network, databaseManager);
       databaseBuilder.build();
     } catch (DfxException e) {
       databaseBuilderErrorCounter++;
@@ -133,7 +142,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("checkDatabase()");
 
     try {
-      DatabaseChecker databaseChecker = new DatabaseChecker(databaseManager);
+      DatabaseChecker databaseChecker = new DatabaseChecker(network, databaseManager);
 
       if (databaseChecker.check()) {
         databaseBuilderErrorCounter = 0;
@@ -154,8 +163,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeDeposit()");
 
     try {
-      DepositBuilder depositBuilder = new DepositBuilder(databaseManager);
-      depositBuilder.build();
+      DepositBuilder depositBuilder = new DepositBuilder(network, databaseManager);
+      depositBuilder.build(TokenEnum.DFI);
+
+      YmDepositBuilder ymDepositBuilder = new YmDepositBuilder(network, databaseManager);
+      ymDepositBuilder.build(TokenEnum.DUSD);
 
       depositBuilderErrorCounter = 0;
     } catch (DfxException e) {
@@ -174,8 +186,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeBalance()");
 
     try {
-      BalanceBuilder balanceBuilder = new BalanceBuilder(databaseManager);
-      balanceBuilder.build();
+      BalanceBuilder balanceBuilder = new BalanceBuilder(network, databaseManager);
+      balanceBuilder.build(TokenEnum.DFI);
+
+      YmBalanceBuilder ymBalanceBuilder = new YmBalanceBuilder(network, databaseManager);
+      ymBalanceBuilder.build(TokenEnum.DUSD);
 
       balanceBuilderErrorCounter = 0;
     } catch (DfxException e) {
@@ -194,8 +209,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeStaking()");
 
     try {
-      StakingBuilder stakingBuilder = new StakingBuilder(databaseManager);
-      stakingBuilder.build();
+      StakingBuilder stakingBuilder = new StakingBuilder(network, databaseManager);
+      stakingBuilder.build(TokenEnum.DFI);
+
+      YmStakingBuilder ymStakingBuilder = new YmStakingBuilder(network, databaseManager);
+      ymStakingBuilder.build(TokenEnum.DUSD);
 
       stakingBuilderErrorCounter = 0;
     } catch (DfxException e) {
@@ -214,7 +232,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeMasternode()");
 
     try {
-      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(databaseManager);
+      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(network, databaseManager);
       masternodeBuilder.build();
 
       masternodeBuilderErrorCounter = 0;
@@ -234,8 +252,9 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeStakingWithdrawalReservedCleaner()");
 
     try {
-      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(databaseManager);
-      stakingWithdrawalReservedCleaner.clean();
+      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner = new StakingWithdrawalReservedCleaner(network, databaseManager);
+      stakingWithdrawalReservedCleaner.clean(TokenEnum.DFI);
+//      stakingWithdrawalReservedCleaner.clean(TokenEnum.DUSD);
 
       stakingWithdrawalReservedCleanerErrorCounter = 0;
     } catch (DfxException e) {

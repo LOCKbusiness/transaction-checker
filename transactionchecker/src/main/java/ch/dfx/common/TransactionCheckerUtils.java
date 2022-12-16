@@ -47,6 +47,9 @@ import ch.dfx.security.EncryptionForSecrets;
 public class TransactionCheckerUtils {
   private static final Logger LOGGER = LogManager.getLogger(TransactionCheckerUtils.class);
 
+  // ...
+  private static final int HTTP_CLIENT_TIMEOUT = 10 * 1000;
+
   public static final SimpleDateFormat LOGFILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
 
   public static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("0.00000000");
@@ -224,13 +227,11 @@ public class TransactionCheckerUtils {
     CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
     credentialsProvider.setCredentials(AuthScope.ANY, credentials);
 
-    int timeout = 10 * 1000;
-
     RequestConfig requestConfig =
         RequestConfig.custom()
-            .setConnectTimeout(timeout)
-            .setConnectionRequestTimeout(timeout)
-            .setSocketTimeout(timeout)
+            .setConnectTimeout(HTTP_CLIENT_TIMEOUT)
+            .setConnectionRequestTimeout(HTTP_CLIENT_TIMEOUT)
+            .setSocketTimeout(HTTP_CLIENT_TIMEOUT)
             .build();
 
     HttpClient httpClient =

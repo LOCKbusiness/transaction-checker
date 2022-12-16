@@ -1,5 +1,7 @@
 package ch.dfx.tools;
 
+import java.util.stream.Stream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,7 +31,12 @@ public class DatabaseCompareMain {
       Class.forName("org.h2.Driver");
 
       // ...
-      NetworkEnum network = TransactionCheckerUtils.getNetwork(false, false, true);
+      boolean isMainnet = Stream.of(args).anyMatch(a -> "--mainnet".equals(a));
+      boolean isStagnet = Stream.of(args).anyMatch(a -> "--stagnet".equals(a));
+      boolean isTestnet = Stream.of(args).anyMatch(a -> "--testnet".equals(a));
+
+      // ...
+      NetworkEnum network = TransactionCheckerUtils.getNetwork(isMainnet, isStagnet, isTestnet);
       EnvironmentEnum environment = TransactionCheckerUtils.getEnvironment();
 
       // ...

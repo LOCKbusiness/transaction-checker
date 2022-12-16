@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
@@ -39,6 +40,8 @@ public class OceanHandler {
   private static final Logger LOGGER = LogManager.getLogger(OceanHandler.class);
 
   // ...
+  private static final int HTTP_CLIENT_TIMEOUT = 10 * 1000;
+
   private static final String OCEAN_MAIN_URI = "https://ocean.defichain.com/v0/";
   private static final int OCEAN_FETCH_SIZE = 200;
 
@@ -63,7 +66,17 @@ public class OceanHandler {
   public OceanHandler() {
     this.gson = new GsonBuilder().setPrettyPrinting().create();
 
-    this.httpClient = HttpClientBuilder.create().build();
+    RequestConfig requestConfig =
+        RequestConfig.custom()
+            .setConnectTimeout(HTTP_CLIENT_TIMEOUT)
+            .setConnectionRequestTimeout(HTTP_CLIENT_TIMEOUT)
+            .setSocketTimeout(HTTP_CLIENT_TIMEOUT).build();
+
+    httpClient =
+        HttpClientBuilder.create()
+            .setDefaultRequestConfig(requestConfig)
+            .build();
+
     this.httpGet = new HttpGet();
   }
 

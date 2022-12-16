@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
 
@@ -51,8 +52,8 @@ public class StakingBuilderMain {
       H2DBManager databaseManager = new H2DBManagerImpl();
 
       // ...
-      StakingBuilder stakingBuilder = new StakingBuilder(databaseManager);
-      stakingBuilder.build();
+      StakingBuilder stakingBuilder = new StakingBuilder(network, databaseManager);
+      stakingBuilder.build(TokenEnum.DFI);
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

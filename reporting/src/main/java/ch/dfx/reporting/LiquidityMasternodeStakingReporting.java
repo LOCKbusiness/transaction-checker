@@ -1,5 +1,8 @@
 package ch.dfx.reporting;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,20 +14,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.common.collect.ArrayListMultimap;
 
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.excel.data.CellData;
+import ch.dfx.excel.data.CellDataList;
 import ch.dfx.excel.data.RowData;
 import ch.dfx.excel.data.RowDataList;
 import ch.dfx.transactionserver.data.AddressDTO;
@@ -32,6 +36,7 @@ import ch.dfx.transactionserver.data.BalanceDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
+import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
 
 /**
@@ -57,9 +62,10 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    * 
    */
   public LiquidityMasternodeStakingReporting(
+      @Nonnull NetworkEnum network,
       @Nonnull H2DBManager databaseManager,
       @Nonnull List<String> logInfoList) {
-    super(databaseManager);
+    super(network, databaseManager);
 
     this.logInfoList = logInfoList;
   }
@@ -67,33 +73,40 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
   /**
    * 
    */
-  public void report() throws DfxException {
+  public void report(
+      @Nonnull TokenEnum token,
+      @Nonnull String rootPath,
+      @Nonnull String fileName,
+      @Nonnull String sheet) throws DfxException {
     LOGGER.debug("report()");
+
+    Objects.requireNonNull(rootPath, "null 'rootPath' not allowed");
+    Objects.requireNonNull(fileName, "null 'fileName' not allowed");
+    Objects.requireNonNull(sheet, "null 'sheet' not allowed");
 
     long startTime = System.currentTimeMillis();
 
     Connection connection = null;
 
     try {
-      String googleRootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
-      String googleFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_BALANCE_SHEET);
+      connection = databaseManager.openConnection();
 
-      if (!StringUtils.isEmpty(googleFileName)) {
-        connection = databaseManager.openConnection();
+      databaseBlockHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection);
+      openStatements(connection);
 
-        databaseHelper.openStatements(connection);
-        openStatements(connection);
+      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
+      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBalanceHelper.getMasternodeWhitelistDTOList();
+      List<StakingDTO> stakingDTOList = databaseBalanceHelper.getStakingDTOList(token);
 
-        List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
-        List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseHelper.getMasternodeWhitelistDTOList();
-        List<StakingDTO> stakingDTOList = databaseHelper.getStakingDTOList();
+      RowDataList rowDataList = createRowDataList(connection, token, stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
+      CellDataList cellDataList = new CellDataList();
 
-        RowDataList rowDataList = createRowDataList(connection, stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
-        writeExcel(googleRootPath, googleFileName, rowDataList);
+      writeExcel(rootPath, fileName, sheet, rowDataList, cellDataList);
 
-        closeStatements();
-        databaseHelper.closeStatements();
-      }
+      closeStatements();
+      databaseBalanceHelper.closeStatements();
+      databaseBlockHelper.closeStatements();
     } finally {
       databaseManager.closeConnection(connection);
 
@@ -115,13 +128,14 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
               + " at_out.transaction_number,"
               + " at_out.vout_number,"
               + " at_out.vout"
-              + " FROM public.address_transaction_in at_in"
-              + " JOIN public.address_transaction_out at_out ON"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in at_in"
+              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out at_out ON"
               + " at_in.block_number = at_out.block_number"
               + " AND at_in.transaction_number = at_out.transaction_number"
               + " AND at_in.address_number != at_out.address_number"
               + " WHERE"
-              + " at_in.address_number not in (SELECT deposit_address_number FROM public.staking)"
+              + " at_in.address_number not in"
+              + " (SELECT deposit_address_number FROM " + TOKEN_NETWORK_SCHEMA + ".staking WHERE token_number=?)"
               + " AND at_out.address_number=?"
               + " GROUP BY"
               + " at_in.address_number,"
@@ -129,7 +143,8 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
               + " at_out.transaction_number,"
               + " at_out.vout_number,"
               + " at_out.vout";
-      transactionVoutSelectStatement = connection.prepareStatement(transactionVoutSelectSql);
+      transactionVoutSelectSql = DatabaseUtils.replaceSchema(network, transactionVoutSelectSql);
+      transactionVoutSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionVoutSelectSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -153,6 +168,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    */
   private RowDataList createRowDataList(
       @Nonnull Connection connection,
+      @Nonnull TokenEnum token,
       @Nonnull List<StakingAddressDTO> stakingAddressDTOList,
       @Nonnull List<MasternodeWhitelistDTO> masternodeWhitelistDTOList,
       @Nonnull List<StakingDTO> stakingDTOList) throws DfxException {
@@ -164,7 +180,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     BigDecimal balance = BigDecimal.ZERO;
 
     // ...
-    BigDecimal liquidityBalance = fillLiquidityBalance(stakingAddressDTOList, rowDataList);
+    BigDecimal liquidityBalance = fillLiquidityBalance(token, stakingAddressDTOList, rowDataList);
     balance = balance.add(liquidityBalance);
 
     // ...
@@ -200,6 +216,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    * 
    */
   private BigDecimal fillLiquidityBalance(
+      @Nonnull TokenEnum token,
       @Nonnull List<StakingAddressDTO> stakingAddressDTOList,
       @Nonnull RowDataList rowDataList) throws DfxException {
     LOGGER.trace("fillLiquidityBalance()");
@@ -209,7 +226,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
       if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
         BalanceDTO liquidityBalanceDTO =
-            databaseHelper.getBalanceDTOByAddressNumber(stakingAddressDTO.getLiquidityAddressNumber());
+            databaseBalanceHelper.getBalanceDTOByAddressNumber(token, stakingAddressDTO.getLiquidityAddressNumber());
 
         if (null != liquidityBalanceDTO) {
           BigDecimal vout = liquidityBalanceDTO.getVout();
@@ -369,16 +386,16 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
       // ...
       String transactionFeeSelectSql =
           "WITH LIQ_OUT AS ("
-              + " SELECT block_number, transaction_number FROM public.address_transaction_out"
+              + " SELECT block_number, transaction_number FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out"
               + " WHERE address_number=" + liquidityAddressNumber
               + " GROUP BY block_number, transaction_number"
               + " ), AT_IN AS ("
-              + " SELECT sum(at_in.vin) AS sum_vin FROM public.address_transaction_in at_in"
+              + " SELECT sum(at_in.vin) AS sum_vin FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in at_in"
               + " JOIN LIQ_OUT liq_out ON"
               + " at_in.block_number = liq_out.block_number"
               + " AND at_in.transaction_number = liq_out.transaction_number"
               + " ), AT_OUT AS ("
-              + " SELECT sum(at_out.vout) AS sum_vout FROM public.address_transaction_out at_out"
+              + " SELECT sum(at_out.vout) AS sum_vout FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out at_out"
               + " JOIN LIQ_OUT liq_out ON"
               + " at_out.block_number = liq_out.block_number"
               + " AND at_out.transaction_number = liq_out.transaction_number"
@@ -388,7 +405,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
               + " at_out.sum_vout"
               + " FROM AT_IN at_in JOIN AT_OUT at_out ON 1=1";
       Statement statement = connection.createStatement();
-      ResultSet resultSet = statement.executeQuery(transactionFeeSelectSql);
+      ResultSet resultSet = statement.executeQuery(DatabaseUtils.replaceSchema(network, transactionFeeSelectSql));
 
       while (resultSet.next()) {
         BigDecimal sumVin = resultSet.getBigDecimal("sum_vin");
@@ -420,7 +437,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
     for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
       if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
-        fillWithDifferentOtherAmounts(stakingAddressDTO.getLiquidityAddressNumber(), groupAddressMap, groupVoutMap);
+        fillWithDifferentOtherAmounts(stakingAddressDTO.getTokenNumber(), stakingAddressDTO.getLiquidityAddressNumber(), groupAddressMap, groupVoutMap);
       }
     }
 
@@ -451,7 +468,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
     for (MasternodeWhitelistDTO masternodeWhitelistDTO : masternodeWhitelistDTOList) {
       String ownerAddress = masternodeWhitelistDTO.getOwnerAddress();
-      AddressDTO ownerAddressDTO = databaseHelper.getAddressDTOByAddress(ownerAddress);
+      AddressDTO ownerAddressDTO = databaseBlockHelper.getAddressDTOByAddress(ownerAddress);
 
       if (null != ownerAddressDTO) {
         masternodeAddressNumberSet.add(ownerAddressDTO.getNumber());
@@ -465,13 +482,15 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    * 
    */
   private void fillWithDifferentOtherAmounts(
+      int tokenNumber,
       int liquidityAddressNumber,
       @Nonnull ArrayListMultimap<String, Integer> groupAddressMap,
       @Nonnull Map<String, BigDecimal> groupVoutMap) throws DfxException {
     LOGGER.trace("fillWithDifferentOtherAmounts()");
 
     try {
-      transactionVoutSelectStatement.setInt(1, liquidityAddressNumber);
+      transactionVoutSelectStatement.setInt(1, tokenNumber);
+      transactionVoutSelectStatement.setInt(2, liquidityAddressNumber);
 
       ResultSet resultSet = transactionVoutSelectStatement.executeQuery();
 

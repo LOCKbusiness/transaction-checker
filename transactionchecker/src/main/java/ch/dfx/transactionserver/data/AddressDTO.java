@@ -8,18 +8,15 @@ import javax.annotation.Nonnull;
 public class AddressDTO extends DatabaseDTO {
   private final Integer number;
   private final String address;
-  private final String hex;
 
   /**
    * 
    */
   public AddressDTO(
       @Nonnull Integer number,
-      @Nonnull String address,
-      @Nonnull String hex) {
+      @Nonnull String address) {
     this.number = number;
     this.address = address;
-    this.hex = hex;
   }
 
   public Integer getNumber() {
@@ -28,9 +25,5 @@ public class AddressDTO extends DatabaseDTO {
 
   public String getAddress() {
     return address;
-  }
-
-  public String getHex() {
-    return hex;
   }
 }

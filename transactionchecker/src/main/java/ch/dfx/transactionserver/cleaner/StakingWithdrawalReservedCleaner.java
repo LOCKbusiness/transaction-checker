@@ -1,5 +1,7 @@
 package ch.dfx.transactionserver.cleaner;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,14 +15,17 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.events.MessageEvent;
 import ch.dfx.transactionserver.data.StakingWithdrawalReservedDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
-import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -30,21 +35,31 @@ public class StakingWithdrawalReservedCleaner {
 
   private PreparedStatement stakingWithdrawalReservedDeleteStatement = null;
 
+  // ...
+  private final NetworkEnum network;
+
   private final H2DBManager databaseManager;
-  private final DatabaseHelper databaseHelper;
+
+  private final DatabaseBlockHelper databaseBlockHelper;
+  private final DatabaseBalanceHelper databaseBalanceHelper;
 
   /**
    * 
    */
-  public StakingWithdrawalReservedCleaner(@Nonnull H2DBManager databaseManager) {
+  public StakingWithdrawalReservedCleaner(
+      @Nonnull NetworkEnum network,
+      @Nonnull H2DBManager databaseManager) {
+    this.network = network;
     this.databaseManager = databaseManager;
-    this.databaseHelper = new DatabaseHelper();
+
+    this.databaseBlockHelper = new DatabaseBlockHelper(network);
+    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
   }
 
   /**
    * 
    */
-  public void clean() throws DfxException {
+  public void clean(@Nonnull TokenEnum token) throws DfxException {
     LOGGER.debug("clean()");
 
     long startTime = System.currentTimeMillis();
@@ -54,17 +69,19 @@ public class StakingWithdrawalReservedCleaner {
     try {
       connection = databaseManager.openConnection();
 
-      databaseHelper.openStatements(connection);
+      databaseBlockHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
-      List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = databaseHelper.getStakingWithdrawalReservedDTOList();
+      List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = databaseBalanceHelper.getStakingWithdrawalReservedDTOList(token);
 
       for (StakingWithdrawalReservedDTO stakingWithdrawalReservedDTO : stakingWithdrawalReservedDTOList) {
         doCleanup(connection, stakingWithdrawalReservedDTO);
       }
 
       closeStatements();
-      databaseHelper.closeStatements();
+      databaseBalanceHelper.closeStatements();
+      databaseBlockHelper.closeStatements();
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
@@ -72,7 +89,7 @@ public class StakingWithdrawalReservedCleaner {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.info("[StakingWithdrawalReservedCleaner] runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.debug("[StakingWithdrawalReservedCleaner] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -84,11 +101,12 @@ public class StakingWithdrawalReservedCleaner {
 
     try {
       String stakingWithdrawalReservedDeleteSql =
-          "DELETE FROM public.staking_withdrawal_reserved"
-              + " WHERE withdrawal_id=?"
+          "DELETE FROM " + TOKEN_NETWORK_SCHEMA + ".staking_withdrawal_reserved"
+              + " WHERE token_number=?"
+              + " AND withdrawal_id=?"
               + " AND transaction_id=?"
               + " AND customer_address=?";
-      stakingWithdrawalReservedDeleteStatement = connection.prepareStatement(stakingWithdrawalReservedDeleteSql);
+      stakingWithdrawalReservedDeleteStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingWithdrawalReservedDeleteSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -116,7 +134,7 @@ public class StakingWithdrawalReservedCleaner {
     try {
       String transactionId = stakingWithdrawalReservedDTO.getTransactionId();
 
-      TransactionDTO transactionDTO = databaseHelper.getTransactionDTOById(transactionId);
+      TransactionDTO transactionDTO = databaseBlockHelper.getTransactionDTOById(transactionId);
 
       if (null == transactionDTO) {
         checkDuration(stakingWithdrawalReservedDTO);
@@ -140,6 +158,7 @@ public class StakingWithdrawalReservedCleaner {
     long hours = duration.toHours();
 
     if (24 < hours) {
+      int tokenNumber = stakingWithdrawalReservedDTO.getTokenNumber();
       Integer withdrawalId = stakingWithdrawalReservedDTO.getWithdrawalId();
       String transactionId = stakingWithdrawalReservedDTO.getTransactionId();
       BigDecimal vout = stakingWithdrawalReservedDTO.getVout();
@@ -147,7 +166,8 @@ public class StakingWithdrawalReservedCleaner {
       String message =
           new StringBuilder()
               .append("Staking Withdrawal Reserved: ").append(hours).append(" hours overtime: ")
-              .append("withdrawalId=").append(withdrawalId)
+              .append("tokenNumber=").append(tokenNumber)
+              .append(" / withdrawalId=").append(withdrawalId)
               .append(" / transactionId=").append(transactionId)
               .append(" / vout=").append(vout.toPlainString())
               .toString();
@@ -166,17 +186,19 @@ public class StakingWithdrawalReservedCleaner {
     LOGGER.trace("deleteStakingWithdrawalReservedDTO()");
 
     try {
+      int tokenNumber = stakingWithdrawalReservedDTO.getTokenNumber();
       Integer withdrawalId = stakingWithdrawalReservedDTO.getWithdrawalId();
       String transactionId = stakingWithdrawalReservedDTO.getTransactionId();
       String customerAddress = stakingWithdrawalReservedDTO.getCustomerAddress();
 
-      LOGGER.info(
-          "[DELETE] Withdrawal Id / Transaction Id / Customer Address: "
-              + withdrawalId + " / " + transactionId + " / " + customerAddress);
+      LOGGER.debug(
+          "[DELETE] Token / Withdrawal Id / Transaction Id / Customer Address: "
+              + tokenNumber + " / " + withdrawalId + " / " + transactionId + " / " + customerAddress);
 
-      stakingWithdrawalReservedDeleteStatement.setInt(1, withdrawalId);
-      stakingWithdrawalReservedDeleteStatement.setString(2, transactionId);
-      stakingWithdrawalReservedDeleteStatement.setString(3, customerAddress);
+      stakingWithdrawalReservedDeleteStatement.setInt(1, tokenNumber);
+      stakingWithdrawalReservedDeleteStatement.setInt(2, withdrawalId);
+      stakingWithdrawalReservedDeleteStatement.setString(3, transactionId);
+      stakingWithdrawalReservedDeleteStatement.setString(4, customerAddress);
 
       stakingWithdrawalReservedDeleteStatement.execute();
 

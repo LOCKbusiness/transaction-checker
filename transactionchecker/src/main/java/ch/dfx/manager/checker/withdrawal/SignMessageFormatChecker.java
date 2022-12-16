@@ -3,6 +3,7 @@ package ch.dfx.manager.checker.withdrawal;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,6 +19,8 @@ import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionRawTxDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
+import ch.dfx.common.enumeration.TokenEnum;
+import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
@@ -107,7 +110,13 @@ public class SignMessageFormatChecker {
       String signMessageStakingId = SIGN_MESSAGE_MATCHER.group(4);
 
       // ...
-      BigDecimal transactionOutAmount = getTransactionOutAmount(transactionData, signMessageAddress);
+      BigDecimal transactionOutAmount;
+      if (TokenEnum.DFI == pendingWithdrawalDTO.getToken()) {
+        transactionOutAmount = getDFITransactionOutAmount(transactionData, signMessageAddress);
+      } else {
+        DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+        transactionOutAmount = getCustomTransactionOutAmount(customData, signMessageAddress);
+      }
 
       boolean isSignMessageAmountValid =
           checkSignMessageAmount(new BigDecimal(signMessageAmount), pendingWithdrawalDTO.getAmount(), transactionOutAmount);
@@ -168,10 +177,10 @@ public class SignMessageFormatChecker {
   /**
    * 
    */
-  private BigDecimal getTransactionOutAmount(
+  private BigDecimal getDFITransactionOutAmount(
       @Nonnull DefiTransactionData transactionData,
       @Nonnull String address) {
-    LOGGER.trace("getTransactionOutAmount()");
+    LOGGER.trace("getDFITransactionOutAmount()");
 
     BigDecimal outAmount = BigDecimal.ZERO;
 
@@ -183,8 +192,48 @@ public class SignMessageFormatChecker {
       if (null != transactionScriptPubKeyData) {
         List<String> addressList = transactionScriptPubKeyData.getAddresses();
 
-        if (addressList.contains(address)) {
+        if (null != addressList
+            && addressList.contains(address)) {
           outAmount = outAmount.add(transactionVoutData.getValue());
+        }
+      }
+    }
+
+    return outAmount;
+  }
+
+  /**
+   * 
+   */
+  private BigDecimal getCustomTransactionOutAmount(
+      @Nonnull DefiCustomData customData,
+      @Nonnull String address) {
+    LOGGER.trace("getDFITransactionOutAmount()");
+
+    BigDecimal outAmount = BigDecimal.ZERO;
+
+    Map<String, Object> resultMap = customData.getResults();
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> toMap = (Map<String, Object>) resultMap.get("to");
+
+    String toValue = (String) toMap.get(address);
+
+    if (null != toValue) {
+      String[] toTokenSplit = toValue.split("\\,");
+
+      for (String toToken : toTokenSplit) {
+        String[] toValueSplit = toToken.split("\\@");
+
+        if (2 == toValueSplit.length) {
+          String amountAsString = toValueSplit[0];
+          String tokenAsString = toValueSplit[1];
+
+          TokenEnum token = TokenEnum.createWithNumber(Integer.parseInt(tokenAsString));
+
+          if (TokenEnum.DUSD == token) {
+            outAmount = outAmount.add(new BigDecimal(amountAsString));
+          }
         }
       }
     }

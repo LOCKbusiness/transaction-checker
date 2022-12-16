@@ -1,5 +1,8 @@
 package ch.dfx.transactionserver.builder;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,14 +15,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.masternode.DefiMasternodeData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
-import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -33,18 +38,27 @@ public class MasternodeBuilder {
   private PreparedStatement masternodeUpdateStatement = null;
 
   // ...
+  private final NetworkEnum network;
+
   private final H2DBManager databaseManager;
-  private final DatabaseHelper databaseHelper;
+
+  private final DatabaseBlockHelper databaseBlockHelper;
+  private final DatabaseBalanceHelper databaseBalanceHelper;
 
   private final DefiDataProvider dataProvider;
 
   /**
    * 
    */
-  public MasternodeBuilder(@Nonnull H2DBManager databaseManager) {
+  public MasternodeBuilder(
+      @Nonnull NetworkEnum network,
+      @Nonnull H2DBManager databaseManager) {
+    this.network = network;
     this.databaseManager = databaseManager;
 
-    this.databaseHelper = new DatabaseHelper();
+    this.databaseBlockHelper = new DatabaseBlockHelper(network);
+    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
 
@@ -61,16 +75,18 @@ public class MasternodeBuilder {
     try {
       connection = databaseManager.openConnection();
 
-      databaseHelper.openStatements(connection);
+      databaseBlockHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
-      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseHelper.getMasternodeWhitelistDTOList();
+      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBalanceHelper.getMasternodeWhitelistDTOList();
 
       fillMasternodeWhitelistDTO(masternodeWhitelistDTOList);
       updateMasternodeWhitelistDTO(connection, masternodeWhitelistDTOList);
 
       closeStatements();
-      databaseHelper.closeStatements();
+      databaseBalanceHelper.closeStatements();
+      databaseBlockHelper.closeStatements();
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
@@ -78,7 +94,7 @@ public class MasternodeBuilder {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.info("[MasternodeBuilder] runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.debug("[MasternodeBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -89,11 +105,11 @@ public class MasternodeBuilder {
     LOGGER.trace("openStatements()");
 
     try {
-      String masternodeSelectSql = "SELECT * FROM public.masternode_whitelist";
-      masternodeSelectStatement = connection.prepareStatement(masternodeSelectSql);
+      String masternodeSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".masternode_whitelist";
+      masternodeSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, masternodeSelectSql));
 
       String masternodeUpdateSql =
-          "UPDATE public.masternode_whitelist"
+          "UPDATE " + TOKEN_NETWORK_SCHEMA + ".masternode_whitelist"
               + " SET txid=?"
               + ", operator_address=?"
               + ", reward_address=?"
@@ -101,22 +117,22 @@ public class MasternodeBuilder {
               + ", resign_block_number=?"
               + ", state=?"
               + " WHERE wallet_id=? AND owner_address=?";
-      masternodeUpdateStatement = connection.prepareStatement(masternodeUpdateSql);
+      masternodeUpdateStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, masternodeUpdateSql));
 
       // ...
       String masternodeTransactionSelectSql =
           "SELECT"
               + " t.txid"
-              + " FROM ADDRESS_TRANSACTION_IN at_in"
-              + " JOIN ADDRESS_TRANSACTION_OUT at_out ON"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in at_in"
+              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out at_out ON"
               + " at_in.block_number = at_out.block_number"
               + " AND at_in.transaction_number = at_out.transaction_number"
               + " AND at_in.address_number = at_out.address_number"
-              + " JOIN TRANSACTION t ON"
+              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".transaction t ON"
               + " at_in.block_number = t.block_number"
               + " AND at_in.transaction_number = t.number"
               + " WHERE at_in.address_number=?";
-      masternodeTransactionSelectStatement = connection.prepareStatement(masternodeTransactionSelectSql);
+      masternodeTransactionSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, masternodeTransactionSelectSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -148,7 +164,7 @@ public class MasternodeBuilder {
       String ownerAddress = masternodeWhitelistDTO.getOwnerAddress();
 
       if (null == masternodeWhitelistDTO.getTransactionId()) {
-        AddressDTO addressDTO = databaseHelper.getAddressDTOByAddress(ownerAddress);
+        AddressDTO addressDTO = databaseBlockHelper.getAddressDTOByAddress(ownerAddress);
 
         if (null != addressDTO) {
           LOGGER.trace("Fill New Masternode " + masternodeWhitelistDTO.getIdx() + ": " + ownerAddress);
@@ -246,7 +262,7 @@ public class MasternodeBuilder {
     try {
       String ownerAddress = masternodeWhitelistDTO.getOwnerAddress();
 
-      LOGGER.info("[UPDATE] Owner Address: " + ownerAddress);
+      LOGGER.debug("[UPDATE] Owner Address: " + ownerAddress);
 
       masternodeUpdateStatement.setString(1, masternodeWhitelistDTO.getTransactionId());
       masternodeUpdateStatement.setString(2, masternodeWhitelistDTO.getOperatorAddress());

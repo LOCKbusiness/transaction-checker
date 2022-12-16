@@ -15,6 +15,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -49,6 +50,9 @@ import ch.dfx.common.provider.ConfigPropertyProvider;
  */
 public class ApiAccessHandlerImpl implements ApiAccessHandler {
   private static final Logger LOGGER = LogManager.getLogger(ApiAccessHandlerImpl.class);
+
+  // ...
+  private static final int HTTP_CLIENT_TIMEOUT = 10 * 1000;
 
   // ...
   private final NetworkEnum network;
@@ -454,7 +458,16 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("getHttpClient()");
 
     if (null == httpClient) {
-      httpClient = HttpClientBuilder.create().build();
+      RequestConfig requestConfig =
+          RequestConfig.custom()
+              .setConnectTimeout(HTTP_CLIENT_TIMEOUT)
+              .setConnectionRequestTimeout(HTTP_CLIENT_TIMEOUT)
+              .setSocketTimeout(HTTP_CLIENT_TIMEOUT).build();
+
+      httpClient =
+          HttpClientBuilder.create()
+              .setDefaultRequestConfig(requestConfig)
+              .build();
     }
 
     return httpClient;

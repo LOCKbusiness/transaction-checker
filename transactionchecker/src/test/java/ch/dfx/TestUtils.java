@@ -44,6 +44,7 @@ import ch.dfx.httpserver.handler.APISignInHandler;
 import ch.dfx.httpserver.handler.APITransactionRequestHandler;
 import ch.dfx.httpserver.handler.APIWithdrawalRequestHandler;
 import ch.dfx.manager.OpenTransactionManagerTest;
+import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
 
 /**
@@ -213,6 +214,7 @@ public class TestUtils {
    * 
    */
   public static List<Map<String, Object>> sqlSelect(
+      @Nonnull String tokenSchema,
       @Nonnull String tableName,
       @Nullable String whereSql) {
     LOGGER.debug("sqlSelect()");
@@ -222,17 +224,18 @@ public class TestUtils {
     try {
       StringBuilder sqlSelectBuilder = new StringBuilder();
 
-      sqlSelectBuilder.append("SELECT * FROM ").append(tableName);
+      sqlSelectBuilder.append("SELECT * FROM ").append(tokenSchema).append(".").append(tableName);
 
       if (null != whereSql) {
         sqlSelectBuilder.append(" WHERE ").append(whereSql);
       }
 
-      LOGGER.debug(sqlSelectBuilder);
+      String sqlSelect = DatabaseUtils.replaceSchema(NetworkEnum.TESTNET, sqlSelectBuilder.toString());
+      LOGGER.debug(sqlSelect);
 
       Statement statement = connection.createStatement();
 
-      ResultSet resultSet = statement.executeQuery(sqlSelectBuilder.toString());
+      ResultSet resultSet = statement.executeQuery(sqlSelect);
 
       ResultSetMetaData metaData = resultSet.getMetaData();
       int columnCount = metaData.getColumnCount();
@@ -263,6 +266,7 @@ public class TestUtils {
    * 
    */
   public static void sqlInsert(
+      @Nonnull String tokenSchema,
       @Nonnull String tableName,
       @Nonnull String fieldNames,
       @Nonnull String values) {
@@ -271,14 +275,15 @@ public class TestUtils {
     try {
       StringBuilder sqlInsertBuilder = new StringBuilder();
 
-      sqlInsertBuilder.append("INSERT INTO ").append(tableName);
+      sqlInsertBuilder.append("INSERT INTO ").append(tokenSchema).append(".").append(tableName);
       sqlInsertBuilder.append(" (").append(fieldNames).append(")");
       sqlInsertBuilder.append(" VALUES (").append(values).append(")");
 
-      LOGGER.debug(sqlInsertBuilder);
+      String sqlInsert = DatabaseUtils.replaceSchema(NetworkEnum.TESTNET, sqlInsertBuilder.toString());
+      LOGGER.debug(sqlInsert);
 
       Statement statement = connection.createStatement();
-      statement.execute(sqlInsertBuilder.toString());
+      statement.execute(sqlInsert);
       statement.close();
 
       connection.commit();
@@ -290,14 +295,17 @@ public class TestUtils {
   /**
    * 
    */
-  public static void sqlDelete(@Nonnull String tableName) {
-    sqlDelete(tableName, null);
+  public static void sqlDelete(
+      @Nonnull String tokenSchema,
+      @Nonnull String tableName) {
+    sqlDelete(tokenSchema, tableName, null);
   }
 
   /**
    * 
    */
   public static void sqlDelete(
+      @Nonnull String tokenSchema,
       @Nonnull String tableName,
       @Nullable String whereSql) {
     LOGGER.debug("sqlDelete()");
@@ -305,16 +313,17 @@ public class TestUtils {
     try {
       StringBuilder sqlDeleteBuilder = new StringBuilder();
 
-      sqlDeleteBuilder.append("DELETE FROM ").append(tableName);
+      sqlDeleteBuilder.append("DELETE FROM ").append(tokenSchema).append(".").append(tableName);
 
       if (null != whereSql) {
         sqlDeleteBuilder.append(" WHERE ").append(whereSql);
       }
 
-      LOGGER.debug(sqlDeleteBuilder);
+      String sqlDelete = DatabaseUtils.replaceSchema(NetworkEnum.TESTNET, sqlDeleteBuilder.toString());
+      LOGGER.debug(sqlDelete);
 
       Statement statement = connection.createStatement();
-      statement.execute(sqlDeleteBuilder.toString());
+      statement.execute(sqlDelete);
       statement.close();
 
       connection.commit();
@@ -364,9 +373,9 @@ public class TestUtils {
 
     httpServer.start();
 
-    LOGGER.info("=========================================");
+    LOGGER.debug("=========================================");
     LOGGER.info("HTTP Server started: Port " + PORT);
-    LOGGER.info("=========================================");
+    LOGGER.debug("=========================================");
   }
 
   /**

@@ -37,7 +37,7 @@ public class WithdrawalManager {
 
     this.signMessageFormatChecker = new SignMessageFormatChecker(dataProvider);
     this.signMessageSignatureChecker = new SignMessageSignatureChecker(network);
-    this.stakingBalanceChecker = new StakingBalanceChecker(databaseManager);
+    this.stakingBalanceChecker = new StakingBalanceChecker(network, databaseManager);
   }
 
   /**
@@ -65,7 +65,6 @@ public class WithdrawalManager {
   public TransactionWithdrawalDTOList checkStakingBalance(@Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
     LOGGER.trace("checkStakingBalance()");
 
-//    return stakingBalanceChecker.checkStakingBalance(transactionWithdrawalDTOList);
-    return stakingBalanceChecker.checkStakingBalanceNew(transactionWithdrawalDTOList);
+    return stakingBalanceChecker.checkStakingBalance(transactionWithdrawalDTOList);
   }
 }

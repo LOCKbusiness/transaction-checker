@@ -9,6 +9,8 @@ import javax.annotation.Nullable;
  * 
  */
 public class StakingDTO extends DatabaseDTO {
+  private final int tokenNumber;
+
   private final int liquidityAddressNumber;
   private final int depositAddressNumber;
   private final int customerAddressNumber;
@@ -29,12 +31,18 @@ public class StakingDTO extends DatabaseDTO {
    * 
    */
   public StakingDTO(
+      int tokenNumber,
       int liquidityAddressNumber,
       int depositAddressNumber,
       int customerAddressNumber) {
+    this.tokenNumber = tokenNumber;
     this.liquidityAddressNumber = liquidityAddressNumber;
     this.depositAddressNumber = depositAddressNumber;
     this.customerAddressNumber = customerAddressNumber;
+  }
+
+  public int getTokenNumber() {
+    return tokenNumber;
   }
 
   public int getLiquidityAddressNumber() {

@@ -51,7 +51,7 @@ public class MasternodeBuilderMain {
       H2DBManager databaseManager = new H2DBManagerImpl();
 
       // ...
-      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(databaseManager);
+      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(network, databaseManager);
       masternodeBuilder.build();
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);

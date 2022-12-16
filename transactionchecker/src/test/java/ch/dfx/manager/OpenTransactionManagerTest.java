@@ -1,5 +1,6 @@
 package ch.dfx.manager;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -20,6 +21,7 @@ import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
 
 /**
@@ -74,7 +76,10 @@ public class OpenTransactionManagerTest {
    */
   @Before
   public void before() {
-    TestUtils.sqlDelete("public.api_duplicate_check");
+    String deleteSql = "api_duplicate_check";
+    deleteSql = DatabaseUtils.replaceSchema(NetworkEnum.TESTNET, deleteSql);
+
+    TestUtils.sqlDelete(TOKEN_NETWORK_SCHEMA, deleteSql);
   }
 
   @Test

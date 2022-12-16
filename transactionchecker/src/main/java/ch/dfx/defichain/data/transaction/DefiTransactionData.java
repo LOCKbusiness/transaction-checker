@@ -15,6 +15,8 @@ public class DefiTransactionData extends ResultDataA {
   private List<DefiTransactionVinData> vin = null;
   private List<DefiTransactionVoutData> vout = null;
 
+  private String hex = null;
+
   /**
    * 
    */
@@ -51,6 +53,14 @@ public class DefiTransactionData extends ResultDataA {
 
   public void setVout(List<DefiTransactionVoutData> vout) {
     this.vout = vout;
+  }
+
+  public String getHex() {
+    return hex;
+  }
+
+  public void setHex(String hex) {
+    this.hex = hex;
   }
 
   @Override

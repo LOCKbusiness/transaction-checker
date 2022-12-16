@@ -3,6 +3,7 @@ package ch.dfx.api.data.withdrawal;
 import java.math.BigDecimal;
 
 import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.enumeration.TokenEnum;
 
 /**
  * 
@@ -15,6 +16,8 @@ public class PendingWithdrawalDTO {
   private String asset = null;
 
   private BigDecimal amount = null;
+
+  private TokenEnum token = null;
 
   /**
    * 
@@ -60,6 +63,14 @@ public class PendingWithdrawalDTO {
 
   public void setAmount(BigDecimal amount) {
     this.amount = amount;
+  }
+
+  public TokenEnum getToken() {
+    return token;
+  }
+
+  public void setToken(TokenEnum token) {
+    this.token = token;
   }
 
   @Override

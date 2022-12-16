@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -23,6 +24,9 @@ import ch.dfx.common.provider.ConfigPropertyProvider;
  */
 public class TelegramNotifier {
   private static final Logger LOGGER = LogManager.getLogger(TelegramNotifier.class);
+
+  // ...
+  private static final int HTTP_CLIENT_TIMEOUT = 10 * 1000;
 
   // ...
   private final String telegramURL;
@@ -62,7 +66,16 @@ public class TelegramNotifier {
                 .append(message)
                 .toString();
 
-        HttpClient httpClient = HttpClientBuilder.create().build();
+        RequestConfig requestConfig =
+            RequestConfig.custom()
+                .setConnectTimeout(HTTP_CLIENT_TIMEOUT)
+                .setConnectionRequestTimeout(HTTP_CLIENT_TIMEOUT)
+                .setSocketTimeout(HTTP_CLIENT_TIMEOUT).build();
+
+        HttpClient httpClient =
+            HttpClientBuilder.create()
+                .setDefaultRequestConfig(requestConfig)
+                .build();
 
         URIBuilder uriBuilder = new URIBuilder(telegramURL);
         uriBuilder.addParameter("chat_id", telegramChatId);

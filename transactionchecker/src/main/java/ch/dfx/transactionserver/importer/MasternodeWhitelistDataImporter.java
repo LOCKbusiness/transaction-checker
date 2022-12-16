@@ -1,5 +1,7 @@
 package ch.dfx.transactionserver.importer;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,8 +27,8 @@ import ch.dfx.transactionserver.importer.data.DataImporterMasternodeOwnerDataLis
 /**
  * 
  */
-public class DataImporter {
-  private static final Logger LOGGER = LogManager.getLogger(DataImporter.class);
+public class MasternodeWhitelistDataImporter {
+  private static final Logger LOGGER = LogManager.getLogger(MasternodeWhitelistDataImporter.class);
 
   private final NetworkEnum network;
 
@@ -41,7 +43,7 @@ public class DataImporter {
   /**
    * 
    */
-  public DataImporter(@Nonnull NetworkEnum network) {
+  public MasternodeWhitelistDataImporter(@Nonnull NetworkEnum network) {
     this.network = network;
 
     this.databaseManager = new H2DBManagerImpl();
@@ -112,8 +114,8 @@ public class DataImporter {
 
     try {
       String masternodeWhitelistInsertSql =
-          "INSERT INTO public.masternode_whitelist (wallet_id, idx, owner_address) VALUES (?, ?, ?)";
-      masternodeWhitelistInsertStatement = connection.prepareStatement(masternodeWhitelistInsertSql);
+          "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".masternode_whitelist (wallet_id, idx, owner_address) VALUES (?, ?, ?)";
+      masternodeWhitelistInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, masternodeWhitelistInsertSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }

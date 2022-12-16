@@ -7,6 +7,8 @@ import java.sql.Timestamp;
  * 
  */
 public class StakingWithdrawalReservedDTO extends DatabaseDTO {
+  private final int tokenNumber;
+
   private Integer withdrawalId = null;
   private String transactionId = null;
   private String customerAddress = null;
@@ -16,7 +18,12 @@ public class StakingWithdrawalReservedDTO extends DatabaseDTO {
   /**
    * 
    */
-  public StakingWithdrawalReservedDTO() {
+  public StakingWithdrawalReservedDTO(int tokenNumber) {
+    this.tokenNumber = tokenNumber;
+  }
+
+  public int getTokenNumber() {
+    return tokenNumber;
   }
 
   public Integer getWithdrawalId() {

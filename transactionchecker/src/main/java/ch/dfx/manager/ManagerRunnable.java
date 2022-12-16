@@ -24,12 +24,11 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   private static final Logger LOGGER = LogManager.getLogger(ManagerRunnable.class);
 
   // ...
+  private final NetworkEnum network;
   private final H2DBManager databaseManager;
   private final ApiAccessHandler apiAccessHandler;
 
   // ...
-  private final NetworkEnum network;
-
   private boolean isProcessing = false;
 
   // ...
@@ -39,8 +38,8 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
    * 
    */
   public ManagerRunnable(
-      @Nonnull H2DBManager databaseManager,
-      @Nonnull NetworkEnum network) {
+      @Nonnull NetworkEnum network,
+      @Nonnull H2DBManager databaseManager) {
     Objects.requireNonNull(databaseManager, "null databaseManager is not allowed");
 
     this.databaseManager = databaseManager;
@@ -73,7 +72,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
     } finally {
       isProcessing = false;
 
-      LOGGER.info("[ManagerRunnable] runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.debug("[ManagerRunnable] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

@@ -1,5 +1,7 @@
 package ch.dfx.manager.checker.transaction;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.database.DatabaseUtils;
@@ -28,17 +31,21 @@ public class DuplicateChecker extends TransactionChecker {
   private PreparedStatement apiDuplicateCheckInsertStatement = null;
 
   // ...
+  private final NetworkEnum network;
+
   private final H2DBManager databaseManager;
 
   /**
    * 
    */
   public DuplicateChecker(
+      @Nonnull NetworkEnum network,
       @Nonnull ApiAccessHandler apiAccessHandler,
       @Nonnull DefiDataProvider dataProvider,
       @Nonnull H2DBManager databaseManager) {
     super(apiAccessHandler, dataProvider);
 
+    this.network = network;
     this.databaseManager = databaseManager;
   }
 
@@ -86,11 +93,11 @@ public class DuplicateChecker extends TransactionChecker {
     LOGGER.trace("openStatements()");
 
     try {
-      String apiDuplicateCheckSelectSql = "SELECT * FROM public.api_duplicate_check WHERE withdrawal_id=? AND transaction_id=?";
-      apiDuplicateCheckSelectStatement = connection.prepareStatement(apiDuplicateCheckSelectSql);
+      String apiDuplicateCheckSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".api_duplicate_check WHERE withdrawal_id=? AND transaction_id=?";
+      apiDuplicateCheckSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, apiDuplicateCheckSelectSql));
 
-      String apiDuplicateCheckInsertSql = "INSERT INTO public.api_duplicate_check (withdrawal_id, transaction_id) VALUES (?, ?)";
-      apiDuplicateCheckInsertStatement = connection.prepareStatement(apiDuplicateCheckInsertSql);
+      String apiDuplicateCheckInsertSql = "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".api_duplicate_check (withdrawal_id, transaction_id) VALUES (?, ?)";
+      apiDuplicateCheckInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, apiDuplicateCheckInsertSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -168,7 +175,7 @@ public class DuplicateChecker extends TransactionChecker {
 
       isValid = true;
     } catch (Exception e) {
-      LOGGER.info("apiDuplicateCheckInsert: WithdrawId=" + withdrawalId + " / TransactionId=" + transactionId);
+      LOGGER.info("Duplicate: WithdrawId=" + withdrawalId + " / TransactionId=" + transactionId);
       isValid = false;
     }
 

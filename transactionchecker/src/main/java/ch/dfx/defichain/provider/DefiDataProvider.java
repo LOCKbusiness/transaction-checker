@@ -60,6 +60,8 @@ public interface DefiDataProvider {
 
   DefiCustomData decodeCustomTransaction(@Nonnull String hexString) throws DfxException;
 
+  byte getCustomType(@Nonnull String scriptPubKeyHexString) throws DfxException;
+
   Map<String, DefiMasternodeData> getMasternode(
       @Nonnull String wallet,
       @Nonnull String transactionId) throws DfxException;

@@ -4,6 +4,8 @@ package ch.dfx.transactionserver.data;
  * 
  */
 public class StakingAddressDTO extends DatabaseDTO {
+  private final int tokenNumber;
+
   private int liquidityAddressNumber = -1;
   private int rewardAddressNumber = -1;
   private int startBlockNumber = -1;
@@ -15,7 +17,12 @@ public class StakingAddressDTO extends DatabaseDTO {
   /**
    * 
    */
-  public StakingAddressDTO() {
+  public StakingAddressDTO(int tokenNumber) {
+    this.tokenNumber = tokenNumber;
+  }
+
+  public int getTokenNumber() {
+    return tokenNumber;
   }
 
   public int getLiquidityAddressNumber() {

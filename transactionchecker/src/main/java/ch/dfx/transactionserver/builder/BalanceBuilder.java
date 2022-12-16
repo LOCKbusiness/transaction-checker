@@ -1,5 +1,8 @@
 package ch.dfx.transactionserver.builder;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,13 +15,15 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.BalanceDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
-import ch.dfx.transactionserver.database.DatabaseHelper;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 
 /**
  * 
@@ -26,6 +31,7 @@ import ch.dfx.transactionserver.database.H2DBManager;
 public class BalanceBuilder {
   private static final Logger LOGGER = LogManager.getLogger(BalanceBuilder.class);
 
+  // ...
   private PreparedStatement voutSelectStatement = null;
   private PreparedStatement vinSelectStatement = null;
 
@@ -33,21 +39,28 @@ public class BalanceBuilder {
   private PreparedStatement balanceUpdateStatement = null;
 
   // ...
+  private final NetworkEnum network;
+
   private final H2DBManager databaseManager;
-  private final DatabaseHelper databaseHelper;
+
+  private final DatabaseBalanceHelper databaseBalanceHelper;
 
   /**
    * 
    */
-  public BalanceBuilder(@Nonnull H2DBManager databaseManager) {
+  public BalanceBuilder(
+      @Nonnull NetworkEnum network,
+      @Nonnull H2DBManager databaseManager) {
+    this.network = network;
     this.databaseManager = databaseManager;
-    this.databaseHelper = new DatabaseHelper();
+
+    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
   }
 
   /**
    * 
    */
-  public void build() throws DfxException {
+  public void build(@Nonnull TokenEnum token) throws DfxException {
     LOGGER.debug("build()");
 
     long startTime = System.currentTimeMillis();
@@ -57,14 +70,14 @@ public class BalanceBuilder {
     try {
       connection = databaseManager.openConnection();
 
-      databaseHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
-      calcStakingAddressBalance(connection);
-      calcDepositBalance(connection);
+      calcStakingAddressBalance(connection, token);
+      calcDepositBalance(connection, token);
 
       closeStatements();
-      databaseHelper.closeStatements();
+      databaseBalanceHelper.closeStatements();
 
       connection.commit();
     } catch (DfxException e) {
@@ -76,7 +89,7 @@ public class BalanceBuilder {
     } finally {
       databaseManager.closeConnection(connection);
 
-      LOGGER.info("[BalanceBuilder] runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.debug("[BalanceBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 
@@ -87,20 +100,32 @@ public class BalanceBuilder {
     LOGGER.trace("openStatements()");
 
     try {
-      // Balance ...
-      String balanceInsertSql = "INSERT INTO public.balance (address_number, block_number, transaction_count, vout, vin) VALUES(?, ?, ?, ?, ?)";
-      balanceInsertStatement = connection.prepareStatement(balanceInsertSql);
-
-      String balanceUpdateSql = "UPDATE public.balance SET block_number=?, transaction_count=?, vout=?, vin=? WHERE address_number=?";
-      balanceUpdateStatement = connection.prepareStatement(balanceUpdateSql);
-
       // Vout ...
-      String voutSelectSql = "SELECT block_number, vout FROM public.address_transaction_out WHERE block_number>? and address_number=?";
-      voutSelectStatement = connection.prepareStatement(voutSelectSql);
+      String voutSelectSql =
+          "SELECT block_number, vout"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out"
+              + " WHERE block_number>? AND address_number=?";
+      voutSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, voutSelectSql));
 
       // Vin ...
-      String vinSelectSql = "SELECT block_number, vin FROM public.address_transaction_in WHERE block_number>? and address_number=?";
-      vinSelectStatement = connection.prepareStatement(vinSelectSql);
+      String vinSelectSql =
+          "SELECT block_number, vin"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in"
+              + " WHERE block_number>? AND address_number=?";
+      vinSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, vinSelectSql));
+
+      // Balance ...
+      String balanceInsertSql =
+          "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".balance"
+              + " (token_number, address_number, block_number, transaction_count, vout, vin)"
+              + " VALUES(?, ?, ?, ?, ?, ?)";
+      balanceInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, balanceInsertSql));
+
+      String balanceUpdateSql =
+          "UPDATE " + TOKEN_NETWORK_SCHEMA + ".balance"
+              + " SET block_number=?, transaction_count=?, vout=?, vin=?"
+              + " WHERE token_number=? AND address_number=?";
+      balanceUpdateStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, balanceUpdateSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -113,11 +138,11 @@ public class BalanceBuilder {
     LOGGER.trace("closeStatements()");
 
     try {
-      balanceInsertStatement.close();
-      balanceUpdateStatement.close();
-
       voutSelectStatement.close();
       vinSelectStatement.close();
+
+      balanceInsertStatement.close();
+      balanceUpdateStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
     }
@@ -126,12 +151,14 @@ public class BalanceBuilder {
   /**
    * 
    */
-  private void calcStakingAddressBalance(@Nonnull Connection connection) throws DfxException {
+  private void calcStakingAddressBalance(
+      @Nonnull Connection connection,
+      @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("calcStakingAddressBalance()");
 
     Set<Integer> stakingAddressNumberSet = new HashSet<>();
 
-    List<StakingAddressDTO> stakingAddressDTOList = databaseHelper.getStakingAddressDTOList();
+    List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
 
     for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
       stakingAddressNumberSet.add(stakingAddressDTO.getLiquidityAddressNumber());
@@ -140,7 +167,7 @@ public class BalanceBuilder {
 
     for (int stakingAddressNumber : stakingAddressNumberSet) {
       if (-1 != stakingAddressNumber) {
-        calcBalance(connection, stakingAddressNumber);
+        calcBalance(connection, token, stakingAddressNumber);
       }
     }
   }
@@ -148,13 +175,15 @@ public class BalanceBuilder {
   /**
    * 
    */
-  private void calcDepositBalance(@Nonnull Connection connection) throws DfxException {
+  private void calcDepositBalance(
+      @Nonnull Connection connection,
+      @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("calcDepositBalance()");
 
-    List<DepositDTO> depositDTOList = databaseHelper.getDepositDTOList();
+    List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList(token);
 
     for (DepositDTO depositDTO : depositDTOList) {
-      calcBalance(connection, depositDTO.getDepositAddressNumber());
+      calcBalance(connection, token, depositDTO.getDepositAddressNumber());
     }
   }
 
@@ -163,22 +192,23 @@ public class BalanceBuilder {
    */
   private void calcBalance(
       @Nonnull Connection connection,
+      @Nonnull TokenEnum token,
       int addressNumber) throws DfxException {
     LOGGER.trace("calcBalance()");
 
     try {
-      BalanceDTO balanceDTO = databaseHelper.getBalanceDTOByAddressNumber(addressNumber);
+      BalanceDTO balanceDTO = databaseBalanceHelper.getBalanceDTOByAddressNumber(token, addressNumber);
 
       if (null == balanceDTO) {
-        balanceDTO = new BalanceDTO(addressNumber);
+        balanceDTO = new BalanceDTO(token.getNumber(), addressNumber);
       }
 
       // ...
       int balanceBlockNumber = balanceDTO.getBlockNumber();
 
       // ...
-      BalanceDTO voutBalanceDTO = calcVout(balanceBlockNumber, addressNumber);
-      BalanceDTO vinBalanceDTO = calcVin(balanceBlockNumber, addressNumber);
+      BalanceDTO voutBalanceDTO = calcVout(balanceBlockNumber, token, addressNumber);
+      BalanceDTO vinBalanceDTO = calcVin(balanceBlockNumber, token, addressNumber);
 
       // ...
       int maxBalanceBlockNumber = balanceBlockNumber;
@@ -210,6 +240,7 @@ public class BalanceBuilder {
    */
   private BalanceDTO calcVout(
       int balanceBlockNumber,
+      @Nonnull TokenEnum token,
       int addressNumber) throws DfxException {
     LOGGER.trace("calcVout()");
 
@@ -217,7 +248,7 @@ public class BalanceBuilder {
       voutSelectStatement.setInt(1, balanceBlockNumber);
       voutSelectStatement.setInt(2, addressNumber);
 
-      BalanceDTO balanceDTO = new BalanceDTO(addressNumber);
+      BalanceDTO balanceDTO = new BalanceDTO(token.getNumber(), addressNumber);
 
       int maxBlockNumber = -1;
 
@@ -245,6 +276,7 @@ public class BalanceBuilder {
    */
   private BalanceDTO calcVin(
       int balanceBlockNumber,
+      @Nonnull TokenEnum token,
       int addressNumber) throws DfxException {
     LOGGER.trace("calcVin()");
 
@@ -252,7 +284,7 @@ public class BalanceBuilder {
       vinSelectStatement.setInt(1, balanceBlockNumber);
       vinSelectStatement.setInt(2, addressNumber);
 
-      BalanceDTO balanceDTO = new BalanceDTO(addressNumber);
+      BalanceDTO balanceDTO = new BalanceDTO(token.getNumber(), addressNumber);
 
       int maxBlockNumber = -1;
 
@@ -282,18 +314,20 @@ public class BalanceBuilder {
     LOGGER.trace("insertBalance()");
 
     try {
+      int tokenNumber = balanceDTO.getTokenNumber();
       int addressNumber = balanceDTO.getAddressNumber();
       int blockNumber = balanceDTO.getBlockNumber();
 
-      LOGGER.info(
-          "[INSERT] Address / Block: "
-              + addressNumber + " / " + blockNumber);
+      LOGGER.debug(
+          "[INSERT] Token / Address / Block: "
+              + tokenNumber + " / " + addressNumber + " / " + blockNumber);
 
-      balanceInsertStatement.setInt(1, addressNumber);
-      balanceInsertStatement.setInt(2, blockNumber);
-      balanceInsertStatement.setInt(3, balanceDTO.getTransactionCount());
-      balanceInsertStatement.setBigDecimal(4, balanceDTO.getVout());
-      balanceInsertStatement.setBigDecimal(5, balanceDTO.getVin());
+      balanceInsertStatement.setInt(1, tokenNumber);
+      balanceInsertStatement.setInt(2, addressNumber);
+      balanceInsertStatement.setInt(3, blockNumber);
+      balanceInsertStatement.setInt(4, balanceDTO.getTransactionCount());
+      balanceInsertStatement.setBigDecimal(5, balanceDTO.getVout());
+      balanceInsertStatement.setBigDecimal(6, balanceDTO.getVin());
       balanceInsertStatement.execute();
     } catch (Exception e) {
       throw new DfxException("insertBalance", e);
@@ -307,18 +341,21 @@ public class BalanceBuilder {
     LOGGER.trace("updateBalance()");
 
     try {
+      int tokenNumber = balanceDTO.getTokenNumber();
       int addressNumber = balanceDTO.getAddressNumber();
       int blockNumber = balanceDTO.getBlockNumber();
 
-      LOGGER.info(
-          "[UPDATE] Address / Block: "
-              + addressNumber + " / " + blockNumber);
+      LOGGER.debug(
+          "[UPDATE] Token / Address / Block: "
+              + tokenNumber + " / " + addressNumber + " / " + blockNumber);
 
       balanceUpdateStatement.setInt(1, blockNumber);
       balanceUpdateStatement.setInt(2, balanceDTO.getTransactionCount());
       balanceUpdateStatement.setBigDecimal(3, balanceDTO.getVout());
       balanceUpdateStatement.setBigDecimal(4, balanceDTO.getVin());
-      balanceUpdateStatement.setInt(5, addressNumber);
+
+      balanceUpdateStatement.setInt(5, tokenNumber);
+      balanceUpdateStatement.setInt(6, addressNumber);
       balanceUpdateStatement.execute();
     } catch (Exception e) {
       throw new DfxException("updateBalance", e);

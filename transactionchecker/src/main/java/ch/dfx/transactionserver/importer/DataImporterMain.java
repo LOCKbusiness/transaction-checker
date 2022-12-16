@@ -47,7 +47,10 @@ public class DataImporterMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      DataImporter dataImporter = new DataImporter(network);
+//      MasternodeWhitelistDataImporter dataImporter = new MasternodeWhitelistDataImporter(network);
+//      dataImporter.execute();
+
+      TokenDataImporter dataImporter = new TokenDataImporter(network);
       dataImporter.execute();
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);

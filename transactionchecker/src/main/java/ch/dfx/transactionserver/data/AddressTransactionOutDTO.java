@@ -2,16 +2,14 @@ package ch.dfx.transactionserver.data;
 
 import java.math.BigDecimal;
 
-import javax.annotation.Nonnull;
-
 /**
  * 
  */
 public class AddressTransactionOutDTO extends DatabaseDTO {
-  private final Integer blockNumber;
-  private final Integer transactionNumber;
-  private final Integer voutNumber;
-  private final Integer addressNumber;
+  private final int blockNumber;
+  private final int transactionNumber;
+  private final int voutNumber;
+  private final int addressNumber;
 
   private BigDecimal vout = null;
   private String type = null;
@@ -20,29 +18,29 @@ public class AddressTransactionOutDTO extends DatabaseDTO {
    * 
    */
   public AddressTransactionOutDTO(
-      @Nonnull Integer blockNumber,
-      @Nonnull Integer transactionNumber,
-      @Nonnull Integer voutNumber,
-      @Nonnull Integer addressNumber) {
+      int blockNumber,
+      int transactionNumber,
+      int voutNumber,
+      int addressNumber) {
     this.blockNumber = blockNumber;
     this.transactionNumber = transactionNumber;
     this.voutNumber = voutNumber;
     this.addressNumber = addressNumber;
   }
 
-  public Integer getBlockNumber() {
+  public int getBlockNumber() {
     return blockNumber;
   }
 
-  public Integer getTransactionNumber() {
+  public int getTransactionNumber() {
     return transactionNumber;
   }
 
-  public Integer getVoutNumber() {
+  public int getVoutNumber() {
     return voutNumber;
   }
 
-  public Integer getAddressNumber() {
+  public int getAddressNumber() {
     return addressNumber;
   }
 

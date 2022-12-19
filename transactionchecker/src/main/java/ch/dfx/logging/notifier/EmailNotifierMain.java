@@ -38,7 +38,7 @@ public class EmailNotifierMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
-      TransactionCheckerUtils.loadConfigProperties(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment);
 
       // ...
       LOGGER.debug("=".repeat(80));

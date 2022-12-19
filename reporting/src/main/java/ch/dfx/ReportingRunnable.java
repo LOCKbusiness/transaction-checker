@@ -90,9 +90,14 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       String stakingBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_STAKING_SHEET);
       String yieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_YIELDMACHINE_SHEET);
 
-      BalanceReporting stakingBalanceReporting = new BalanceReporting(network, databaseManager, logInfoList);
-      stakingBalanceReporting.report(TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
-      stakingBalanceReporting.report(TokenEnum.DUSD, rootPath, balanceFileName, yieldmachineBalanceSheet);
+      if (null != rootPath
+          && null != balanceFileName
+          && null != stakingBalanceSheet
+          && null != yieldmachineBalanceSheet) {
+        BalanceReporting stakingBalanceReporting = new BalanceReporting(network, databaseManager, logInfoList);
+        stakingBalanceReporting.report(TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
+        stakingBalanceReporting.report(TokenEnum.DUSD, rootPath, balanceFileName, yieldmachineBalanceSheet);
+      }
     } catch (Exception e) {
       LOGGER.error("executeStakingBalanceReport", e);
     }
@@ -109,8 +114,13 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       String checkFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_FILENAME);
       String checkSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_SHEET);
 
-      LiquidityMasternodeStakingReporting liquidityMasternodeStakingReporting = new LiquidityMasternodeStakingReporting(network, databaseManager, logInfoList);
-      liquidityMasternodeStakingReporting.report(TokenEnum.DFI, rootPath, checkFileName, checkSheet);
+      if (null != rootPath
+          && null != checkFileName
+          && null != checkSheet) {
+        LiquidityMasternodeStakingReporting liquidityMasternodeStakingReporting =
+            new LiquidityMasternodeStakingReporting(network, databaseManager, logInfoList);
+        liquidityMasternodeStakingReporting.report(TokenEnum.DFI, rootPath, checkFileName, checkSheet);
+      }
     } catch (Exception e) {
       LOGGER.error("executeLiquidityMasternodeStakingBalanceReport", e);
     }

@@ -35,6 +35,18 @@ public class DefiMessageHandler {
     String password = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_PASSWORD);
     String signAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_SIGN_ADDRESS);
 
+    if (null == wallet) {
+      throw new DfxException("wallet is null");
+    }
+
+    if (null == password) {
+      throw new DfxException("password is null");
+    }
+
+    if (null == signAddress) {
+      throw new DfxException("signAddress is null");
+    }
+
     dataProvider.walletPassphrase(wallet, password, 10);
     String signedMessage = dataProvider.signMessage(wallet, signAddress, message);
     dataProvider.walletLock(wallet);

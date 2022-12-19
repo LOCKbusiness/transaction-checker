@@ -55,7 +55,7 @@ public class HttpServerMain {
       ((DefaultShutdownCallbackRegistry) factory.getShutdownCallbackRegistry()).stop();
 
       // ...
-      TransactionCheckerUtils.loadConfigProperties(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment);
 
       // ...
       Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));

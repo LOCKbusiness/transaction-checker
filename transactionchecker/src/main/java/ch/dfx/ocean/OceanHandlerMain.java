@@ -83,7 +83,7 @@ public class OceanHandlerMain {
     TransactionCheckerUtils.initLog4j("log4j2.xml");
 
     // ...
-    TransactionCheckerUtils.loadConfigProperties(network, environment);
+    TransactionCheckerUtils.setupGlobalProvider(network, environment);
 
     // ...
     OceanHandlerMain oceanHandler = new OceanHandlerMain(network);

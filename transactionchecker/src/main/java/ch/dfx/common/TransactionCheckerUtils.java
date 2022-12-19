@@ -37,6 +37,7 @@ import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.common.provider.TokenProvider;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.defichain.provider.DefiDataProviderImpl;
 import ch.dfx.security.EncryptionForSecrets;
@@ -141,10 +142,22 @@ public class TransactionCheckerUtils {
   /**
    * 
    */
-  public static void loadConfigProperties(
+  public static void setupGlobalProvider(
       @Nonnull NetworkEnum network,
       @Nonnull EnvironmentEnum environment) throws DfxException {
-    LOGGER.trace("loadConfigProperties()");
+    LOGGER.trace("setupGlobalProvider()");
+
+    setupTokenProvider(network);
+    setupConfigPropertyProvider(network, environment);
+  }
+
+  /**
+   * 
+   */
+  private static void setupConfigPropertyProvider(
+      @Nonnull NetworkEnum network,
+      @Nonnull EnvironmentEnum environment) throws DfxException {
+    LOGGER.trace("setupConfigPropertyProvider()");
 
     // ...
     File configDirectory = Paths.get("config", "properties", network.toString()).toFile();
@@ -197,6 +210,15 @@ public class TransactionCheckerUtils {
     }
 
     ConfigPropertyProvider.setup(properties);
+  }
+
+  /**
+   * 
+   */
+  private static void setupTokenProvider(@Nonnull NetworkEnum network) throws DfxException {
+    LOGGER.trace("setupTokenProvider()");
+
+    TokenProvider.setup(network);
   }
 
   /**

@@ -75,7 +75,7 @@ public class TransactionServerMain {
       TransactionCheckerUtils.initLog4j("log4j2-transactionserver.xml");
 
       // ...
-      TransactionCheckerUtils.loadConfigProperties(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment);
 
       // ...
       LOGGER.debug("=".repeat(80));
@@ -249,10 +249,13 @@ public class TransactionServerMain {
     LOGGER.debug("loadWallet()");
 
     String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
-    DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-    DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
-    walletHandler.loadWallet(wallet);
+    if (null != wallet) {
+      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+
+      DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
+      walletHandler.loadWallet(wallet);
+    }
   }
 
   /**
@@ -263,10 +266,13 @@ public class TransactionServerMain {
 
     try {
       String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
-      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-      DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
-      walletHandler.unloadWallet(wallet);
+      if (null != wallet) {
+        DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+
+        DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
+        walletHandler.unloadWallet(wallet);
+      }
     } catch (Exception e) {
       LOGGER.error("unloadWallet", e);
     }

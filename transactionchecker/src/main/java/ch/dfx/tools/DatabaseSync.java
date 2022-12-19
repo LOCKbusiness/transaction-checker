@@ -68,7 +68,8 @@ public class DatabaseSync extends DatabaseTool {
       @Nonnull Connection remoteConnection) throws DfxException {
     LOGGER.trace("doSync()");
 
-    syncDuplicateCheck(localConnection, remoteConnection);
+    // syncDuplicateCheck(localConnection, remoteConnection);
+    resyncDuplicateCheck(localConnection, remoteConnection);
   }
 
   /**
@@ -115,4 +116,41 @@ public class DatabaseSync extends DatabaseTool {
       LOGGER.error("syncDuplicateCheck", e);
     }
   }
+
+  /**
+   * 
+   */
+  private void resyncDuplicateCheck(
+      @Nonnull Connection localConnection,
+      @Nonnull Connection remoteConnection) throws DfxException {
+    LOGGER.trace("syncDuplicateCheck()");
+
+    try {
+      // ...
+      String remoteInsertSql = "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".api_duplicate_check (withdrawal_id, transaction_id) VALUES (?, ?)";
+      PreparedStatement remoteInsertStatement = remoteConnection.prepareStatement(DatabaseUtils.replaceSchema(network, remoteInsertSql));
+
+      // ...
+      Statement localSelectStatement = localConnection.createStatement();
+
+      String localSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".api_duplicate_check WHERE withdrawal_id > 675";
+      ResultSet localResultSet = localSelectStatement.executeQuery(DatabaseUtils.replaceSchema(network, localSelectSql));
+
+      while (localResultSet.next()) {
+        remoteInsertStatement.setInt(1, localResultSet.getInt("withdrawal_id"));
+        remoteInsertStatement.setString(2, localResultSet.getString("transaction_id"));
+        remoteInsertStatement.execute();
+      }
+
+      localResultSet.close();
+
+      remoteInsertStatement.close();
+
+      remoteConnection.commit();
+    } catch (Exception e) {
+      DatabaseUtils.rollback(remoteConnection);
+      LOGGER.error("syncDuplicateCheck", e);
+    }
+  }
+
 }

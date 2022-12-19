@@ -29,7 +29,6 @@ import com.google.gson.GsonBuilder;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
-import ch.dfx.defichain.data.DefiAmountData;
 import ch.dfx.defichain.data.ResultDataA;
 import ch.dfx.defichain.data.ResultErrorData;
 import ch.dfx.defichain.data.basic.DefiBooleanResultData;
@@ -47,7 +46,6 @@ import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionResultData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletResultData;
-import ch.dfx.defichain.provider.typeadapter.AmountTypeAdapter;
 import ch.dfx.defichain.provider.typeadapter.CustomTypeAdapter;
 
 /**
@@ -83,7 +81,6 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     this.httpPost = httpPost;
 
     this.gson = new GsonBuilder()
-        .registerTypeAdapter(DefiAmountData.class, new AmountTypeAdapter())
         .registerTypeAdapter(DefiCustomResultWrapperData.class, new CustomTypeAdapter())
         .create();
   }

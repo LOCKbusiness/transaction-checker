@@ -1,34 +1,24 @@
 package ch.dfx.common.enumeration;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import ch.dfx.common.errorhandling.DfxException;
+import ch.dfx.common.provider.TokenProvider;
+
 /**
- * 
+ * DFI: Staking
+ * DUSD: Yield Machine
  */
 public enum TokenEnum {
-  DFI(0),
-  DUSD(15);
-
-  // ...
-  private static final Map<Integer, TokenEnum> numberToTokenCache;
-
-  static {
-    numberToTokenCache = new HashMap<>();
-
-    for (TokenEnum token : TokenEnum.values()) {
-      numberToTokenCache.put(token.getNumber(), token);
-    }
-  }
+  DFI,
+  DUSD;
 
   /**
    * 
    */
   public static @Nullable TokenEnum createWithNumber(int number) {
-    return numberToTokenCache.get(number);
+    return TokenProvider.getInstance().createWithNumber(number);
   }
 
   /**
@@ -37,31 +27,13 @@ public enum TokenEnum {
   public static @Nonnull TokenEnum createWithText(
       @Nullable String text,
       @Nonnull TokenEnum defaultToken) {
-    try {
-      if (null != text) {
-        return TokenEnum.valueOf(text.toUpperCase());
-      }
-    } catch (Throwable t) {
-      // Intentionally left blank ...
-    }
-
-    return defaultToken;
-  }
-
-  // ...
-  private final int number;
-
-  /**
-   * 
-   */
-  private TokenEnum(int number) {
-    this.number = number;
+    return TokenProvider.getInstance().createWithText(text, defaultToken);
   }
 
   /**
    * 
    */
-  public int getNumber() {
-    return number;
+  public int getNumber() throws DfxException {
+    return TokenProvider.getInstance().getNumber(this);
   }
 }

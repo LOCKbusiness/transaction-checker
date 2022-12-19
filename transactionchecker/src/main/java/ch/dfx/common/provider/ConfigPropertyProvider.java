@@ -2,9 +2,11 @@ package ch.dfx.common.provider;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -26,6 +28,8 @@ public class ConfigPropertyProvider {
    * 
    */
   public static void setup(@Nonnull Properties properties) {
+    Objects.requireNonNull(properties, "null 'properties' not allowed");
+
     if (null != instance) {
       String errorString = "setup() can only be called once ...";
       LOGGER.error(errorString);
@@ -49,7 +53,7 @@ public class ConfigPropertyProvider {
   /**
    * 
    */
-  public String getProperty(@Nonnull PropertyEnum property) {
+  public @Nullable String getProperty(@Nonnull PropertyEnum property) {
     return propertyMap.get(property);
   }
 

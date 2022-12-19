@@ -80,6 +80,10 @@ public class SignatureChecker extends TransactionChecker {
 
     String verifyAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_VERIFY_ADDRESS);
 
+    if (null == verifyAddress) {
+      throw new DfxException("verifyAddress is null");
+    }
+
     Boolean isValid = messageHandler.verifyMessage(verifyAddress, openTransactionIssuerSignature, openTransactionHex);
     LOGGER.debug("Open Transaction Id: " + openTransactionDTO.getId() + " / " + isValid);
 

@@ -69,7 +69,7 @@ public class TransactionServerWatchdogMain {
       ((DefaultShutdownCallbackRegistry) factory.getShutdownCallbackRegistry()).stop();
 
       // ...
-      TransactionCheckerUtils.loadConfigProperties(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment);
 
       // ...
       LOGGER.debug("=".repeat(80));
@@ -282,24 +282,27 @@ public class TransactionServerWatchdogMain {
 
     try {
       String watchdogExecutable = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.WATCHDOG_EXECUTABLE);
-      LOGGER.debug("Start process: " + watchdogExecutable);
 
-      // ...
-      ProcessBuilder processBuilder = new ProcessBuilder(watchdogExecutable.split("\\s+"));
-      processBuilder.inheritIO();
-      processBuilder.redirectErrorStream(true);
+      if (null != watchdogExecutable) {
+        LOGGER.debug("Start process: " + watchdogExecutable);
 
-      Process process = processBuilder.start();
+        // ...
+        ProcessBuilder processBuilder = new ProcessBuilder(watchdogExecutable.split("\\s+"));
+        processBuilder.inheritIO();
+        processBuilder.redirectErrorStream(true);
 
-      // ...
-      int exitCode = process.waitFor();
-      LOGGER.debug("... Process exit code: " + exitCode);
+        Process process = processBuilder.start();
 
-      deleteTransactionServerProcessLockfile();
+        // ...
+        int exitCode = process.waitFor();
+        LOGGER.debug("... Process exit code: " + exitCode);
 
-      String stopMessage = "[Transaction Check Server] Unexpected stop, trying to restart now";
-      MessageEventBus.getInstance().postEvent(new MessageEvent(stopMessage));
-      LOGGER.error(stopMessage);
+        deleteTransactionServerProcessLockfile();
+
+        String stopMessage = "[Transaction Check Server] Unexpected stop, trying to restart now";
+        MessageEventBus.getInstance().postEvent(new MessageEvent(stopMessage));
+        LOGGER.error(stopMessage);
+      }
     } catch (Throwable t) {
       String message = "[Transaction Check Server] Unexpected exception stop";
       MessageEventBus.getInstance().postEvent(new MessageEvent(message));

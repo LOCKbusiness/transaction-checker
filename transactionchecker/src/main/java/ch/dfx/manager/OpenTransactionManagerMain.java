@@ -42,26 +42,29 @@ public class OpenTransactionManagerMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
-      TransactionCheckerUtils.loadConfigProperties(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment);
 
       // ...
       String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
-      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-      DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
-      walletHandler.loadWallet(wallet);
+      if (null != wallet) {
+        DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-      // ...
-      ApiAccessHandler apiAccessHandler = new ApiAccessHandlerImpl(network);
-      apiAccessHandler.signIn();
+        DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
+        walletHandler.loadWallet(wallet);
 
-      // ...
-      H2DBManager databaseManager = new H2DBManagerImpl();
+        // ...
+        ApiAccessHandler apiAccessHandler = new ApiAccessHandlerImpl(network);
+        apiAccessHandler.signIn();
 
-      // ...
-      OpenTransactionManager transactionManager =
-          new OpenTransactionManager(network, apiAccessHandler, databaseManager, dataProvider);
-      transactionManager.execute();
+        // ...
+        H2DBManager databaseManager = new H2DBManagerImpl();
+
+        // ...
+        OpenTransactionManager transactionManager =
+            new OpenTransactionManager(network, apiAccessHandler, databaseManager, dataProvider);
+        transactionManager.execute();
+      }
     } catch (Exception e) {
       LOGGER.error("Fatal Error ...", e);
     }

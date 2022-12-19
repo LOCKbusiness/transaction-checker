@@ -104,8 +104,10 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("doRun()");
 
     // ...
-    executeDatabase();
-    checkDatabase();
+    if (NetworkEnum.STAGNET != network) {
+      executeDatabase();
+      checkDatabase();
+    }
 
     // ...
     executeDeposit();

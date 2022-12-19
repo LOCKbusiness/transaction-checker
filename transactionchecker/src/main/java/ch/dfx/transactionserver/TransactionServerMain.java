@@ -164,9 +164,7 @@ public class TransactionServerMain {
       startDatabaseServer();
 
       // ...
-      if (NetworkEnum.STAGNET != network) {
-        loadWallet();
-      }
+      loadWallet();
 
       // ...
       int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
@@ -224,9 +222,7 @@ public class TransactionServerMain {
 
     SchedulerProvider.getInstance().shutdown();
 
-    if (NetworkEnum.STAGNET != network) {
-      unloadWallet();
-    }
+    unloadWallet();
 
     stopDatabaseServer();
 
@@ -248,13 +244,17 @@ public class TransactionServerMain {
   private void loadWallet() throws DfxException {
     LOGGER.debug("loadWallet()");
 
-    String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+    if (NetworkEnum.STAGNET != network) {
+      String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
 
-    if (null != wallet) {
-      DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+      if (null != wallet) {
+        DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-      DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
-      walletHandler.loadWallet(wallet);
+        DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
+        walletHandler.loadWallet(wallet);
+      }
+    } else {
+      LOGGER.debug("Staging not allowed to load the wallet");
     }
   }
 
@@ -265,13 +265,17 @@ public class TransactionServerMain {
     LOGGER.debug("unloadWallet()");
 
     try {
-      String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+      if (NetworkEnum.STAGNET != network) {
+        String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
 
-      if (null != wallet) {
-        DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
+        if (null != wallet) {
+          DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
-        DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
-        walletHandler.unloadWallet(wallet);
+          DefiWalletHandler walletHandler = new DefiWalletHandler(network, dataProvider);
+          walletHandler.unloadWallet(wallet);
+        }
+      } else {
+        LOGGER.debug("Staging not allowed to unload the wallet");
       }
     } catch (Exception e) {
       LOGGER.error("unloadWallet", e);
@@ -332,17 +336,21 @@ public class TransactionServerMain {
     LOGGER.debug("startDatabaseServer()");
 
     try {
-      String tcpPort = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SERVER_TCP_PORT);
-      String databaseDirectory = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_DIR);
-      LOGGER.debug("TCP PORT: " + tcpPort);
-      LOGGER.debug("DATABASE DIRECTORY: " + databaseDirectory);
+      if (NetworkEnum.STAGNET != network) {
+        String tcpPort = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SERVER_TCP_PORT);
+        String databaseDirectory = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_DIR);
+        LOGGER.debug("TCP PORT: " + tcpPort);
+        LOGGER.debug("DATABASE DIRECTORY: " + databaseDirectory);
 
-      tcpServer = Server.createTcpServer("-tcpPort", tcpPort, "-baseDir", databaseDirectory, "-tcpAllowOthers");
-      tcpServer.start();
+        tcpServer = Server.createTcpServer("-tcpPort", tcpPort, "-baseDir", databaseDirectory, "-tcpAllowOthers");
+        tcpServer.start();
 
-      LOGGER.debug("=====================================");
-      LOGGER.info("Transaction Server started: Port " + tcpPort);
-      LOGGER.debug("=====================================");
+        LOGGER.debug("=====================================");
+        LOGGER.info("Transaction Server started: Port " + tcpPort);
+        LOGGER.debug("=====================================");
+      } else {
+        LOGGER.debug("Staging not allowed to start the Transaction Server");
+      }
     } catch (Exception e) {
       throw new DfxException("startDatabaseServer", e);
     }
@@ -354,12 +362,16 @@ public class TransactionServerMain {
   private void stopDatabaseServer() {
     LOGGER.debug("stopDatabaseServer()");
 
-    if (null != tcpServer) {
-      tcpServer.stop();
-    }
+    if (NetworkEnum.STAGNET != network) {
+      if (null != tcpServer) {
+        tcpServer.stop();
+      }
 
-    LOGGER.debug("==========================");
-    LOGGER.info("Transaction Server stopped");
-    LOGGER.debug("==========================");
+      LOGGER.debug("==========================");
+      LOGGER.info("Transaction Server stopped");
+      LOGGER.debug("==========================");
+    } else {
+      LOGGER.debug("Staging not allowed to stop the Transaction Server");
+    }
   }
 }

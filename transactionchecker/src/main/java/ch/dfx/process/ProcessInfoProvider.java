@@ -27,7 +27,7 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
   private final MemoryMXBean memoryMXBean;
 
   // ...
-  private ProcessInfoService processInfoService = null;
+  private static ProcessInfoService processInfoService = null;
 
   private boolean isProcessing = false;
 

@@ -44,6 +44,9 @@ public class TransactionServerWatchdogMain {
 //  private HttpServer httpServer = null;
   private Registry registry = null;
 
+  private static ProcessInfoService processInfoService = null;
+
+  // ...
   private final MessageEventCollector messageEventCollector;
   private final MessageEventProvider messageEventProvider;
 
@@ -220,7 +223,7 @@ public class TransactionServerWatchdogMain {
 
       registry = LocateRegistry.createRegistry(rmiPort);
 
-      ProcessInfoService processInfoService =
+      processInfoService =
           (ProcessInfoService) UnicastRemoteObject.exportObject(new ProcessInfoServiceImpl(), 0);
 
       registry.rebind(ProcessInfoService.class.getSimpleName(), processInfoService);

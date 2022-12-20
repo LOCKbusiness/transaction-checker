@@ -4,6 +4,9 @@ package ch.dfx.common.enumeration;
  * 
  */
 public enum PropertyEnum {
+  // Server ID ...
+  SERVER_ID,
+
   // E-Mail ...
   EMAIL_USER,
   EMAIL_PASSWORD,

@@ -103,10 +103,12 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
     try {
       if (isAccessTokenExpired()) {
-        // ...
+        String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
         String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/auth/sign-in";
         LOGGER.debug("URL: " + url);
+
         HttpPost httpPost = new HttpPost(url);
+        httpPost.addHeader("Device-Id", serverId);
 
         signInDTO = createLoginData();
 
@@ -139,15 +141,11 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
           signInDTO.setAccessTokenHeader(gson.fromJson(header, SignInAccessTokenHeaderDTO.class));
           signInDTO.setAccessTokenPayload(gson.fromJson(payload, SignInAccessTokenPayloadDTO.class));
         } else {
-          // TODO: Error Handling:
-          // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
           LOGGER.error("[SignIn] HTTP Status Code: " + statusCode);
           resetSignIn();
         }
       }
     } catch (Exception e) {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("signIn", e);
       resetSignIn();
     }
@@ -198,8 +196,6 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     if (null != signInDTO) {
       fillOpenTransactionDTOList(openTransactionDTOList);
     } else {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("[Transaction] no SignIn Data found");
     }
 
@@ -213,11 +209,13 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("fillOpenTransactionDTOList()");
 
     try {
+      String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/open";
       LOGGER.debug("URL: " + url);
 
       HttpGet httpGet = new HttpGet(url);
       httpGet.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
+      httpGet.addHeader("Device-Id", serverId);
 
       HttpResponse httpResponse = getHttpClient().execute(httpGet);
 
@@ -229,14 +227,10 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
         openTransactionDTOList.addAll(gson.fromJson(jsonResponse, OpenTransactionDTOList.class));
       } else {
-        // TODO: Error Handling:
-        // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
         LOGGER.error("[Transaction] HTTP Status Code: " + statusCode);
         httpClient = null;
       }
     } catch (Exception e) {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("fillOpenTransactionDTOList", e);
       resetSignIn();
     }
@@ -254,8 +248,6 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     if (null != signInDTO) {
       fillPendingWithdrawalDTOList(pendingWithdrawalDTOList);
     } else {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("[Withdrawal] no SignIn Data found");
     }
 
@@ -269,11 +261,13 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("fillPendingWithdrawalDTOList()");
 
     try {
+      String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/withdrawal/pending";
       LOGGER.debug("URL: " + url);
 
       HttpGet httpGet = new HttpGet(url);
       httpGet.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
+      httpGet.addHeader("Device-Id", serverId);
 
       HttpResponse httpResponse = getHttpClient().execute(httpGet);
 
@@ -285,14 +279,10 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
         pendingWithdrawalDTOList.addAll(gson.fromJson(jsonResponse, PendingWithdrawalDTOList.class));
       } else {
-        // TODO: Error Handling:
-        // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
         LOGGER.error("[Withdrawal] HTTP Status Code: " + statusCode);
         httpClient = null;
       }
     } catch (Exception e) {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("getPendingWithdrawalDTOList", e);
       resetSignIn();
     }
@@ -310,8 +300,6 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     if (null != signInDTO) {
       doSendOpenTransactionVerified(openTransactionId, openTransactionVerifiedDTO);
     } else {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("[Verified] no SignIn Data found");
     }
   }
@@ -325,11 +313,13 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("doSendOpenTransactionVerified()");
 
     try {
+      String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/verified";
       LOGGER.debug("URL: " + url);
 
       HttpPut httpPut = new HttpPut(url);
       httpPut.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
+      httpPut.addHeader("Device-Id", serverId);
 
       String jsonOpenTransactionVerified = gson.toJson(openTransactionVerifiedDTO);
       logJSON("verified", jsonOpenTransactionVerified);
@@ -342,14 +332,10 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
       if (HttpStatus.SC_OK != statusCode) {
-        // TODO: Error Handling:
-        // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
         LOGGER.error("[Verified] HTTP Status Code: " + statusCode);
         httpClient = null;
       }
     } catch (Exception e) {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("sendOpenTransactionVerified", e);
       resetSignIn();
     }
@@ -367,8 +353,6 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     if (null != signInDTO) {
       doSendOpenTransactionInvalidated(openTransactionId, openTransactionInvalidatedDTO);
     } else {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("[Invalidated] no SignIn Data found");
     }
   }
@@ -382,11 +366,13 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("doSendOpenTransactionInvalidated()");
 
     try {
+      String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
       String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/invalidated";
       LOGGER.debug("URL: " + url);
 
       HttpPut httpPut = new HttpPut(url);
       httpPut.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
+      httpPut.addHeader("Device-Id", serverId);
 
       String jsonOpenTransactionInvalidated = gson.toJson(openTransactionInvalidatedDTO);
       logJSON("invalidated", jsonOpenTransactionInvalidated);
@@ -399,14 +385,10 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       int statusCode = httpResponse.getStatusLine().getStatusCode();
 
       if (HttpStatus.SC_OK != statusCode) {
-        // TODO: Error Handling:
-        // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
         LOGGER.error("[Invalidated] HTTP Status Code: " + statusCode);
         httpClient = null;
       }
     } catch (Exception e) {
-      // TODO: Error Handling:
-      // TODO: Count Error and send via E-Mail, if a defined number of errors occurs ...
       LOGGER.error("sendOpenTransactionInvalidated", e);
       resetSignIn();
     }

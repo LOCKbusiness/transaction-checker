@@ -196,6 +196,7 @@ public class TransactionServerMain {
       String startMessage = "[Transaction Check Server] Process is running";
       MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
       LOGGER.info(startMessage);
+      messageEventProvider.run();
     }
   }
 

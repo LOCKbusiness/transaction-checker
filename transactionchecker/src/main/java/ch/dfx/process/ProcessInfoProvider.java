@@ -55,7 +55,9 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
     try {
       if (null == processInfoService) {
         startRMI();
-      } else {
+      }
+
+      if (null != processInfoService) {
         ProcessInfoDTO processInfoDTO = getProcessInfoDTO();
         processInfoService.sendProcessInfo(processInfoDTO);
       }

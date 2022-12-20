@@ -87,6 +87,7 @@ public class TransactionServerWatchdogMain {
       String startMessage = "[Transaction Check Server Watchdog] Process is running";
       MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
       LOGGER.info(startMessage);
+      transactionServerWatchdogMain.messageEventProvider.run();
 
       // ...
       while (true) {
@@ -145,7 +146,7 @@ public class TransactionServerWatchdogMain {
     int runPeriodMessageEvent = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
 
     if (60 <= runPeriodMessageEvent) {
-      SchedulerProvider.getInstance().add(messageEventProvider, 30, runPeriodMessageEvent, TimeUnit.SECONDS);
+      SchedulerProvider.getInstance().add(messageEventProvider, 60, runPeriodMessageEvent, TimeUnit.SECONDS);
     }
   }
 
@@ -306,8 +307,8 @@ public class TransactionServerWatchdogMain {
     } catch (Throwable t) {
       String message = "[Transaction Check Server] Unexpected exception stop";
       MessageEventBus.getInstance().postEvent(new MessageEvent(message));
-
       LOGGER.error("Fatal Error", t);
+      messageEventProvider.run();
     }
   }
 

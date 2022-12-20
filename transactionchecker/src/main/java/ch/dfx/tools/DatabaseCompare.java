@@ -1,5 +1,7 @@
 package ch.dfx.tools;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -12,6 +14,7 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.tools.data.DatabaseConnectionData;
@@ -24,6 +27,7 @@ import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
+import ch.dfx.transactionserver.database.DatabaseUtils;
 
 /**
  * Compare table content from remote and local:
@@ -42,10 +46,14 @@ import ch.dfx.transactionserver.data.TransactionDTO;
 public class DatabaseCompare extends DatabaseTool {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseCompare.class);
 
+  // ...
+  private final NetworkEnum network;
+
   /**
    * 
    */
-  public DatabaseCompare() {
+  public DatabaseCompare(@Nonnull NetworkEnum network) {
+    this.network = network;
   }
 
   /**
@@ -153,8 +161,8 @@ public class DatabaseCompare extends DatabaseTool {
   private List<MasternodeWhitelistDTO> getLocalMasternodeWhitelistDTOList(@Nonnull Connection connection) throws DfxException {
     LOGGER.trace("getLocalMasternodeWhitelistDTOList()");
 
-    String masternodeSelectSql = "SELECT * FROM mainnet.masternode_whitelist";
-    return getMasternodeWhitelistDTOList(connection, masternodeSelectSql);
+    String masternodeSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".masternode_whitelist";
+    return getMasternodeWhitelistDTOList(connection, DatabaseUtils.replaceSchema(network, masternodeSelectSql));
   }
 
   /**
@@ -163,8 +171,8 @@ public class DatabaseCompare extends DatabaseTool {
   private List<MasternodeWhitelistDTO> getRemoteMasternodeWhitelistDTOList(@Nonnull Connection connection) throws DfxException {
     LOGGER.trace("getRemoteMasternodeWhitelistDTOList()");
 
-    String masternodeSelectSql = "SELECT * FROM mainnet.masternode_whitelist";
-    return getMasternodeWhitelistDTOList(connection, masternodeSelectSql);
+    String masternodeSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".masternode_whitelist";
+    return getMasternodeWhitelistDTOList(connection, DatabaseUtils.replaceSchema(network, masternodeSelectSql));
   }
 
   /**
@@ -355,13 +363,13 @@ public class DatabaseCompare extends DatabaseTool {
             + " s.*,"
             + " a1.address AS liquidity_address,"
             + " a2.address AS reward_address,"
-            + " FROM mainnet.staking_address s"
+            + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking_address s"
             + " JOIN public.address a1 ON"
             + " s.liquidity_address_number = a1.number"
             + " LEFT JOIN public.address a2 ON"
             + " s.reward_address_number = a2.number"
             + " WHERE token_number=" + token.getNumber();
-    return getStakingAddressDTOList(connection, stakingAddressSelectSql);
+    return getStakingAddressDTOList(connection, DatabaseUtils.replaceSchema(network, stakingAddressSelectSql));
   }
 
   /**
@@ -377,13 +385,13 @@ public class DatabaseCompare extends DatabaseTool {
             + " s.*,"
             + " a1.address AS liquidity_address,"
             + " a2.address AS reward_address,"
-            + " FROM mainnet.staking_address s"
+            + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking_address s"
             + " JOIN public.address a1 ON"
             + " s.liquidity_address_number = a1.number"
             + " LEFT JOIN public.address a2 ON"
             + " s.reward_address_number = a2.number"
             + " WHERE token_number=" + token.getNumber();
-    return getStakingAddressDTOList(connection, stakingAddressSelectSql);
+    return getStakingAddressDTOList(connection, DatabaseUtils.replaceSchema(network, stakingAddressSelectSql));
   }
 
   /**
@@ -462,11 +470,11 @@ public class DatabaseCompare extends DatabaseTool {
         "SELECT"
             + " b.*,"
             + " a.address"
-            + " FROM mainnet.balance b"
+            + " FROM " + TOKEN_NETWORK_SCHEMA + ".balance b"
             + " JOIN public.address a ON"
             + " b.address_number = a.number"
             + " WHERE b.token_number=" + token.getNumber();
-    return getBalanceDTOList(connection, balanceSelectSql);
+    return getBalanceDTOList(connection, DatabaseUtils.replaceSchema(network, balanceSelectSql));
   }
 
   /**
@@ -481,11 +489,11 @@ public class DatabaseCompare extends DatabaseTool {
         "SELECT"
             + " b.*,"
             + " a.address"
-            + " FROM mainnet.balance b"
+            + " FROM " + TOKEN_NETWORK_SCHEMA + ".balance b"
             + " JOIN public.address a ON"
             + " b.address_number = a.number"
             + " WHERE b.token_number=" + token.getNumber();
-    return getBalanceDTOList(connection, balanceSelectSql);
+    return getBalanceDTOList(connection, DatabaseUtils.replaceSchema(network, balanceSelectSql));
   }
 
   /**
@@ -567,7 +575,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " a1.address AS liquidity_address,"
             + " a2.address AS deposit_address,"
             + " a3.address AS customer_address"
-            + " FROM mainnet.deposit d"
+            + " FROM " + TOKEN_NETWORK_SCHEMA + ".deposit d"
             + " JOIN public.address a1 ON"
             + " d.liquidity_address_number = a1.number"
             + " JOIN public.address a2 ON"
@@ -575,7 +583,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " JOIN public.address a3 ON"
             + " d.customer_address_number = a3.number"
             + " WHERE d.token_number=" + token.getNumber();
-    return getDepositDTOList(connection, depositSelectSql);
+    return getDepositDTOList(connection, DatabaseUtils.replaceSchema(network, depositSelectSql));
   }
 
   /**
@@ -592,7 +600,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " a1.address AS liquidity_address,"
             + " a2.address AS deposit_address,"
             + " a3.address AS customer_address"
-            + " FROM mainnet.deposit d"
+            + " FROM " + TOKEN_NETWORK_SCHEMA + ".deposit d"
             + " JOIN public.address a1 ON"
             + " d.liquidity_address_number = a1.number"
             + " JOIN public.address a2 ON"
@@ -600,7 +608,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " JOIN public.address a3 ON"
             + " d.customer_address_number = a3.number"
             + " WHERE d.token_number=" + token.getNumber();
-    return getDepositDTOList(connection, depositSelectSql);
+    return getDepositDTOList(connection, DatabaseUtils.replaceSchema(network, depositSelectSql));
   }
 
   /**
@@ -684,7 +692,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " a1.address AS liquidity_address,"
             + " a2.address AS deposit_address,"
             + " a3.address AS customer_address"
-            + " FROM mainnet.staking s"
+            + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking s"
             + " JOIN public.address a1 ON"
             + " s.liquidity_address_number = a1.number"
             + " JOIN public.address a2 ON"
@@ -692,7 +700,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " JOIN public.address a3 ON"
             + " s.customer_address_number = a3.number"
             + " WHERE s.token_number=" + token.getNumber();
-    return getStakingDTOList(connection, stakingSelectSql);
+    return getStakingDTOList(connection, DatabaseUtils.replaceSchema(network, stakingSelectSql));
   }
 
   /**
@@ -709,7 +717,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " a1.address AS liquidity_address,"
             + " a2.address AS deposit_address,"
             + " a3.address AS customer_address"
-            + " FROM mainnet.staking s"
+            + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking s"
             + " JOIN public.address a1 ON"
             + " s.liquidity_address_number = a1.number"
             + " JOIN public.address a2 ON"
@@ -717,7 +725,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " JOIN public.address a3 ON"
             + " s.customer_address_number = a3.number"
             + " WHERE s.token_number=" + token.getNumber();
-    return getStakingDTOList(connection, stakingSelectSql);
+    return getStakingDTOList(connection, DatabaseUtils.replaceSchema(network, stakingSelectSql));
   }
 
   /**

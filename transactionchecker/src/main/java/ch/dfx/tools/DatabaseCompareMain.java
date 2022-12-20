@@ -44,12 +44,15 @@ public class DatabaseCompareMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
+      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+
+      // ...
       LOGGER.debug("=".repeat(80));
       LOGGER.debug("Network: " + network);
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      DatabaseCompare databaseCompare = new DatabaseCompare();
+      DatabaseCompare databaseCompare = new DatabaseCompare(network);
       databaseCompare.compare();
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);

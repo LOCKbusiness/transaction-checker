@@ -40,6 +40,9 @@ public class DatabaseSyncMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
+      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+
+      // ...
       LOGGER.debug("=".repeat(80));
       LOGGER.debug("Network: " + network);
       LOGGER.debug("Environment: " + environment);

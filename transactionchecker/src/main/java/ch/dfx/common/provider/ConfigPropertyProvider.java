@@ -60,6 +60,21 @@ public class ConfigPropertyProvider {
   /**
    * 
    */
+  public @Nonnull String getPropertyOrDefault(
+      @Nonnull PropertyEnum property,
+      @Nonnull String defaultValue) {
+    String value = getProperty(property);
+
+    if (null == value) {
+      value = defaultValue;
+    }
+
+    return value;
+  }
+
+  /**
+   * 
+   */
   public int getIntValueOrDefault(
       @Nonnull PropertyEnum property,
       int defaultValue) {

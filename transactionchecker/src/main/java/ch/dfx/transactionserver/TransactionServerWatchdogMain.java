@@ -42,8 +42,7 @@ public class TransactionServerWatchdogMain {
   private final NetworkEnum network;
 
 //  private HttpServer httpServer = null;
-  private Registry registry = null;
-
+  private static Registry registry = null;
   private static ProcessInfoService processInfoService = null;
 
   // ...

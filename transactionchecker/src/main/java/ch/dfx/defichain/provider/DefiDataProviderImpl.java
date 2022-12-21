@@ -44,6 +44,8 @@ import ch.dfx.defichain.data.masternode.DefiMasternodeData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeResultData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionResultData;
+import ch.dfx.defichain.data.vault.DefiVaultData;
+import ch.dfx.defichain.data.vault.DefiVaultResultData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletResultData;
 import ch.dfx.defichain.provider.typeadapter.CustomTypeAdapter;
@@ -367,6 +369,18 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     }
 
     return masternodeMap;
+  }
+
+  /**
+   *
+   */
+  @Override
+  public DefiVaultData getVault(@Nonnull String vaultId) throws DfxException {
+    LOGGER.trace("getVault(): vaultId=" + vaultId);
+
+    List<Object> paramList = Arrays.asList(vaultId);
+
+    return getData("getvault", paramList, DefiVaultResultData.class).getResult();
   }
 
   /**

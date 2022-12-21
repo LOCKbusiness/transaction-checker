@@ -40,10 +40,11 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   public ManagerRunnable(
       @Nonnull NetworkEnum network,
       @Nonnull H2DBManager databaseManager) {
+    Objects.requireNonNull(network, "null network is not allowed");
     Objects.requireNonNull(databaseManager, "null databaseManager is not allowed");
 
-    this.databaseManager = databaseManager;
     this.network = network;
+    this.databaseManager = databaseManager;
 
     this.apiAccessHandler = new ApiAccessHandlerImpl(network);
 
@@ -101,12 +102,14 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
       OpenTransactionManager openTransactionManager =
           new OpenTransactionManager(network, apiAccessHandler, databaseManager, dataProvider);
       openTransactionManager.execute();
+
+      openTransactionErrorCounter = 0;
     } catch (DfxException e) {
       openTransactionErrorCounter++;
-      LOGGER.error("executeOpenTransaction: openTransactionErrorCounter=" + openTransactionErrorCounter, e.getMessage());
+      LOGGER.error("Open Transaction Manager: errorCounter=" + openTransactionErrorCounter, e.getMessage());
     } catch (Exception e) {
       openTransactionErrorCounter++;
-      LOGGER.error("executeOpenTransaction: openTransactionErrorCounter=" + openTransactionErrorCounter, e);
+      LOGGER.error("Open Transaction Manager: errorCounter=" + openTransactionErrorCounter, e);
     }
   }
 

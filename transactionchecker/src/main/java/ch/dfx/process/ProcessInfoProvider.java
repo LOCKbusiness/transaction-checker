@@ -27,6 +27,7 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
   private final MemoryMXBean memoryMXBean;
 
   // ...
+  private static Registry registry = null;
   private static ProcessInfoService processInfoService = null;
 
   private boolean isProcessing = false;
@@ -111,7 +112,7 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
       String rmiHost = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.RMI_HOST);
       int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
 
-      Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
+      registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
 
       processInfoService =
           (ProcessInfoService) registry.lookup(ProcessInfoService.class.getSimpleName());

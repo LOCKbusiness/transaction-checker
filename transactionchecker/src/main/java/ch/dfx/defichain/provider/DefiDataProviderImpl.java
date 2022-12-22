@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,6 +32,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.data.ResultDataA;
 import ch.dfx.defichain.data.ResultErrorData;
+import ch.dfx.defichain.data.account.DefiAccountResultData;
 import ch.dfx.defichain.data.basic.DefiBooleanResultData;
 import ch.dfx.defichain.data.basic.DefiLongResultData;
 import ch.dfx.defichain.data.basic.DefiStringListResultData;
@@ -42,8 +44,14 @@ import ch.dfx.defichain.data.custom.DefiCustomResultData;
 import ch.dfx.defichain.data.custom.DefiCustomResultWrapperData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeResultData;
+import ch.dfx.defichain.data.pool.DefiPoolPairData;
+import ch.dfx.defichain.data.pool.DefiPoolPairResultData;
+import ch.dfx.defichain.data.price.DefiFixedIntervalPriceData;
+import ch.dfx.defichain.data.price.DefiFixedIntervalPriceResultData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionResultData;
+import ch.dfx.defichain.data.vault.DefiListVaultData;
+import ch.dfx.defichain.data.vault.DefiListVaultResultData;
 import ch.dfx.defichain.data.vault.DefiVaultData;
 import ch.dfx.defichain.data.vault.DefiVaultResultData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletData;
@@ -369,6 +377,64 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     }
 
     return masternodeMap;
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public DefiPoolPairData getPoolPair(@Nonnull String poolId) throws DfxException {
+    LOGGER.trace("getPoolPair(): poolId=" + poolId);
+
+    List<Object> paramList = Arrays.asList(poolId);
+
+    Map<String, DefiPoolPairData> poolIdToPoolPairDataMap =
+        getData("getpoolpair", paramList, DefiPoolPairResultData.class).getResult();
+
+    Entry<String, DefiPoolPairData> poolIdToPoolPairDataMapEntry =
+        poolIdToPoolPairDataMap.entrySet().stream().findFirst().get();
+
+    return poolIdToPoolPairDataMapEntry.getValue();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public DefiFixedIntervalPriceData getFixedIntervalPrice(@Nonnull String fixedIntervalPriceId) throws DfxException {
+    LOGGER.trace("getFixedIntervalPrice(): fixedIntervalPriceId=" + fixedIntervalPriceId);
+
+    List<Object> paramList = Arrays.asList(fixedIntervalPriceId);
+
+    return getData("getfixedintervalprice", paramList, DefiFixedIntervalPriceResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public List<String> getAccount(@Nonnull String address) throws DfxException {
+    LOGGER.trace("getAccount(): address=" + address);
+
+    List<Object> paramList = Arrays.asList(address);
+
+    return getData("getaccount", paramList, DefiAccountResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public List<DefiListVaultData> listVaults(@Nonnull String ownerAddress) throws DfxException {
+    LOGGER.trace("listVaults(): ownerAddress=" + ownerAddress);
+
+    Map<String, Object> paramMap = new HashMap<>();
+    paramMap.put("ownerAddress", ownerAddress);
+    paramMap.put("verbose", true);
+
+    List<Object> paramList = Arrays.asList(paramMap);
+
+    return getData("listvaults", paramList, DefiListVaultResultData.class).getResult();
   }
 
   /**

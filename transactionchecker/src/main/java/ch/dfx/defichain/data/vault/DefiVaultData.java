@@ -1,6 +1,7 @@
 package ch.dfx.defichain.data.vault;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
@@ -10,6 +11,13 @@ import ch.dfx.common.TransactionCheckerUtils;
 public class DefiVaultData {
   private String vaultId = null;
   private String ownerAddress = null;
+
+  private String loanSchemeId = null;
+  private String state = null;
+
+  private List<String> collateralAmounts = null;
+  private List<String> loanAmounts = null;
+  private List<String> interestAmounts = null;
 
   private BigDecimal collateralValue = null;
   private BigDecimal loanValue = null;
@@ -38,6 +46,46 @@ public class DefiVaultData {
 
   public void setOwnerAddress(String ownerAddress) {
     this.ownerAddress = ownerAddress;
+  }
+
+  public String getLoanSchemeId() {
+    return loanSchemeId;
+  }
+
+  public void setLoanSchemeId(String loanSchemeId) {
+    this.loanSchemeId = loanSchemeId;
+  }
+
+  public String getState() {
+    return state;
+  }
+
+  public void setState(String state) {
+    this.state = state;
+  }
+
+  public List<String> getCollateralAmounts() {
+    return collateralAmounts;
+  }
+
+  public void setCollateralAmounts(List<String> collateralAmounts) {
+    this.collateralAmounts = collateralAmounts;
+  }
+
+  public List<String> getLoanAmounts() {
+    return loanAmounts;
+  }
+
+  public void setLoanAmounts(List<String> loanAmounts) {
+    this.loanAmounts = loanAmounts;
+  }
+
+  public List<String> getInterestAmounts() {
+    return interestAmounts;
+  }
+
+  public void setInterestAmounts(List<String> interestAmounts) {
+    this.interestAmounts = interestAmounts;
   }
 
   public BigDecimal getCollateralValue() {

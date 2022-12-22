@@ -9,7 +9,10 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.block.DefiBlockData;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeData;
+import ch.dfx.defichain.data.pool.DefiPoolPairData;
+import ch.dfx.defichain.data.price.DefiFixedIntervalPriceData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
+import ch.dfx.defichain.data.vault.DefiListVaultData;
 import ch.dfx.defichain.data.vault.DefiVaultData;
 import ch.dfx.defichain.data.wallet.DefiLoadWalletData;
 
@@ -66,6 +69,14 @@ public interface DefiDataProvider {
   Map<String, DefiMasternodeData> getMasternode(
       @Nonnull String wallet,
       @Nonnull String transactionId) throws DfxException;
+
+  DefiPoolPairData getPoolPair(@Nonnull String poolId) throws DfxException;
+
+  DefiFixedIntervalPriceData getFixedIntervalPrice(@Nonnull String fixedIntervalPriceId) throws DfxException;
+
+  List<String> getAccount(@Nonnull String address) throws DfxException;
+
+  List<DefiListVaultData> listVaults(@Nonnull String ownerAddress) throws DfxException;
 
   DefiVaultData getVault(@Nonnull String vaultId) throws DfxException;
 }

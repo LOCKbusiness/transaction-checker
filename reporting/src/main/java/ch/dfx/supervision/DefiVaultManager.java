@@ -34,8 +34,8 @@ public class DefiVaultManager {
   }
 
   // ...
-  private final DefiDataProvider dataProvider;
   private final MessageEventProvider messageEventProvider;
+  private final DefiDataProvider dataProvider;
 
   private StateEnum prevState = StateEnum.UNKNOWN;
   private StateEnum currState = StateEnum.UNKNOWN;

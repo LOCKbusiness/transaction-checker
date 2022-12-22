@@ -284,9 +284,9 @@ public class VaultReporting extends Reporting {
     cellDataList.add(createCellData(36, difference));
 
     // ...
-    logInfoList.add("Vault Total:               " + GERMAN_DECIMAL_FORMAT.format(totalValue));
-    logInfoList.add("Staking Total:           " + GERMAN_DECIMAL_FORMAT.format(totalStakingBalance));
-    logInfoList.add("Difference:                " + GERMAN_PERCENTAGE_FORMAT.format(difference.multiply(HUNDERED)) + "%");
+    logInfoList.add("Vault Balance:          " + GERMAN_DECIMAL_FORMAT.format(totalValue));
+    logInfoList.add("Staking Balance:      " + GERMAN_DECIMAL_FORMAT.format(totalStakingBalance));
+    logInfoList.add("Difference:                 " + GERMAN_PERCENTAGE_FORMAT.format(difference.multiply(HUNDERED)) + "%");
 
     return cellDataList;
   }

@@ -222,7 +222,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     rowDataList.add(rowData);
 
     // ...
-    logInfoList.add("Difference:                " + GERMAN_DECIMAL_FORMAT.format(finalBalance));
+    logInfoList.add("Difference:                 " + GERMAN_DECIMAL_FORMAT.format(finalBalance));
 
     return rowDataList;
   }
@@ -628,7 +628,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     rowDataList.add(rowData);
 
     // ...
-    logInfoList.add("Staking Balance:      " + GERMAN_DECIMAL_FORMAT.format(stakingBalance));
+    logInfoList.add("Staking Balance:      " + GERMAN_DECIMAL_FORMAT.format(stakingBalance.abs()));
 
     return stakingBalance;
   }

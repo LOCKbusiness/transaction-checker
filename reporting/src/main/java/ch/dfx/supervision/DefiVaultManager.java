@@ -56,8 +56,8 @@ public class DefiVaultManager {
     LOGGER.trace("checkRatio()");
 
     try {
-      String vaultId = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_VAULT_ID, "");
-      String checkRatio = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_VAULT_CHECK_RATIO, "");
+      String vaultId = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT_ID, "");
+      String checkRatio = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT_CHECK_RATIO, "");
       LOGGER.trace("VaultId: " + vaultId);
       LOGGER.trace("CheckRatio: " + checkRatio);
 

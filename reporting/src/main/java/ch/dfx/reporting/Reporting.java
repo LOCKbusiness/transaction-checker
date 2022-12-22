@@ -29,6 +29,9 @@ public abstract class Reporting {
   protected final DatabaseBlockHelper databaseBlockHelper;
   protected final DatabaseBalanceHelper databaseBalanceHelper;
 
+  private File excelFile = null;
+  private ExcelWriter excelWriter = null;
+
   /**
    * 
    */
@@ -45,30 +48,65 @@ public abstract class Reporting {
   /**
    * 
    */
-  protected void writeExcel(
+  protected void openExcel(
       @Nonnull String reportingRootPath,
       @Nonnull String reportingFileName,
-      @Nonnull String reportingSheetName,
+      @Nonnull String reportingSheetName) throws DfxException {
+    LOGGER.trace("openExcel()");
+
+    // ...
+    excelFile = new File(reportingRootPath, reportingFileName);
+
+    excelWriter = new ExcelWriter();
+    excelWriter.openWorkbook(excelFile, reportingSheetName);
+  }
+
+  /**
+   * 
+   */
+  protected void cleanExcel(@Nonnull CellDataList cellDataList) throws DfxException {
+    LOGGER.trace("cleanExcel()");
+
+    if (null != excelWriter) {
+      excelWriter.cleanSheet(cellDataList);
+    }
+  }
+
+  /**
+   * 
+   */
+  protected void cleanExcel(int afterRowNumber) {
+    LOGGER.trace("cleanExcel()");
+
+    if (null != excelWriter) {
+      excelWriter.cleanSheet(afterRowNumber);
+    }
+  }
+
+  /**
+   * 
+   */
+  protected void writeExcel(
       @Nonnull RowDataList rowDataList,
       @Nonnull CellDataList specialCellDataList) throws DfxException {
     LOGGER.trace("writeExcel()");
 
-    try {
-      LOGGER.debug("Reporting: " + reportingFileName);
+    LOGGER.debug("Reporting: " + excelFile.getName());
 
-      // ...
-      File reportingFile = new File(reportingRootPath, reportingFileName);
-
-      ExcelWriter excelWriter = new ExcelWriter();
-      excelWriter.openWorkbook(reportingFile, reportingSheetName);
-
+    if (null != excelWriter) {
       excelWriter.insertRowData(rowDataList);
       excelWriter.insertCellData(specialCellDataList);
+    }
+  }
 
-      // ...
-      excelWriter.writeWorkbook(reportingFile);
-    } catch (Exception e) {
-      throw new DfxException("writeExcel", e);
+  /**
+   * 
+   */
+  protected void closeExcel() throws DfxException {
+    LOGGER.trace("closeExcel()");
+
+    if (null != excelWriter) {
+      excelWriter.writeWorkbook(excelFile);
     }
   }
 }

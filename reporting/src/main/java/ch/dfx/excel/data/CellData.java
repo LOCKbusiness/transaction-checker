@@ -11,6 +11,7 @@ public class CellData {
 
   private Object value = null;
 
+  private boolean keepStyle = false;
   private boolean bold = false;
 
   /**
@@ -55,6 +56,16 @@ public class CellData {
 
   public CellData setBold(boolean bold) {
     this.bold = bold;
+
+    return this;
+  }
+
+  public boolean isKeepStyle() {
+    return keepStyle;
+  }
+
+  public CellData setKeepStyle(boolean keepStyle) {
+    this.keepStyle = keepStyle;
 
     return this;
   }

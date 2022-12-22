@@ -3,6 +3,7 @@ package ch.dfx.reporting;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -76,10 +77,22 @@ public class BalanceReporting extends Reporting {
       RowDataList rowDataList = createRowDataList(token, stakingAddressDTOList);
 
       CellDataList cellDataList = new CellDataList();
-      cellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setValue(totalBalance));
+      cellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(totalBalance));
 
-      writeExcel(rootPath, fileName, sheet, rowDataList, cellDataList);
+      // ...
+      openExcel(rootPath, fileName, sheet);
 
+      CellDataList cleanCellDataList = new CellDataList();
+      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(new Date()));
+      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(BigDecimal.ZERO));
+
+      cleanExcel(2);
+      cleanExcel(cleanCellDataList);
+
+      writeExcel(rowDataList, cellDataList);
+      closeExcel();
+
+      // ...
       databaseBalanceHelper.closeStatements();
     } finally {
       databaseManager.closeConnection(connection);
@@ -124,7 +137,7 @@ public class BalanceReporting extends Reporting {
     LOGGER.debug("Number of Deposit Addresses: " + depositDTOList.size());
 
     // ...
-    logInfoList.add("Deposit Addresses: " + depositDTOList.size());
+    logInfoList.add("Deposit Addresses: " + depositDTOList.size() + " (" + token + ")");
 
     // ...
     depositDTOList.sort(new Comparator<DepositDTO>() {

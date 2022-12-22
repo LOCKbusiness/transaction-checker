@@ -15,6 +15,7 @@ import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.logging.notifier.TelegramNotifier;
 import ch.dfx.reporting.BalanceReporting;
 import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
+import ch.dfx.reporting.VaultReporting;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
@@ -74,6 +75,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 
     executeStakingBalanceReport(logInfoList);
     executeLiquidityMasternodeStakingBalanceReport(logInfoList);
+    executeVaultReport(logInfoList);
 
     writeLogInfo(logInfoList);
   }
@@ -97,6 +99,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         BalanceReporting stakingBalanceReporting = new BalanceReporting(network, databaseManager, logInfoList);
         stakingBalanceReporting.report(TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
         stakingBalanceReporting.report(TokenEnum.DUSD, rootPath, balanceFileName, yieldmachineBalanceSheet);
+
+        logInfoList.add("");
       }
     } catch (Exception e) {
       LOGGER.error("executeStakingBalanceReport", e);
@@ -120,9 +124,34 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         LiquidityMasternodeStakingReporting liquidityMasternodeStakingReporting =
             new LiquidityMasternodeStakingReporting(network, databaseManager, logInfoList);
         liquidityMasternodeStakingReporting.report(TokenEnum.DFI, rootPath, checkFileName, checkSheet);
+
+        logInfoList.add("");
       }
     } catch (Exception e) {
       LOGGER.error("executeLiquidityMasternodeStakingBalanceReport", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void executeVaultReport(@Nonnull List<String> logInfoList) {
+    LOGGER.trace("executeVaultReport() ...");
+
+    try {
+      String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
+      String checkFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_VAULT_CHECK_FILENAME);
+      String checkSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_VAULT_CHECK_SHEET);
+
+      if (null != rootPath
+          && null != checkFileName
+          && null != checkSheet) {
+        VaultReporting vaultReporting =
+            new VaultReporting(network, databaseManager, logInfoList);
+        vaultReporting.report(TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
+      }
+    } catch (Exception e) {
+      LOGGER.error("executeVaultReport", e);
     }
   }
 

@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.DecimalFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -102,8 +103,19 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
       RowDataList rowDataList = createRowDataList(connection, token, stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
       CellDataList cellDataList = new CellDataList();
 
-      writeExcel(rootPath, fileName, sheet, rowDataList, cellDataList);
+      // ...
+      openExcel(rootPath, fileName, sheet);
 
+      CellDataList cleanCellDataList = new CellDataList();
+      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(new Date()));
+
+      cleanExcel(2);
+      cleanExcel(cleanCellDataList);
+
+      writeExcel(rowDataList, cellDataList);
+      closeExcel();
+
+      // ...
       closeStatements();
       databaseBalanceHelper.closeStatements();
       databaseBlockHelper.closeStatements();
@@ -208,6 +220,9 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     rowData.addCellData(new CellData().setValue(finalBalance));
 
     rowDataList.add(rowData);
+
+    // ...
+    logInfoList.add("Difference:                " + GERMAN_DECIMAL_FORMAT.format(finalBalance));
 
     return rowDataList;
   }

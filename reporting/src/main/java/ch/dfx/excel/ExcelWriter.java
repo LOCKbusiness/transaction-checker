@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.math.BigDecimal;
-import java.util.Date;
 
 import javax.annotation.Nonnull;
 
@@ -41,6 +40,7 @@ public class ExcelWriter {
 
   private CellStyle decimalNumberCellStyle = null;
   private CellStyle numberCellStyle = null;
+  private CellStyle dateCellStyle = null;
 
   /**
    * 
@@ -61,7 +61,6 @@ public class ExcelWriter {
       sheet = workbook.getSheet(sheetName);
 
       initializeStyles();
-      cleanSheet();
     } catch (Exception e) {
       throw new DfxException("openWorkbook", e);
     }
@@ -86,37 +85,32 @@ public class ExcelWriter {
 
     numberCellStyle = workbook.createCellStyle();
     numberCellStyle.setDataFormat(dataFormat.getFormat("#0"));
+
+    dateCellStyle = workbook.createCellStyle();
+    dateCellStyle.setDataFormat(dataFormat.getFormat("YYYY-MM-DD HH:MM:SS"));
   }
 
   /**
    * 
    */
-  private void cleanSheet() {
+  public void cleanSheet(@Nonnull CellDataList cellDataList) throws DfxException {
     LOGGER.trace("cleanSheet()");
 
-    for (int rowNum = sheet.getPhysicalNumberOfRows(); rowNum > 1; rowNum--) {
+    insertCellData(cellDataList);
+  }
+
+  /**
+   * 
+   */
+  public void cleanSheet(int afterRowNumber) {
+    LOGGER.trace("cleanSheet()");
+
+    for (int rowNum = sheet.getPhysicalNumberOfRows(); rowNum >= afterRowNumber; rowNum--) {
       Row row = sheet.getRow(rowNum);
 
       if (null != row) {
         sheet.removeRow(row);
       }
-    }
-
-    // ...
-    Row firstRow = sheet.getRow(0);
-
-    // B1: Timestamp
-    Cell timestampCell = firstRow.getCell(1);
-
-    if (null != timestampCell) {
-      timestampCell.setCellValue(new Date());
-    }
-
-    // C1: Total
-    Cell totalCell = firstRow.getCell(2);
-
-    if (null != totalCell) {
-      totalCell.setCellValue(0);
     }
   }
 
@@ -225,7 +219,8 @@ public class ExcelWriter {
 
     Object value = cellData.getValue();
 
-    if (cellData.isBold()) {
+    if (!cellData.isKeepStyle()
+        && cellData.isBold()) {
       cell.setCellStyle(boldCellStyle);
     }
 
@@ -237,14 +232,29 @@ public class ExcelWriter {
       if (String.class == valueClass) {
         cell.setCellValue((String) value);
       } else if (BigDecimal.class == valueClass) {
-        cell.setCellStyle(decimalNumberCellStyle);
+        if (!cellData.isKeepStyle()) {
+          cell.setCellStyle(decimalNumberCellStyle);
+        }
+
         cell.setCellValue(((BigDecimal) value).doubleValue());
       } else if (Integer.class == valueClass) {
-        cell.setCellStyle(numberCellStyle);
+        if (!cellData.isKeepStyle()) {
+          cell.setCellStyle(numberCellStyle);
+        }
+
         cell.setCellValue(((Integer) value).doubleValue());
       } else if (Long.class == valueClass) {
-        cell.setCellStyle(numberCellStyle);
+        if (!cellData.isKeepStyle()) {
+          cell.setCellStyle(numberCellStyle);
+        }
+
         cell.setCellValue(((Long) value).doubleValue());
+      } else if (java.util.Date.class == valueClass) {
+        if (!cellData.isKeepStyle()) {
+          cell.setCellStyle(dateCellStyle);
+        }
+
+        cell.setCellValue((java.util.Date) value);
       } else {
         throw new DfxException("unknown value class " + valueClass.getSimpleName());
       }

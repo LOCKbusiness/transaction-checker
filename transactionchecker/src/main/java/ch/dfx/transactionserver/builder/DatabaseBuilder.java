@@ -195,9 +195,11 @@ public class DatabaseBuilder {
     LOGGER.trace("createBlockDTO()");
 
     String blockHash = dataProvider.getBlockHash((long) nextBlockNumber);
-    BlockDTO blockDTO = new BlockDTO(nextBlockNumber, blockHash);
+    DefiBlockData blockData = dataProvider.getBlock(blockHash);
 
-    List<String> transactionIdList = getTransactionIdList(blockHash);
+    BlockDTO blockDTO = new BlockDTO(nextBlockNumber, blockHash, blockData.getMediantime());
+
+    List<String> transactionIdList = getTransactionIdList(blockData);
 
     for (int i = 0; i < transactionIdList.size(); i++) {
       String transactionId = transactionIdList.get(i);
@@ -221,21 +223,17 @@ public class DatabaseBuilder {
   /**
    * 
    */
-  private List<String> getTransactionIdList(@Nonnull String blockHash) throws DfxException {
+  private List<String> getTransactionIdList(@Nonnull DefiBlockData blockData) throws DfxException {
     LOGGER.trace("getTransactionIdList()");
 
     try {
       List<String> transactionIdList = new ArrayList<>();
-
-      DefiBlockData blockData = dataProvider.getBlock(blockHash);
 
       for (String transactionId : blockData.getTx()) {
         transactionIdList.add(transactionId);
       }
 
       return transactionIdList;
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
       throw new DfxException("getTransactionIdList", e);
     }

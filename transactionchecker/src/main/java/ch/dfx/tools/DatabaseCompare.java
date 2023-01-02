@@ -261,7 +261,8 @@ public class DatabaseCompare extends DatabaseTool {
         BlockDTO blockDTO =
             new BlockDTO(
                 resultSet.getInt("number"),
-                resultSet.getString("hash"));
+                resultSet.getString("hash"),
+                resultSet.getLong("timestamp"));
 
         blockDTOList.add(blockDTO);
       }

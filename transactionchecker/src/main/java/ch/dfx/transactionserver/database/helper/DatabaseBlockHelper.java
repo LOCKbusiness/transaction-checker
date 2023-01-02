@@ -75,7 +75,7 @@ public class DatabaseBlockHelper {
       String blockByNumberSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".block WHERE number=?";
       blockByNumberSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, blockByNumberSelectSql));
 
-      String blockInsertSql = "INSERT INTO " + TOKEN_PUBLIC_SCHEMA + ".block (number, hash) VALUES (?, ?)";
+      String blockInsertSql = "INSERT INTO " + TOKEN_PUBLIC_SCHEMA + ".block (number, hash, timestamp) VALUES (?, ?, ?)";
       blockInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, blockInsertSql));
 
       // Transaction ...
@@ -200,7 +200,8 @@ public class DatabaseBlockHelper {
         blockDTO =
             new BlockDTO(
                 resultSet.getInt("number"),
-                resultSet.getString("hash"));
+                resultSet.getString("hash"),
+                resultSet.getLong("timestamp"));
       }
 
       resultSet.close();
@@ -520,6 +521,7 @@ public class DatabaseBlockHelper {
 
       blockInsertStatement.setInt(1, blockNumber);
       blockInsertStatement.setString(2, blockDTO.getHash());
+      blockInsertStatement.setLong(3, blockDTO.getTimestamp());
 
       blockInsertStatement.execute();
 

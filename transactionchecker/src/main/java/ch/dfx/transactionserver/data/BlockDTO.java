@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
 public class BlockDTO extends DatabaseDTO {
   private final Integer number;
   private final String hash;
+  private final Long timestamp;
 
   private final List<TransactionDTO> transactionDTOList;
 
@@ -19,9 +20,11 @@ public class BlockDTO extends DatabaseDTO {
    */
   public BlockDTO(
       @Nonnull Integer number,
-      @Nonnull String hash) {
+      @Nonnull String hash,
+      @Nonnull Long timestamp) {
     this.number = number;
     this.hash = hash;
+    this.timestamp = timestamp;
 
     this.transactionDTOList = new ArrayList<>();
   }
@@ -32,6 +35,10 @@ public class BlockDTO extends DatabaseDTO {
 
   public String getHash() {
     return hash;
+  }
+
+  public Long getTimestamp() {
+    return timestamp;
   }
 
   public List<TransactionDTO> getTransactionDTOList() {

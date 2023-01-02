@@ -13,6 +13,7 @@ public class DefiBlockData extends ResultDataA {
   private Long confirmations = null;
   private Long height = null;
   private Long nTx = null;
+  private Long mediantime = null;
   private String previousblockhash = null;
   private String nextblockhash = null;
 
@@ -54,6 +55,14 @@ public class DefiBlockData extends ResultDataA {
 
   public void setnTx(Long nTx) {
     this.nTx = nTx;
+  }
+
+  public Long getMediantime() {
+    return mediantime;
+  }
+
+  public void setMediantime(Long mediantime) {
+    this.mediantime = mediantime;
   }
 
   public String getPreviousblockhash() {

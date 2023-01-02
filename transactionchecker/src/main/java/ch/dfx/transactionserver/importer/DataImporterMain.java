@@ -50,8 +50,11 @@ public class DataImporterMain {
 //      MasternodeWhitelistDataImporter dataImporter = new MasternodeWhitelistDataImporter(network);
 //      dataImporter.execute();
 
-      TokenDataImporter dataImporter = new TokenDataImporter(network);
-      dataImporter.execute();
+//      VaultWhitelistDataImporter vaultWhitelistDataImporter = new VaultWhitelistDataImporter(network);
+//      vaultWhitelistDataImporter.execute();
+
+//      TokenDataImporter dataImporter = new TokenDataImporter(network);
+//      dataImporter.execute();
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

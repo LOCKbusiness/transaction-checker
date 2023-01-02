@@ -13,16 +13,16 @@ import ch.dfx.common.enumeration.NetworkEnum;
 /**
  * 
  */
-public class MasternodeWhitelistDataImporter extends WhitelistDataImporter {
-  private static final Logger LOGGER = LogManager.getLogger(MasternodeWhitelistDataImporter.class);
+public class VaultWhitelistDataImporter extends WhitelistDataImporter {
+  private static final Logger LOGGER = LogManager.getLogger(VaultWhitelistDataImporter.class);
 
   // ...
-  private static final int WALLET_ID = 1;
+  private static final int WALLET_ID = 999;
 
   /**
    * 
    */
-  public MasternodeWhitelistDataImporter(@Nonnull NetworkEnum network) {
+  public VaultWhitelistDataImporter(@Nonnull NetworkEnum network) {
     super(network);
   }
 
@@ -36,11 +36,11 @@ public class MasternodeWhitelistDataImporter extends WhitelistDataImporter {
     Path path;
 
     if (NetworkEnum.MAINNET == network) {
-      path = Paths.get("data", "json", "masternode", "owner-prd.json");
+      path = Paths.get("data", "json", "vault", "vault-prd.json");
     } else if (NetworkEnum.STAGNET == network) {
-      path = Paths.get("data", "json", "masternode", "owner-stg.json");
+      path = Paths.get("data", "json", "vault", "vault-stag.json");
     } else {
-      path = Paths.get("data", "json", "masternode", "owner-dev.json");
+      path = Paths.get("data", "json", "vault", "vault-dev.json");
     }
 
     return path;

@@ -83,6 +83,7 @@ public class VaultReporting extends Reporting {
       @Nonnull String sheet) throws DfxException {
     LOGGER.debug("report()");
 
+    Objects.requireNonNull(token, "null 'token' not allowed");
     Objects.requireNonNull(rootPath, "null 'rootPath' not allowed");
     Objects.requireNonNull(fileName, "null 'fileName' not allowed");
     Objects.requireNonNull(sheet, "null 'sheet' not allowed");
@@ -106,7 +107,7 @@ public class VaultReporting extends Reporting {
         if (!listVaultDataList.isEmpty()) {
           DefiListVaultData listVaultData = listVaultDataList.get(0);
 
-          RowDataList rowDataList = new RowDataList();
+          RowDataList rowDataList = new RowDataList(2);
           CellDataList cellDataList =
               doCheckVaultValue(listVaultData, liquidityTokenToAmountMap, vaultTokenToAmountMap, totalStakingBalance);
 

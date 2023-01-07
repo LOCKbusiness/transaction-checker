@@ -81,6 +81,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
       @Nonnull String sheet) throws DfxException {
     LOGGER.debug("report()");
 
+    Objects.requireNonNull(token, "null 'token' not allowed");
     Objects.requireNonNull(rootPath, "null 'rootPath' not allowed");
     Objects.requireNonNull(fileName, "null 'fileName' not allowed");
     Objects.requireNonNull(sheet, "null 'sheet' not allowed");
@@ -186,7 +187,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
       @Nonnull List<StakingDTO> stakingDTOList) throws DfxException {
     LOGGER.trace("createRowDataList()");
 
-    RowDataList rowDataList = new RowDataList();
+    RowDataList rowDataList = new RowDataList(2);
 
     // ...
     BigDecimal balance = BigDecimal.ZERO;

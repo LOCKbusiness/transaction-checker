@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import javax.annotation.Nonnull;
 
@@ -41,6 +43,7 @@ public class ExcelWriter {
   private CellStyle decimalNumberCellStyle = null;
   private CellStyle numberCellStyle = null;
   private CellStyle dateCellStyle = null;
+  private CellStyle timestampCellStyle = null;
 
   /**
    * 
@@ -87,7 +90,10 @@ public class ExcelWriter {
     numberCellStyle.setDataFormat(dataFormat.getFormat("#0"));
 
     dateCellStyle = workbook.createCellStyle();
-    dateCellStyle.setDataFormat(dataFormat.getFormat("YYYY-MM-DD HH:MM:SS"));
+    dateCellStyle.setDataFormat(dataFormat.getFormat("YYYY-MM-DD"));
+
+    timestampCellStyle = workbook.createCellStyle();
+    timestampCellStyle.setDataFormat(dataFormat.getFormat("YYYY-MM-DD HH:MM:SS"));
   }
 
   /**
@@ -134,8 +140,10 @@ public class ExcelWriter {
   public void insertRowData(@Nonnull RowDataList rowDataList) throws DfxException {
     LOGGER.trace("insertRowData()");
 
+    int rowOffset = rowDataList.getRowOffset();
+
     for (int rowIndex = 0; rowIndex < rowDataList.size(); rowIndex++) {
-      Row row = sheet.createRow(rowIndex + 2);
+      Row row = sheet.createRow(rowIndex + rowOffset);
       row.setHeightInPoints(16f);
 
       RowData rowData = rowDataList.get(rowIndex);
@@ -249,12 +257,32 @@ public class ExcelWriter {
         }
 
         cell.setCellValue(((Long) value).doubleValue());
-      } else if (java.util.Date.class == valueClass) {
+      } else if (java.util.Date.class == valueClass
+          || java.sql.Date.class == valueClass) {
         if (!cellData.isKeepStyle()) {
           cell.setCellStyle(dateCellStyle);
         }
 
         cell.setCellValue((java.util.Date) value);
+      } else if (LocalDate.class == valueClass) {
+        if (!cellData.isKeepStyle()) {
+          cell.setCellStyle(dateCellStyle);
+        }
+
+        cell.setCellValue((LocalDate) value);
+      } else if (java.sql.Timestamp.class == valueClass) {
+        if (!cellData.isKeepStyle()) {
+          cell.setCellStyle(timestampCellStyle);
+        }
+
+        cell.setCellValue((java.util.Date) value);
+
+      } else if (LocalDateTime.class == valueClass) {
+        if (!cellData.isKeepStyle()) {
+          cell.setCellStyle(timestampCellStyle);
+        }
+
+        cell.setCellValue((LocalDateTime) value);
       } else {
         throw new DfxException("unknown value class " + valueClass.getSimpleName());
       }

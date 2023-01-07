@@ -1,7 +1,9 @@
 package ch.dfx;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -16,6 +18,8 @@ import ch.dfx.logging.notifier.TelegramNotifier;
 import ch.dfx.reporting.BalanceReporting;
 import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
 import ch.dfx.reporting.VaultReporting;
+import ch.dfx.statistik.StatistikProvider;
+import ch.dfx.statistik.StatistikReporting;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
@@ -73,9 +77,11 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 
     List<String> logInfoList = new ArrayList<>();
 
-    executeStakingBalanceReport(logInfoList);
-    executeLiquidityMasternodeStakingBalanceReport(logInfoList);
-    executeVaultReport(logInfoList);
+    createStakingBalanceReport(logInfoList);
+    createLiquidityMasternodeStakingBalanceReport(logInfoList);
+    createVaultReport(logInfoList);
+
+    createStatistikReport();
 
     writeLogInfo(logInfoList);
   }
@@ -83,8 +89,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  private void executeStakingBalanceReport(@Nonnull List<String> logInfoList) {
-    LOGGER.trace("executeStakingBalanceReport() ...");
+  private void createStakingBalanceReport(@Nonnull List<String> logInfoList) {
+    LOGGER.trace("createStakingBalanceReport() ...");
 
     try {
       String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
@@ -103,15 +109,15 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         logInfoList.add("");
       }
     } catch (Exception e) {
-      LOGGER.error("executeStakingBalanceReport", e);
+      LOGGER.error("createStakingBalanceReport", e);
     }
   }
 
   /**
    * 
    */
-  private void executeLiquidityMasternodeStakingBalanceReport(@Nonnull List<String> logInfoList) {
-    LOGGER.trace("executeLiquidityMasternodeStakingBalanceReport() ...");
+  private void createLiquidityMasternodeStakingBalanceReport(@Nonnull List<String> logInfoList) {
+    LOGGER.trace("createLiquidityMasternodeStakingBalanceReport() ...");
 
     try {
       String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
@@ -128,15 +134,15 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         logInfoList.add("");
       }
     } catch (Exception e) {
-      LOGGER.error("executeLiquidityMasternodeStakingBalanceReport", e);
+      LOGGER.error("createLiquidityMasternodeStakingBalanceReport", e);
     }
   }
 
   /**
    * 
    */
-  private void executeVaultReport(@Nonnull List<String> logInfoList) {
-    LOGGER.trace("executeVaultReport() ...");
+  private void createVaultReport(@Nonnull List<String> logInfoList) {
+    LOGGER.trace("createVaultReport() ...");
 
     try {
       String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
@@ -151,7 +157,37 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         vaultReporting.report(TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
       }
     } catch (Exception e) {
-      LOGGER.error("executeVaultReport", e);
+      LOGGER.error("createVaultReport", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void createStatistikReport() {
+    LOGGER.trace("createStatistikReport() ...");
+
+    try {
+      String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
+      String statistikFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STATISTIK_FILENAME);
+      String statistikDfiDataSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STATISTIK_DFI_DATA_SHEET);
+      String statistikDusdDataSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STATISTIK_DUSD_DATA_SHEET);
+
+      if (null != rootPath
+          && null != statistikFileName
+          && null != statistikDfiDataSheet
+          && null != statistikDusdDataSheet) {
+        StatistikReporting statistikReporting = new StatistikReporting(network, databaseManager);
+        StatistikProvider statistikProvider = new StatistikProvider(network, databaseManager);
+
+        Map<LocalDate, Integer> dfiStatistikData = statistikProvider.createStatistikData(TokenEnum.DFI);
+        statistikReporting.report(dfiStatistikData, rootPath, statistikFileName, statistikDfiDataSheet);
+
+        Map<LocalDate, Integer> dusdStatistikData = statistikProvider.createStatistikData(TokenEnum.DUSD);
+        statistikReporting.report(dusdStatistikData, rootPath, statistikFileName, statistikDusdDataSheet);
+      }
+    } catch (Exception e) {
+      LOGGER.error("createStatistikReport", e);
     }
   }
 

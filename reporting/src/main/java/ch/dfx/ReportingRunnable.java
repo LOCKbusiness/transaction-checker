@@ -1,9 +1,7 @@
 package ch.dfx;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -18,7 +16,6 @@ import ch.dfx.logging.notifier.TelegramNotifier;
 import ch.dfx.reporting.BalanceReporting;
 import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
 import ch.dfx.reporting.VaultReporting;
-import ch.dfx.statistik.StatistikProvider;
 import ch.dfx.statistik.StatistikReporting;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
@@ -178,13 +175,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != statistikDfiDataSheet
           && null != statistikDusdDataSheet) {
         StatistikReporting statistikReporting = new StatistikReporting(network, databaseManager);
-        StatistikProvider statistikProvider = new StatistikProvider(network, databaseManager);
-
-        Map<LocalDate, Integer> dfiStatistikData = statistikProvider.createStatistikData(TokenEnum.DFI);
-        statistikReporting.report(dfiStatistikData, rootPath, statistikFileName, statistikDfiDataSheet);
-
-        Map<LocalDate, Integer> dusdStatistikData = statistikProvider.createStatistikData(TokenEnum.DUSD);
-        statistikReporting.report(dusdStatistikData, rootPath, statistikFileName, statistikDusdDataSheet);
+        statistikReporting.report(TokenEnum.DFI, rootPath, statistikFileName, statistikDfiDataSheet);
+        statistikReporting.report(TokenEnum.DUSD, rootPath, statistikFileName, statistikDusdDataSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createStatistikReport", e);

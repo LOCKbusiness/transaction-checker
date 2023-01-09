@@ -277,8 +277,6 @@ public class StatistikProvider extends DepositBuilder {
 
     // ...
     while (workDate.isBefore(endDate)) {
-      LOGGER.debug("fillDateToCountMap: " + workDate);
-
       int count = getCount(token, workDate);
 
       dateToCountMap.merge(workDate, count, (currVal, newVal) -> currVal += newVal);
@@ -334,8 +332,6 @@ public class StatistikProvider extends DepositBuilder {
 
     // ...
     while (workDate.isBefore(endDate)) {
-      LOGGER.debug("fillDateToVinMap: " + workDate);
-
       BigDecimal sumVin;
 
       if (TokenEnum.DFI == token) {
@@ -442,8 +438,6 @@ public class StatistikProvider extends DepositBuilder {
 
     // ...
     while (workDate.isBefore(endDate)) {
-      LOGGER.debug("fillDateToVoutMap: " + workDate);
-
       BigDecimal sumVout;
 
       if (TokenEnum.DFI == token) {

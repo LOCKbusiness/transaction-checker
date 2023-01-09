@@ -1,5 +1,6 @@
 package ch.dfx.statistik;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
 
@@ -41,8 +42,11 @@ public class StatistikProvider extends DepositBuilder {
   // ...
   private PreparedStatement depositCountSelectStatement = null;
 
-  private PreparedStatement depositSumVinSelectStatement = null;
-  private PreparedStatement depositSumVoutSelectStatement = null;
+  private PreparedStatement depositDfiSumVinSelectStatement = null;
+  private PreparedStatement depositDfiSumVoutSelectStatement = null;
+
+  private PreparedStatement depositDusdSumVinSelectStatement = null;
+  private PreparedStatement depositDusdSumVoutSelectStatement = null;
 
   // ...
   private final NetworkEnum network;
@@ -74,7 +78,7 @@ public class StatistikProvider extends DepositBuilder {
       @Nonnull Map<LocalDate, Integer> dateToCountMap,
       @Nonnull Map<LocalDate, BigDecimal> dateToSumVinMap,
       @Nonnull Map<LocalDate, BigDecimal> dateToSumVoutMap) throws DfxException {
-    LOGGER.trace("fillDepositStatistikData()");
+    LOGGER.trace("fillDfiDepositStatistikData()");
 
     Connection connection = null;
 
@@ -160,7 +164,7 @@ public class StatistikProvider extends DepositBuilder {
               + " SELECT"
               + " SUM(vin) AS sum_vin"
               + " FROM X";
-      depositSumVinSelectStatement =
+      depositDfiSumVinSelectStatement =
           connection.prepareStatement(DatabaseUtils.replaceSchema(network, depositSumVinSelectSql));
 
       String depositSumVoutSelectSql =
@@ -188,9 +192,52 @@ public class StatistikProvider extends DepositBuilder {
               + " SELECT"
               + " SUM(vout) AS sum_vout"
               + " FROM X";
-      depositSumVoutSelectStatement =
+      depositDfiSumVoutSelectStatement =
           connection.prepareStatement(DatabaseUtils.replaceSchema(network, depositSumVoutSelectSql));
 
+      String depositDusdSumVinSelectSql =
+          "SELECT"
+              + " SUM(ata_in.amount) AS sum_vin"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".block b"
+              + " JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out ON"
+              + " b.number = ata_out.block_number"
+              + " JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_in ata_in ON"
+              + " ata_out.block_number = ata_in.block_number"
+              + " AND ata_out.transaction_number = ata_in.transaction_number"
+              + " AND ata_out.type_number = ata_in.type_number"
+              + " AND ata_out.token_number = ata_in.token_number"
+              + " WHERE"
+              + " b.timestamp>=? AND b.timestamp<=?"
+              + " AND ata_out.token_number=?"
+              + " AND ata_out.address_number=?"
+              + " AND ata_in.address_number IN ("
+              + " SELECT deposit_address_number"
+              + " FROM mainnet.deposit"
+              + " WHERE token_number=?)";
+      depositDusdSumVinSelectStatement =
+          connection.prepareStatement(DatabaseUtils.replaceSchema(network, depositDusdSumVinSelectSql));
+
+      String depositDusdSumVoutSelectSql =
+          "SELECT"
+              + " SUM(ata_in.amount) AS sum_vout"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".block b"
+              + " JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out ON"
+              + " b.number = ata_out.block_number"
+              + " JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_in ata_in ON"
+              + " ata_out.block_number = ata_in.block_number"
+              + " AND ata_out.transaction_number = ata_in.transaction_number"
+              + " AND ata_out.type_number = ata_in.type_number"
+              + " AND ata_out.token_number = ata_in.token_number"
+              + " WHERE"
+              + " b.timestamp>=? AND b.timestamp<=?"
+              + " AND ata_out.token_number=?"
+              + " AND ata_out.address_number IN ("
+              + " SELECT customer_address_number"
+              + " FROM mainnet.deposit"
+              + " WHERE token_number=?)"
+              + " AND ata_in.address_number=?";
+      depositDusdSumVoutSelectStatement =
+          connection.prepareStatement(DatabaseUtils.replaceSchema(network, depositDusdSumVoutSelectSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -205,8 +252,11 @@ public class StatistikProvider extends DepositBuilder {
     try {
       depositCountSelectStatement.close();
 
-      depositSumVinSelectStatement.close();
-      depositSumVoutSelectStatement.close();
+      depositDfiSumVinSelectStatement.close();
+      depositDfiSumVoutSelectStatement.close();
+
+      depositDusdSumVinSelectStatement.close();
+      depositDusdSumVoutSelectStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
     }
@@ -286,7 +336,13 @@ public class StatistikProvider extends DepositBuilder {
     while (workDate.isBefore(endDate)) {
       LOGGER.debug("fillDateToVinMap: " + workDate);
 
-      BigDecimal sumVin = getSumVin(token, liquidityAddressNumber, workDate);
+      BigDecimal sumVin;
+
+      if (TokenEnum.DFI == token) {
+        sumVin = getDfiSumVin(token, liquidityAddressNumber, workDate);
+      } else {
+        sumVin = getDusdSumVin(token, liquidityAddressNumber, workDate);
+      }
 
       dateToSumVinMap.merge(workDate, sumVin, (currVal, newVal) -> currVal.add(newVal));
 
@@ -297,22 +353,22 @@ public class StatistikProvider extends DepositBuilder {
   /**
    * 
    */
-  private BigDecimal getSumVin(
+  private BigDecimal getDfiSumVin(
       @Nonnull TokenEnum token,
       int liquidityAddressNumber,
       @Nonnull LocalDate workDate) throws DfxException {
-    LOGGER.trace("getSumVin()");
+    LOGGER.trace("getDfiSumVin()");
 
     try {
       long[] timestampOfDayArray = getTimestampOfDay(workDate);
 
-      depositSumVinSelectStatement.setLong(1, timestampOfDayArray[0]);
-      depositSumVinSelectStatement.setLong(2, timestampOfDayArray[1]);
-      depositSumVinSelectStatement.setInt(3, liquidityAddressNumber);
-      depositSumVinSelectStatement.setInt(4, token.getNumber());
-      depositSumVinSelectStatement.setInt(5, liquidityAddressNumber);
+      depositDfiSumVinSelectStatement.setLong(1, timestampOfDayArray[0]);
+      depositDfiSumVinSelectStatement.setLong(2, timestampOfDayArray[1]);
+      depositDfiSumVinSelectStatement.setInt(3, liquidityAddressNumber);
+      depositDfiSumVinSelectStatement.setInt(4, token.getNumber());
+      depositDfiSumVinSelectStatement.setInt(5, liquidityAddressNumber);
 
-      ResultSet resultSet = depositSumVinSelectStatement.executeQuery();
+      ResultSet resultSet = depositDfiSumVinSelectStatement.executeQuery();
 
       BigDecimal sumVin = null;
 
@@ -328,7 +384,45 @@ public class StatistikProvider extends DepositBuilder {
 
       return sumVin;
     } catch (Exception e) {
-      throw new DfxException("getSumVin", e);
+      throw new DfxException("getDfiSumVin", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private BigDecimal getDusdSumVin(
+      @Nonnull TokenEnum token,
+      int liquidityAddressNumber,
+      @Nonnull LocalDate workDate) throws DfxException {
+    LOGGER.trace("getDusdSumVin()");
+
+    try {
+      long[] timestampOfDayArray = getTimestampOfDay(workDate);
+
+      depositDusdSumVinSelectStatement.setLong(1, timestampOfDayArray[0]);
+      depositDusdSumVinSelectStatement.setLong(2, timestampOfDayArray[1]);
+      depositDusdSumVinSelectStatement.setInt(3, token.getNumber());
+      depositDusdSumVinSelectStatement.setInt(4, liquidityAddressNumber);
+      depositDusdSumVinSelectStatement.setInt(5, token.getNumber());
+
+      ResultSet resultSet = depositDusdSumVinSelectStatement.executeQuery();
+
+      BigDecimal sumVin = null;
+
+      if (resultSet.next()) {
+        sumVin = resultSet.getBigDecimal("sum_vin");
+      }
+
+      if (null == sumVin) {
+        sumVin = BigDecimal.ZERO;
+      }
+
+      resultSet.close();
+
+      return sumVin;
+    } catch (Exception e) {
+      throw new DfxException("getDusdSumVin", e);
     }
   }
 
@@ -350,7 +444,13 @@ public class StatistikProvider extends DepositBuilder {
     while (workDate.isBefore(endDate)) {
       LOGGER.debug("fillDateToVoutMap: " + workDate);
 
-      BigDecimal sumVout = getSumVout(token, liquidityAddressNumber, workDate);
+      BigDecimal sumVout;
+
+      if (TokenEnum.DFI == token) {
+        sumVout = getDfiSumVout(token, liquidityAddressNumber, workDate);
+      } else {
+        sumVout = getDusdSumVout(token, liquidityAddressNumber, workDate);
+      }
 
       dateToSumVoutMap.merge(workDate, sumVout, (currVal, newVal) -> currVal.add(newVal));
 
@@ -361,22 +461,22 @@ public class StatistikProvider extends DepositBuilder {
   /**
    * 
    */
-  private BigDecimal getSumVout(
+  private BigDecimal getDfiSumVout(
       @Nonnull TokenEnum token,
       int liquidityAddressNumber,
       @Nonnull LocalDate workDate) throws DfxException {
-    LOGGER.trace("getSumVout()");
+    LOGGER.trace("getDfiSumVout()");
 
     try {
       long[] timestampOfDayArray = getTimestampOfDay(workDate);
 
-      depositSumVoutSelectStatement.setLong(1, timestampOfDayArray[0]);
-      depositSumVoutSelectStatement.setLong(2, timestampOfDayArray[1]);
-      depositSumVoutSelectStatement.setInt(3, liquidityAddressNumber);
-      depositSumVoutSelectStatement.setInt(4, token.getNumber());
-      depositSumVoutSelectStatement.setInt(5, liquidityAddressNumber);
+      depositDfiSumVoutSelectStatement.setLong(1, timestampOfDayArray[0]);
+      depositDfiSumVoutSelectStatement.setLong(2, timestampOfDayArray[1]);
+      depositDfiSumVoutSelectStatement.setInt(3, liquidityAddressNumber);
+      depositDfiSumVoutSelectStatement.setInt(4, token.getNumber());
+      depositDfiSumVoutSelectStatement.setInt(5, liquidityAddressNumber);
 
-      ResultSet resultSet = depositSumVoutSelectStatement.executeQuery();
+      ResultSet resultSet = depositDfiSumVoutSelectStatement.executeQuery();
 
       BigDecimal sumVin = null;
 
@@ -392,7 +492,45 @@ public class StatistikProvider extends DepositBuilder {
 
       return sumVin;
     } catch (Exception e) {
-      throw new DfxException("getSumVout", e);
+      throw new DfxException("getDfiSumVout", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private BigDecimal getDusdSumVout(
+      @Nonnull TokenEnum token,
+      int liquidityAddressNumber,
+      @Nonnull LocalDate workDate) throws DfxException {
+    LOGGER.trace("getDusdSumVout()");
+
+    try {
+      long[] timestampOfDayArray = getTimestampOfDay(workDate);
+
+      depositDusdSumVoutSelectStatement.setLong(1, timestampOfDayArray[0]);
+      depositDusdSumVoutSelectStatement.setLong(2, timestampOfDayArray[1]);
+      depositDusdSumVoutSelectStatement.setInt(3, token.getNumber());
+      depositDusdSumVoutSelectStatement.setInt(4, token.getNumber());
+      depositDusdSumVoutSelectStatement.setInt(5, liquidityAddressNumber);
+
+      ResultSet resultSet = depositDusdSumVoutSelectStatement.executeQuery();
+
+      BigDecimal sumVin = null;
+
+      if (resultSet.next()) {
+        sumVin = resultSet.getBigDecimal("sum_vout");
+      }
+
+      if (null == sumVin) {
+        sumVin = BigDecimal.ZERO;
+      }
+
+      resultSet.close();
+
+      return sumVin;
+    } catch (Exception e) {
+      throw new DfxException("getDusdSumVout", e);
     }
   }
 

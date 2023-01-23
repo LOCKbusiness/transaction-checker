@@ -1,5 +1,6 @@
 package ch.dfx.transactionserver.builder;
 
+import java.sql.Connection;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +11,8 @@ import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
+import ch.dfx.transactionserver.handler.DatabaseAddressHandler;
 
 /**
  * 
@@ -49,11 +52,20 @@ public class DatabaseBuilderMain {
 
       // ...
       H2DBManager databaseManager = new H2DBManagerImpl();
+      Connection connection = databaseManager.openConnection();
+
+      DatabaseBlockHelper databaseBlockHelper = new DatabaseBlockHelper(network);
+      databaseBlockHelper.openStatements(connection);
+
+      DatabaseAddressHandler databaseAddressHandler = new DatabaseAddressHandler(network);
 
       // ...
-      DatabaseBuilder databaseBuilder = new DatabaseBuilder(network, databaseManager);
-      databaseBuilder.build();
+      DatabaseBuilder databaseBuilder = new DatabaseBuilder(network, databaseBlockHelper, databaseAddressHandler);
+      databaseBuilder.build(connection);
 
+      // ...
+      databaseBlockHelper.closeStatements();
+      databaseManager.closeConnection(connection);
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

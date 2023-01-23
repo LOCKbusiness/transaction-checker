@@ -1,6 +1,7 @@
 package ch.dfx.statistik;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +22,8 @@ import ch.dfx.excel.data.CellDataList;
 import ch.dfx.excel.data.RowData;
 import ch.dfx.excel.data.RowDataList;
 import ch.dfx.reporting.Reporting;
-import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -36,10 +38,11 @@ public class StatistikReporting extends Reporting {
    */
   public StatistikReporting(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
-    super(network, databaseManager);
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
+    super(network, databaseBlockHelper, databaseBalanceHelper);
 
-    this.statistikProvider = new StatistikProvider(network, databaseManager);
+    this.statistikProvider = new StatistikProvider(network, databaseBlockHelper, databaseBalanceHelper);
   }
 
 //  /**
@@ -83,6 +86,7 @@ public class StatistikReporting extends Reporting {
    * 
    */
   public void report(
+      @Nonnull Connection connection,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -101,7 +105,7 @@ public class StatistikReporting extends Reporting {
       Map<LocalDate, BigDecimal> dateToSumVinMap = new HashMap<>();
       Map<LocalDate, BigDecimal> dateToSumVoutMap = new HashMap<>();
 
-      statistikProvider.fillDepositStatistikData(token, dateToCountMap, dateToSumVinMap, dateToSumVoutMap);
+      statistikProvider.fillDepositStatistikData(connection, token, dateToCountMap, dateToSumVinMap, dateToSumVoutMap);
 
       // ...
       int totalCount = 0;

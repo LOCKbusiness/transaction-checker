@@ -1,6 +1,7 @@
 package ch.dfx.transactionserver;
 
 import java.io.File;
+import java.sql.Connection;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -30,6 +31,8 @@ import ch.dfx.transactionserver.builder.DatabaseBuilder;
 import ch.dfx.transactionserver.database.DatabaseRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
+import ch.dfx.transactionserver.handler.DatabaseAddressHandler;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 
 /**
@@ -135,10 +138,19 @@ public class TransactionServerMain {
     if (createProcessLockfile()) {
       startDatabaseServer();
 
-      DatabaseBuilder databaseBuilder = new DatabaseBuilder(network, databaseManager);
-      databaseBuilder.build();
+      DatabaseBlockHelper databaseBlockHelper = new DatabaseBlockHelper(network);
+      DatabaseAddressHandler databaseAddressHandler = new DatabaseAddressHandler(network);
 
-      shutdown();
+      Connection connection = databaseManager.openConnection();
+      databaseBlockHelper.openStatements(connection);
+
+      DatabaseBuilder databaseBuilder = new DatabaseBuilder(network, databaseBlockHelper, databaseAddressHandler);
+      databaseBuilder.build(connection);
+
+      databaseBlockHelper.closeStatements();
+      databaseManager.closeConnection(connection);
+
+      shutdown(true);
     }
   }
 
@@ -156,7 +168,7 @@ public class TransactionServerMain {
       ((DefaultShutdownCallbackRegistry) factory.getShutdownCallbackRegistry()).stop();
 
       // ...
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(isServerOnly)));
 
       // ...
       setupMessageEventHandling();
@@ -164,7 +176,9 @@ public class TransactionServerMain {
       startDatabaseServer();
 
       // ...
-      loadWallet();
+      if (!isServerOnly) {
+        loadWallet();
+      }
 
       // ...
       int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
@@ -218,12 +232,14 @@ public class TransactionServerMain {
   /**
    * 
    */
-  private void shutdown() {
+  private void shutdown(boolean isServerOnly) {
     LOGGER.debug("shutdown()");
 
     SchedulerProvider.getInstance().shutdown();
 
-    unloadWallet();
+    if (!isServerOnly) {
+      unloadWallet();
+    }
 
     stopDatabaseServer();
 

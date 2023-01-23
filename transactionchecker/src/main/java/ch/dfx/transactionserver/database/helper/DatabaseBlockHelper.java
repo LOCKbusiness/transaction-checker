@@ -31,6 +31,7 @@ import ch.dfx.transactionserver.database.DatabaseUtils;
 public class DatabaseBlockHelper {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseBlockHelper.class);
 
+  // ...
   private PreparedStatement blockByNumberSelectStatement = null;
   private PreparedStatement blockInsertStatement = null;
 

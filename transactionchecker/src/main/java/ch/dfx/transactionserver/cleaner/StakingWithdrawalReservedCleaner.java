@@ -23,7 +23,6 @@ import ch.dfx.logging.events.MessageEvent;
 import ch.dfx.transactionserver.data.StakingWithdrawalReservedDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
@@ -38,8 +37,6 @@ public class StakingWithdrawalReservedCleaner {
   // ...
   private final NetworkEnum network;
 
-  private final H2DBManager databaseManager;
-
   private final DatabaseBlockHelper databaseBlockHelper;
   private final DatabaseBalanceHelper databaseBalanceHelper;
 
@@ -48,29 +45,25 @@ public class StakingWithdrawalReservedCleaner {
    */
   public StakingWithdrawalReservedCleaner(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     this.network = network;
-    this.databaseManager = databaseManager;
 
-    this.databaseBlockHelper = new DatabaseBlockHelper(network);
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseBlockHelper = databaseBlockHelper;
+    this.databaseBalanceHelper = databaseBalanceHelper;
   }
 
   /**
    * 
    */
-  public void clean(@Nonnull TokenEnum token) throws DfxException {
+  public void clean(
+      @Nonnull Connection connection,
+      @Nonnull TokenEnum token) throws DfxException {
     LOGGER.debug("clean()");
 
     long startTime = System.currentTimeMillis();
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBlockHelper.openStatements(connection);
-      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = databaseBalanceHelper.getStakingWithdrawalReservedDTOList(token);
@@ -80,15 +73,11 @@ public class StakingWithdrawalReservedCleaner {
       }
 
       closeStatements();
-      databaseBalanceHelper.closeStatements();
-      databaseBlockHelper.closeStatements();
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
       throw new DfxException("clean", e);
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("[StakingWithdrawalReservedCleaner] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

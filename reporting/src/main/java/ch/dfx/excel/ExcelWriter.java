@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
@@ -49,6 +50,7 @@ public class ExcelWriter {
    * 
    */
   public ExcelWriter() {
+    ZipSecureFile.setMinInflateRatio(0);
   }
 
   /**

@@ -36,7 +36,8 @@ import ch.dfx.excel.data.CellData;
 import ch.dfx.excel.data.CellDataList;
 import ch.dfx.excel.data.RowDataList;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  *
@@ -64,9 +65,10 @@ public class VaultReporting extends Reporting {
    */
   public VaultReporting(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager,
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper,
       @Nonnull List<String> logInfoList) {
-    super(network, databaseManager);
+    super(network, databaseBlockHelper, databaseBalanceHelper);
 
     this.logInfoList = logInfoList;
 
@@ -77,6 +79,7 @@ public class VaultReporting extends Reporting {
    * 
    */
   public void report(
+      @Nonnull Connection connection,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -91,7 +94,7 @@ public class VaultReporting extends Reporting {
     long startTime = System.currentTimeMillis();
 
     try {
-      BigDecimal totalStakingBalance = getTotalStakingBalance(token);
+      BigDecimal totalStakingBalance = getTotalStakingBalance(connection, token);
 
       String liquidityAddress = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_LIQUIDITY_ADDRESS, "");
       String vaultAddress = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT_ADDRESS, "");
@@ -124,15 +127,13 @@ public class VaultReporting extends Reporting {
   /**
    * 
    */
-  private BigDecimal getTotalStakingBalance(@Nonnull TokenEnum token) throws DfxException {
+  private BigDecimal getTotalStakingBalance(
+      @Nonnull Connection connection,
+      @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getTotalStakingBalance()");
-
-    Connection connection = null;
 
     try {
       BigDecimal balance = BigDecimal.ZERO;
-
-      connection = databaseManager.openConnection();
 
       String selectSql =
           "SELECT sum(vin)-sum(vout) AS balance"
@@ -153,8 +154,6 @@ public class VaultReporting extends Reporting {
       throw e;
     } catch (Exception e) {
       throw new DfxException("getTotalStakingBalance", e);
-    } finally {
-      databaseManager.closeConnection(connection);
     }
   }
 

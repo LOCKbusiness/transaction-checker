@@ -29,7 +29,6 @@ public class DatabaseChecker {
 
   private final NetworkEnum network;
 
-  private final H2DBManager databaseManager;
   private final DefiDataProvider dataProvider;
 
   private PreparedStatement transactionSelectStatement = null;
@@ -37,11 +36,8 @@ public class DatabaseChecker {
   /**
    * 
    */
-  public DatabaseChecker(
-      @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
+  public DatabaseChecker(@Nonnull NetworkEnum network) {
     this.network = network;
-    this.databaseManager = databaseManager;
 
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
@@ -49,15 +45,12 @@ public class DatabaseChecker {
   /**
    * 
    */
-  public boolean check() throws DfxException {
+  public boolean check(@Nonnull Connection connection) throws DfxException {
     LOGGER.debug("check()");
 
     long startTime = System.currentTimeMillis();
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
       openStatements(connection);
 
       long maxBlockNumber = getMaxBlockNumber(connection);
@@ -90,8 +83,6 @@ public class DatabaseChecker {
       DatabaseUtils.rollback(connection);
       throw new DfxException("check", e);
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("[DatabaseChecker] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

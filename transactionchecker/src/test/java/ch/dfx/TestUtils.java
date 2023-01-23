@@ -37,6 +37,7 @@ import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.common.provider.TokenProvider;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
@@ -90,6 +91,9 @@ public class TestUtils {
       // ...
       System.setProperty("logFilename", logPrefix + "-test-" + network + "-" + environment);
       TransactionCheckerUtils.initLog4j("log4j2.xml");
+
+      // ...
+      TokenProvider.setup(network);
 
       // ...
       Properties properties = new Properties();

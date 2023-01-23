@@ -1,5 +1,6 @@
 package ch.dfx.transactionserver.ymbuilder;
 
+import java.sql.Connection;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +12,7 @@ import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 
 /**
  * 
@@ -50,10 +52,18 @@ public class YmDepositBuilderMain {
 
       // ...
       H2DBManager databaseManager = new H2DBManagerImpl();
+      Connection connection = databaseManager.openConnection();
+
+      DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(network);
+      databaseBalanceHelper.openStatements(connection);
 
       // ...
-      YmDepositBuilder ymDepositBuilder = new YmDepositBuilder(network, databaseManager);
-      ymDepositBuilder.build(TokenEnum.DUSD);
+      YmDepositBuilder ymDepositBuilder = new YmDepositBuilder(network, databaseBalanceHelper);
+      ymDepositBuilder.build(connection, TokenEnum.DUSD);
+
+      // ...
+      databaseBalanceHelper.closeStatements();
+      databaseManager.closeConnection(connection);
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

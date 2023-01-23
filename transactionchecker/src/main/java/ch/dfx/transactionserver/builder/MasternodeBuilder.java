@@ -22,7 +22,6 @@ import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
@@ -40,8 +39,6 @@ public class MasternodeBuilder {
   // ...
   private final NetworkEnum network;
 
-  private final H2DBManager databaseManager;
-
   private final DatabaseBlockHelper databaseBlockHelper;
   private final DatabaseBalanceHelper databaseBalanceHelper;
 
@@ -52,12 +49,12 @@ public class MasternodeBuilder {
    */
   public MasternodeBuilder(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     this.network = network;
-    this.databaseManager = databaseManager;
 
-    this.databaseBlockHelper = new DatabaseBlockHelper(network);
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseBlockHelper = databaseBlockHelper;
+    this.databaseBalanceHelper = databaseBalanceHelper;
 
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
@@ -65,18 +62,12 @@ public class MasternodeBuilder {
   /**
    * 
    */
-  public void build() throws DfxException {
+  public void build(@Nonnull Connection connection) throws DfxException {
     LOGGER.debug("build()");
 
     long startTime = System.currentTimeMillis();
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBlockHelper.openStatements(connection);
-      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBalanceHelper.getMasternodeWhitelistDTOList();
@@ -85,15 +76,11 @@ public class MasternodeBuilder {
       updateMasternodeWhitelistDTO(connection, masternodeWhitelistDTOList);
 
       closeStatements();
-      databaseBalanceHelper.closeStatements();
-      databaseBlockHelper.closeStatements();
     } catch (DfxException e) {
       throw e;
     } catch (Exception e) {
       throw new DfxException("build", e);
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("[MasternodeBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

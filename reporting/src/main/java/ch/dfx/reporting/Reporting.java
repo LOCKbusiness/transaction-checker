@@ -12,7 +12,6 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.excel.ExcelWriter;
 import ch.dfx.excel.data.CellDataList;
 import ch.dfx.excel.data.RowDataList;
-import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
@@ -23,8 +22,6 @@ public abstract class Reporting {
   private static final Logger LOGGER = LogManager.getLogger(Reporting.class);
 
   protected final NetworkEnum network;
-
-  protected final H2DBManager databaseManager;
 
   protected final DatabaseBlockHelper databaseBlockHelper;
   protected final DatabaseBalanceHelper databaseBalanceHelper;
@@ -37,12 +34,12 @@ public abstract class Reporting {
    */
   public Reporting(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     this.network = network;
-    this.databaseManager = databaseManager;
 
-    this.databaseBlockHelper = new DatabaseBlockHelper(network);
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseBlockHelper = databaseBlockHelper;
+    this.databaseBalanceHelper = databaseBalanceHelper;
   }
 
   /**

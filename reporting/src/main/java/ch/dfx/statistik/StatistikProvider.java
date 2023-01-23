@@ -29,7 +29,6 @@ import ch.dfx.transactionserver.builder.DepositBuilder;
 import ch.dfx.transactionserver.data.BlockDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
@@ -50,7 +49,6 @@ public class StatistikProvider extends DepositBuilder {
 
   // ...
   private final NetworkEnum network;
-  private final H2DBManager databaseManager;
 
   private final DatabaseBlockHelper databaseBlockHelper;
   private final DatabaseBalanceHelper databaseBalanceHelper;
@@ -60,33 +58,28 @@ public class StatistikProvider extends DepositBuilder {
    */
   public StatistikProvider(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
-    super(network, databaseManager);
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
+    super(network, databaseBalanceHelper);
 
     this.network = network;
-    this.databaseManager = databaseManager;
 
-    this.databaseBlockHelper = new DatabaseBlockHelper(network);
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseBlockHelper = databaseBlockHelper;
+    this.databaseBalanceHelper = databaseBalanceHelper;
   }
 
   /**
    * 
    */
   public void fillDepositStatistikData(
+      @Nonnull Connection connection,
       @Nonnull TokenEnum token,
       @Nonnull Map<LocalDate, Integer> dateToCountMap,
       @Nonnull Map<LocalDate, BigDecimal> dateToSumVinMap,
       @Nonnull Map<LocalDate, BigDecimal> dateToSumVoutMap) throws DfxException {
     LOGGER.trace("fillDfiDepositStatistikData()");
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBlockHelper.openStatements(connection);
-      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       // ...
@@ -109,13 +102,8 @@ public class StatistikProvider extends DepositBuilder {
 
       // ...
       closeStatements();
-      databaseBalanceHelper.closeStatements();
-      databaseBlockHelper.closeStatements();
-
     } catch (Exception e) {
       throw new DfxException("fillDepositStatistikData", e);
-    } finally {
-      databaseManager.closeConnection(connection);
     }
   }
 

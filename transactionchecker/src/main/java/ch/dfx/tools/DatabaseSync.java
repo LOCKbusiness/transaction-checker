@@ -68,8 +68,8 @@ public class DatabaseSync extends DatabaseTool {
       @Nonnull Connection remoteConnection) throws DfxException {
     LOGGER.trace("doSync()");
 
-    // syncDuplicateCheck(localConnection, remoteConnection);
-    resyncDuplicateCheck(localConnection, remoteConnection);
+    syncDuplicateCheck(localConnection, remoteConnection);
+    // resyncDuplicateCheck(localConnection, remoteConnection);
   }
 
   /**

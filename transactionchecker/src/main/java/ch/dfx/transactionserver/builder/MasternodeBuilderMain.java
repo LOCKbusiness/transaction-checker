@@ -1,5 +1,6 @@
 package ch.dfx.transactionserver.builder;
 
+import java.sql.Connection;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +11,8 @@ import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -49,10 +52,22 @@ public class MasternodeBuilderMain {
 
       // ...
       H2DBManager databaseManager = new H2DBManagerImpl();
+      Connection connection = databaseManager.openConnection();
+
+      DatabaseBlockHelper databaseBlockHelper = new DatabaseBlockHelper(network);
+      databaseBlockHelper.openStatements(connection);
+
+      DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(network);
+      databaseBalanceHelper.openStatements(connection);
 
       // ...
-      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(network, databaseManager);
-      masternodeBuilder.build();
+      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(network, databaseBlockHelper, databaseBalanceHelper);
+      masternodeBuilder.build(connection);
+
+      // ...
+      databaseBlockHelper.closeStatements();
+      databaseBalanceHelper.closeStatements();
+      databaseManager.closeConnection(connection);
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

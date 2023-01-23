@@ -43,8 +43,6 @@ public class DepositBuilder {
   // ...
   private final NetworkEnum network;
 
-  private final H2DBManager databaseManager;
-
   private final DatabaseBalanceHelper databaseBalanceHelper;
 
   /**
@@ -52,27 +50,23 @@ public class DepositBuilder {
    */
   public DepositBuilder(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     this.network = network;
-    this.databaseManager = databaseManager;
 
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseBalanceHelper = databaseBalanceHelper;
   }
 
   /**
    * 
    */
-  public void build(@Nonnull TokenEnum token) throws DfxException {
+  public void build(
+      @Nonnull Connection connection,
+      @Nonnull TokenEnum token) throws DfxException {
     LOGGER.debug("build()");
 
     long startTime = System.currentTimeMillis();
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       // ...
@@ -113,15 +107,12 @@ public class DepositBuilder {
       }
 
       closeStatements();
-      databaseBalanceHelper.closeStatements();
 
       connection.commit();
     } catch (Exception e) {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("[DepositBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

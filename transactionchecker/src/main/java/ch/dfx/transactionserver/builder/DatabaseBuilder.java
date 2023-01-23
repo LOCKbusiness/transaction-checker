@@ -34,8 +34,6 @@ import ch.dfx.transactionserver.data.AddressTransactionOutDTO;
 import ch.dfx.transactionserver.data.BlockDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
-import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 import ch.dfx.transactionserver.handler.DatabaseAddressHandler;
 
@@ -52,10 +50,7 @@ public class DatabaseBuilder {
   // ...
   private final NetworkEnum network;
 
-  private final H2DBManager databaseManager;
-
   private final DatabaseBlockHelper databaseBlockHelper;
-  private final DatabaseBalanceHelper databaseBalanceHelper;
   private final DatabaseAddressHandler databaseAddressHandler;
 
   private final DatabaseCustomTransactionBuilder customTransactionBuilder;
@@ -70,13 +65,12 @@ public class DatabaseBuilder {
    */
   public DatabaseBuilder(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseAddressHandler databaseAddressHandler) {
     this.network = network;
-    this.databaseManager = databaseManager;
 
-    this.databaseBlockHelper = new DatabaseBlockHelper(network);
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
-    this.databaseAddressHandler = new DatabaseAddressHandler(network);
+    this.databaseBlockHelper = databaseBlockHelper;
+    this.databaseAddressHandler = databaseAddressHandler;
 
     this.customTransactionBuilder =
         new DatabaseCustomTransactionBuilder(network, databaseBlockHelper, databaseAddressHandler);
@@ -87,7 +81,7 @@ public class DatabaseBuilder {
   /**
    * 
    */
-  public void build() throws DfxException {
+  public void build(@Nonnull Connection connection) throws DfxException {
     LOGGER.debug("build()");
 
     long startTime = System.currentTimeMillis();
@@ -95,13 +89,7 @@ public class DatabaseBuilder {
     Long blockCount = dataProvider.getBlockCount();
     LOGGER.debug("[DatabaseBuilder] Block Count: " + blockCount);
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBlockHelper.openStatements(connection);
-      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       // ...
@@ -138,8 +126,6 @@ public class DatabaseBuilder {
       }
 
       closeStatements();
-      databaseBalanceHelper.closeStatements();
-      databaseBlockHelper.closeStatements();
 
       connection.commit();
     } catch (DfxException e) {
@@ -149,8 +135,6 @@ public class DatabaseBuilder {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("[DatabaseBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

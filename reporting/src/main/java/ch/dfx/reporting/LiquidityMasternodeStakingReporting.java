@@ -38,7 +38,8 @@ import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -64,9 +65,10 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    */
   public LiquidityMasternodeStakingReporting(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager,
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper,
       @Nonnull List<String> logInfoList) {
-    super(network, databaseManager);
+    super(network, databaseBlockHelper, databaseBalanceHelper);
 
     this.logInfoList = logInfoList;
   }
@@ -75,6 +77,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    * 
    */
   public void report(
+      @Nonnull Connection connection,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -88,13 +91,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
     long startTime = System.currentTimeMillis();
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBlockHelper.openStatements(connection);
-      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
@@ -118,11 +115,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
       // ...
       closeStatements();
-      databaseBalanceHelper.closeStatements();
-      databaseBlockHelper.closeStatements();
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

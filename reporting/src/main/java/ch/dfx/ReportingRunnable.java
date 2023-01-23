@@ -1,5 +1,6 @@
 package ch.dfx;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,8 @@ import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
 import ch.dfx.reporting.VaultReporting;
 import ch.dfx.statistik.StatistikReporting;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
 /**
@@ -30,6 +33,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   private final NetworkEnum network;
   private final H2DBManager databaseManager;
 
+  private final DatabaseBlockHelper databaseBlockHelper;
+  private final DatabaseBalanceHelper databaseBalanceHelper;
+
   private boolean isProcessing = false;
 
   /**
@@ -40,6 +46,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       @Nonnull H2DBManager databaseManager) {
     this.network = network;
     this.databaseManager = databaseManager;
+
+    this.databaseBlockHelper = new DatabaseBlockHelper(network);
+    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
   }
 
   @Override
@@ -72,21 +81,40 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   private void doRun() {
     LOGGER.trace("doRun() ...");
 
-    List<String> logInfoList = new ArrayList<>();
+    Connection connection = null;
 
-    createStakingBalanceReport(logInfoList);
-    createLiquidityMasternodeStakingBalanceReport(logInfoList);
-    createVaultReport(logInfoList);
+    try {
+      connection = databaseManager.openConnection();
 
-    createStatistikReport();
+      databaseBlockHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection);
 
-    writeLogInfo(logInfoList);
+      List<String> logInfoList = new ArrayList<>();
+
+      createStakingBalanceReport(connection, logInfoList);
+      createLiquidityMasternodeStakingBalanceReport(connection, logInfoList);
+      createVaultReport(connection, logInfoList);
+
+      createStatistikReport(connection);
+
+      writeLogInfo(logInfoList);
+
+      // ...
+      databaseBalanceHelper.closeStatements();
+      databaseBlockHelper.closeStatements();
+    } catch (Exception e) {
+      LOGGER.error("doRun", e);
+    } finally {
+      databaseManager.closeConnection(connection);
+    }
   }
 
   /**
    * 
    */
-  private void createStakingBalanceReport(@Nonnull List<String> logInfoList) {
+  private void createStakingBalanceReport(
+      @Nonnull Connection connection,
+      @Nonnull List<String> logInfoList) {
     LOGGER.trace("createStakingBalanceReport() ...");
 
     try {
@@ -99,9 +127,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != balanceFileName
           && null != stakingBalanceSheet
           && null != yieldmachineBalanceSheet) {
-        BalanceReporting stakingBalanceReporting = new BalanceReporting(network, databaseManager, logInfoList);
-        stakingBalanceReporting.report(TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
-        stakingBalanceReporting.report(TokenEnum.DUSD, rootPath, balanceFileName, yieldmachineBalanceSheet);
+        BalanceReporting stakingBalanceReporting = new BalanceReporting(network, databaseBlockHelper, databaseBalanceHelper, logInfoList);
+        stakingBalanceReporting.report(connection, TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
+        stakingBalanceReporting.report(connection, TokenEnum.DUSD, rootPath, balanceFileName, yieldmachineBalanceSheet);
 
         logInfoList.add("");
       }
@@ -113,7 +141,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  private void createLiquidityMasternodeStakingBalanceReport(@Nonnull List<String> logInfoList) {
+  private void createLiquidityMasternodeStakingBalanceReport(
+      @Nonnull Connection connection,
+      @Nonnull List<String> logInfoList) {
     LOGGER.trace("createLiquidityMasternodeStakingBalanceReport() ...");
 
     try {
@@ -125,8 +155,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != checkFileName
           && null != checkSheet) {
         LiquidityMasternodeStakingReporting liquidityMasternodeStakingReporting =
-            new LiquidityMasternodeStakingReporting(network, databaseManager, logInfoList);
-        liquidityMasternodeStakingReporting.report(TokenEnum.DFI, rootPath, checkFileName, checkSheet);
+            new LiquidityMasternodeStakingReporting(network, databaseBlockHelper, databaseBalanceHelper, logInfoList);
+        liquidityMasternodeStakingReporting.report(connection, TokenEnum.DFI, rootPath, checkFileName, checkSheet);
 
         logInfoList.add("");
       }
@@ -138,7 +168,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  private void createVaultReport(@Nonnull List<String> logInfoList) {
+  private void createVaultReport(
+      @Nonnull Connection connection,
+      @Nonnull List<String> logInfoList) {
     LOGGER.trace("createVaultReport() ...");
 
     try {
@@ -150,8 +182,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != checkFileName
           && null != checkSheet) {
         VaultReporting vaultReporting =
-            new VaultReporting(network, databaseManager, logInfoList);
-        vaultReporting.report(TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
+            new VaultReporting(network, databaseBlockHelper, databaseBalanceHelper, logInfoList);
+        vaultReporting.report(connection, TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createVaultReport", e);
@@ -161,7 +193,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  private void createStatistikReport() {
+  private void createStatistikReport(@Nonnull Connection connection) {
     LOGGER.trace("createStatistikReport() ...");
 
     try {
@@ -174,9 +206,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != statistikFileName
           && null != statistikDfiDataSheet
           && null != statistikDusdDataSheet) {
-        StatistikReporting statistikReporting = new StatistikReporting(network, databaseManager);
-        statistikReporting.report(TokenEnum.DFI, rootPath, statistikFileName, statistikDfiDataSheet);
-        statistikReporting.report(TokenEnum.DUSD, rootPath, statistikFileName, statistikDusdDataSheet);
+        StatistikReporting statistikReporting = new StatistikReporting(network, databaseBlockHelper, databaseBalanceHelper);
+        statistikReporting.report(connection, TokenEnum.DFI, rootPath, statistikFileName, statistikDfiDataSheet);
+        statistikReporting.report(connection, TokenEnum.DUSD, rootPath, statistikFileName, statistikDusdDataSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createStatistikReport", e);

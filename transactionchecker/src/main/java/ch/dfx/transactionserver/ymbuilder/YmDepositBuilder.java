@@ -25,7 +25,6 @@ import ch.dfx.transactionserver.data.DatabaseDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 
 /**
@@ -41,8 +40,6 @@ public class YmDepositBuilder {
   // ...
   private final NetworkEnum network;
 
-  private final H2DBManager databaseManager;
-
   private final DatabaseBalanceHelper databaseBalanceHelper;
 
   /**
@@ -50,27 +47,23 @@ public class YmDepositBuilder {
    */
   public YmDepositBuilder(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     this.network = network;
-    this.databaseManager = databaseManager;
 
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseBalanceHelper = databaseBalanceHelper;
   }
 
   /**
    * 
    */
-  public void build(@Nonnull TokenEnum token) throws DfxException {
+  public void build(
+      @Nonnull Connection connection,
+      @Nonnull TokenEnum token) throws DfxException {
     LOGGER.debug("build()");
 
     long startTime = System.currentTimeMillis();
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       Set<Integer> depositAddressNumberSet =
@@ -106,7 +99,6 @@ public class YmDepositBuilder {
       }
 
       closeStatements();
-      databaseBalanceHelper.closeStatements();
 
       connection.commit();
       DatabaseUtils.rollback(connection);
@@ -114,8 +106,6 @@ public class YmDepositBuilder {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("[YmDepositBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

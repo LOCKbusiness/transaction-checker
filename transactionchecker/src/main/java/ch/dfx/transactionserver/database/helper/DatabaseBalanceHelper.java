@@ -32,6 +32,7 @@ import ch.dfx.transactionserver.database.DatabaseUtils;
 public class DatabaseBalanceHelper {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseBalanceHelper.class);
 
+  // ...
   private PreparedStatement stakingAddressSelectStatement = null;
   private PreparedStatement stakingAddressByLiquidityAddressNumberSelectStatement = null;
 

@@ -5,6 +5,7 @@ import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEM
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +20,13 @@ import org.junit.Test;
 import ch.dfx.TestUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
+import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
 import ch.dfx.logging.events.MessageEvent;
 import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -88,9 +92,7 @@ public class StakingWithdrawalReservedCleanerTest {
           "token_number, withdrawal_id, transaction_id, customer_address, vout, create_time",
           "0, 1, 'abcde', '" + CUSTOMER_ADDRESS + "', 1.50000000, '" + testTime + "'");
 
-      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
-          new StakingWithdrawalReservedCleaner(NetworkEnum.TESTNET, databaseManagerMock);
-      stakingWithdrawalReservedCleaner.clean(TokenEnum.DFI);
+      executeStakingWithdrawalReservedCleaner();
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND withdrawal_id=1");
@@ -123,9 +125,7 @@ public class StakingWithdrawalReservedCleanerTest {
           "token_number, withdrawal_id, transaction_id, customer_address, vout, create_time",
           "0, 1, 'abcde', '" + CUSTOMER_ADDRESS + "', 0.12345678, '" + testTime + "'");
 
-      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
-          new StakingWithdrawalReservedCleaner(NetworkEnum.TESTNET, databaseManagerMock);
-      stakingWithdrawalReservedCleaner.clean(TokenEnum.DFI);
+      executeStakingWithdrawalReservedCleaner();
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND withdrawal_id=1");
@@ -170,9 +170,7 @@ public class StakingWithdrawalReservedCleanerTest {
           "block_number, number, txid, custom_type_code",
           "1, 1, 'abcde', 0");
 
-      StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
-          new StakingWithdrawalReservedCleaner(NetworkEnum.TESTNET, databaseManagerMock);
-      stakingWithdrawalReservedCleaner.clean(TokenEnum.DFI);
+      executeStakingWithdrawalReservedCleaner();
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND withdrawal_id=1");
@@ -185,5 +183,26 @@ public class StakingWithdrawalReservedCleanerTest {
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }
+  }
+
+  /**
+   * 
+   */
+  private void executeStakingWithdrawalReservedCleaner() throws DfxException {
+    Connection connection = databaseManagerMock.openConnection();
+
+    DatabaseBlockHelper databaseBlockHelper = new DatabaseBlockHelper(NetworkEnum.TESTNET);
+    DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(NetworkEnum.TESTNET);
+
+    databaseBlockHelper.openStatements(connection);
+    databaseBalanceHelper.openStatements(connection);
+
+    StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
+        new StakingWithdrawalReservedCleaner(NetworkEnum.TESTNET, databaseBlockHelper, databaseBalanceHelper);
+    stakingWithdrawalReservedCleaner.clean(connection, TokenEnum.DFI);
+
+    databaseBlockHelper.closeStatements();
+    databaseBalanceHelper.closeStatements();
+    databaseManagerMock.closeConnection(connection);
   }
 }

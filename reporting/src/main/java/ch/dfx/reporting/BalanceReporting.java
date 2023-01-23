@@ -22,7 +22,8 @@ import ch.dfx.excel.data.RowDataList;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
-import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -40,9 +41,10 @@ public class BalanceReporting extends Reporting {
    */
   public BalanceReporting(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager,
+      @Nonnull DatabaseBlockHelper databaseBlockHelper,
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper,
       @Nonnull List<String> logInfoList) {
-    super(network, databaseManager);
+    super(network, databaseBlockHelper, databaseBalanceHelper);
 
     this.logInfoList = logInfoList;
   }
@@ -51,6 +53,7 @@ public class BalanceReporting extends Reporting {
    * 
    */
   public void report(
+      @Nonnull Connection connection,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -64,13 +67,7 @@ public class BalanceReporting extends Reporting {
 
     long startTime = System.currentTimeMillis();
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBalanceHelper.openStatements(connection);
-
       totalBalance = BigDecimal.ZERO;
 
       List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
@@ -92,12 +89,7 @@ public class BalanceReporting extends Reporting {
 
       writeExcel(rowDataList, cellDataList);
       closeExcel();
-
-      // ...
-      databaseBalanceHelper.closeStatements();
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

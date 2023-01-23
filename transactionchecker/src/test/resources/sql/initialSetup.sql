@@ -9,11 +9,14 @@ CREATE SCHEMA IF NOT EXISTS testnet_custom AUTHORIZATION SA;
 -- PUBLIC.BLOCK
 -- ============
 CREATE TABLE IF NOT EXISTS block (
-  number BIGINT      PRIMARY KEY NOT NULL,
-  hash   VARCHAR(64)             NOT NULL
+  number    BIGINT      PRIMARY KEY NOT NULL,
+  hash      VARCHAR(64)             NOT NULL,
+  timestamp BIGINT                  NOT NULL
 );
 
 CREATE UNIQUE INDEX idx1_block ON block(hash);
+CREATE UNIQUE INDEX idx2_block ON block(number);
+CREATE INDEX idx3_block ON block(timestamp);
 
 -- ==================
 -- PUBLIC.TRANSACTION
@@ -27,6 +30,8 @@ CREATE TABLE IF NOT EXISTS transaction (
 
 CREATE UNIQUE INDEX idx1_transaction ON transaction(txid);
 CREATE UNIQUE INDEX idx2_transaction ON transaction(block_number, number);
+CREATE INDEX idx3_transaction ON transaction(custom_type_code);
+CREATE INDEX idx4_transaction ON transaction(block_number);
 
 -- ==============
 -- PUBLIC.ADDRESS
@@ -54,6 +59,7 @@ CREATE UNIQUE INDEX idx1_address_transaction_out ON address_transaction_out(bloc
 
 CREATE INDEX idx2_address_transaction_out ON address_transaction_out(block_number, transaction_number);
 CREATE INDEX idx3_address_transaction_out ON address_transaction_out(address_number);
+CREATE INDEX idx4_address_transaction_out ON address_transaction_out(block_number);
 
 -- =============================
 -- PUBLIC.ADDRESS_TRANSACTION_IN
@@ -72,6 +78,7 @@ CREATE UNIQUE INDEX idx1_address_transaction_in ON address_transaction_in(block_
 
 CREATE INDEX idx2_address_transaction_in ON address_transaction_in(block_number, transaction_number);
 CREATE INDEX idx3_address_transaction_in ON address_transaction_in(address_number);
+CREATE INDEX idx4_address_transaction_in ON address_transaction_in(block_number);
 
 -- ============================================================================
 -- SCHEMA: TESTNET
@@ -244,10 +251,11 @@ CREATE TABLE IF NOT EXISTS testnet_custom.account_to_account_in (
   token_number        INT           NOT NULL
 );
 
-CREATE UNIQUE INDEX idx1_account_to_account_in ON testnet_custom.account_to_account_in(block_number, transaction_number, type_number, address_number);
+CREATE UNIQUE INDEX idx1_account_to_account_in ON testnet_custom.account_to_account_in(block_number, transaction_number, type_number, address_number, token_number);
 
 CREATE INDEX idx2_account_to_account_in ON testnet_custom.account_to_account_in(block_number, transaction_number);
 CREATE INDEX idx3_account_to_account_in ON testnet_custom.account_to_account_in(address_number);
+CREATE INDEX idx4_account_to_account_in ON testnet_custom.account_to_account_in(block_number);
 
 -- =====================================
 -- TESTNET_CUSTOM.ACCOUNT_TO_ACCOUNT_OUT
@@ -261,7 +269,8 @@ CREATE TABLE IF NOT EXISTS testnet_custom.account_to_account_out (
   token_number        INT           NOT NULL
 );
 
-CREATE UNIQUE INDEX idx1_account_to_account_out ON testnet_custom.account_to_account_out(block_number, transaction_number, type_number, address_number);
+CREATE UNIQUE INDEX idx1_account_to_account_out ON testnet_custom.account_to_account_out(block_number, transaction_number, type_number, address_number, token_number);
 
 CREATE INDEX idx2_account_to_account_out ON testnet_custom.account_to_account_out(block_number, transaction_number);
 CREATE INDEX idx3_account_to_account_out ON testnet_custom.account_to_account_out(address_number);
+CREATE INDEX idx4_account_to_account_out ON testnet_custom.account_to_account_out(block_number);

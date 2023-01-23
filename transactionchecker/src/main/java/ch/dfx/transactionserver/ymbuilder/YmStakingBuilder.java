@@ -20,7 +20,6 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 
 /**
@@ -39,8 +38,6 @@ public class YmStakingBuilder {
   // ...
   private final NetworkEnum network;
 
-  private final H2DBManager databaseManager;
-
   private final DatabaseBalanceHelper databaseBalanceHelper;
 
   /**
@@ -48,41 +45,34 @@ public class YmStakingBuilder {
    */
   public YmStakingBuilder(
       @Nonnull NetworkEnum network,
-      @Nonnull H2DBManager databaseManager) {
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     this.network = network;
-    this.databaseManager = databaseManager;
 
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseBalanceHelper = databaseBalanceHelper;
   }
 
   /**
    * 
    */
-  public void build(@Nonnull TokenEnum token) throws DfxException {
+  public void build(
+      @Nonnull Connection connection,
+      @Nonnull TokenEnum token) throws DfxException {
     LOGGER.debug("build()");
 
     long startTime = System.currentTimeMillis();
 
-    Connection connection = null;
-
     try {
-      connection = databaseManager.openConnection();
-
-      databaseBalanceHelper.openStatements(connection);
       openStatements(connection);
 
       calcStakingBalance(connection, token);
 
       closeStatements();
-      databaseBalanceHelper.closeStatements();
 
       connection.commit();
     } catch (Exception e) {
       DatabaseUtils.rollback(connection);
       throw new DfxException("build", e);
     } finally {
-      databaseManager.closeConnection(connection);
-
       LOGGER.debug("[YmStakingBuilder] runtime: " + (System.currentTimeMillis() - startTime));
     }
   }

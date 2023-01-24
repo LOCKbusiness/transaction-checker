@@ -15,6 +15,8 @@ import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 public enum OpenTransactionCustomTypeEnum {
   CREATE_MASTERNODE("CreateMasternode", ApiTransactionTypeEnum.CREATE_MASTERNODE),
   RESIGN_MASTERNODE("ResignMasternode", ApiTransactionTypeEnum.RESIGN_MASTERNODE),
+  UPDATE_MASTERNODE("UpdateMasternode", ApiTransactionTypeEnum.UPDATE_MASTERNODE),
+  VOTE("Vote", ApiTransactionTypeEnum.VOTE_MASTERNODE),
 
   VAULT("Vault", ApiTransactionTypeEnum.CREATE_VAULT),
   DEPOSIT_TO_VAULT("DepositToVault", ApiTransactionTypeEnum.DEPOSIT_TO_VAULT),

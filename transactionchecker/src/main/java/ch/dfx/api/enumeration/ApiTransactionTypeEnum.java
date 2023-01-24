@@ -16,6 +16,8 @@ public enum ApiTransactionTypeEnum {
   // Masternode ...
   CREATE_MASTERNODE("CreateMasternode", OpenTransactionTypeEnum.MASTERNODE),
   RESIGN_MASTERNODE("ResignMasternode", OpenTransactionTypeEnum.MASTERNODE),
+  UPDATE_MASTERNODE("UpdateMasternode", OpenTransactionTypeEnum.MASTERNODE),
+  VOTE_MASTERNODE("VoteMasternode", OpenTransactionTypeEnum.MASTERNODE),
 
   // UTXO ...
   SEND_FROM_LIQ("SendFromLiq", OpenTransactionTypeEnum.UTXO),

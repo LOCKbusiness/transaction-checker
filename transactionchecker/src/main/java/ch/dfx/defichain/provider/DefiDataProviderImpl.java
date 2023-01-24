@@ -44,6 +44,8 @@ import ch.dfx.defichain.data.custom.DefiCustomResultData;
 import ch.dfx.defichain.data.custom.DefiCustomResultWrapperData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeResultData;
+import ch.dfx.defichain.data.network.PeerInfoData;
+import ch.dfx.defichain.data.network.PeerInfoResultData;
 import ch.dfx.defichain.data.pool.DefiPoolPairData;
 import ch.dfx.defichain.data.pool.DefiPoolPairResultData;
 import ch.dfx.defichain.data.price.DefiFixedIntervalPriceData;
@@ -93,6 +95,30 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     this.gson = new GsonBuilder()
         .registerTypeAdapter(DefiCustomResultWrapperData.class, new CustomTypeAdapter())
         .create();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public Long getConnectionCount() throws DfxException {
+    LOGGER.trace("getConnectionCount()");
+
+    List<Object> paramList = new ArrayList<>();
+
+    return getDataWithErrorExpected("getconnectioncount", paramList, DefiLongResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public List<PeerInfoData> getPeerInfo() throws DfxException {
+    LOGGER.trace("getPeerInfo()");
+
+    List<Object> paramList = new ArrayList<>();
+
+    return getDataWithErrorExpected("getpeerinfo", paramList, PeerInfoResultData.class).getResult();
   }
 
   /**

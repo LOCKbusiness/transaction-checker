@@ -26,6 +26,7 @@ public enum PropertyEnum {
 
   // Watchdog ...
   WATCHDOG_EXECUTABLE,
+  DEFICHAIN_WATCHDOG_EXECUTABLE,
 
   // DefiChain ...
   DFI_URL,

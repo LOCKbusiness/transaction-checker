@@ -9,6 +9,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.block.DefiBlockData;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeData;
+import ch.dfx.defichain.data.network.PeerInfoData;
 import ch.dfx.defichain.data.pool.DefiPoolPairData;
 import ch.dfx.defichain.data.price.DefiFixedIntervalPriceData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
@@ -20,6 +21,10 @@ import ch.dfx.defichain.data.wallet.DefiLoadWalletData;
  * 
  */
 public interface DefiDataProvider {
+
+  Long getConnectionCount() throws DfxException;
+
+  List<PeerInfoData> getPeerInfo() throws DfxException;
 
   DefiLoadWalletData loadWallet(@Nonnull String wallet) throws DfxException;
 

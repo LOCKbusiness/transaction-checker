@@ -20,6 +20,7 @@ import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.defichain.handler.DefiStatusHandler;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
 import ch.dfx.logging.MessageEventProvider;
@@ -93,7 +94,9 @@ public class TransactionServerWatchdogMain {
 
       // ...
       while (true) {
+        transactionServerWatchdogMain.waitForDefichainInSync();
         transactionServerWatchdogMain.runProcess();
+
         Thread.sleep(15 * 60 * 1000);
       }
     } catch (Throwable t) {
@@ -275,6 +278,34 @@ public class TransactionServerWatchdogMain {
 
     // ...
     LogManager.shutdown();
+  }
+
+  /**
+   * 
+   */
+  private void waitForDefichainInSync() throws DfxException {
+    LOGGER.debug("waitForDefichainInSync");
+
+    try {
+      DefiStatusHandler statusHandler = new DefiStatusHandler();
+
+      boolean isInSync = false;
+
+      while (!isInSync) {
+        isInSync = statusHandler.isInSync();
+
+        String syncMessage = "[Transaction Check Server Watchdog] Defichain inSync? " + isInSync;
+
+        MessageEventBus.getInstance().postEvent(new MessageEvent(syncMessage));
+        LOGGER.error(syncMessage);
+
+        if (!isInSync) {
+          Thread.sleep(1 * 60 * 1000);
+        }
+      }
+    } catch (Exception e) {
+      throw new DfxException("waitForDefichainInSync", e);
+    }
   }
 
   /**

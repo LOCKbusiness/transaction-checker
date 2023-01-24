@@ -15,9 +15,13 @@
       <property name="executable_directory" value="${executable_directory}"/>
       <property name="maven_directory" value="${maven_directory}"/>
     </ant>
-    
-   
+       
     <ant antfile="ant-transactionsupervision.xml" target="create_executable">
+      <property name="executable_directory" value="${executable_directory}"/>
+      <property name="maven_directory" value="${maven_directory}"/>
+    </ant>
+    
+    <ant antfile="ant-defichain.xml" target="create_executable">
       <property name="executable_directory" value="${executable_directory}"/>
       <property name="maven_directory" value="${maven_directory}"/>
     </ant>

@@ -27,6 +27,7 @@ public enum ApiTransactionTypeEnum {
   UTXO_SPLIT("UtxoSplit", OpenTransactionTypeEnum.UTXO),
 
   ACCOUNT_TO_ACCOUNT("AccountToAccount", OpenTransactionTypeEnum.UTXO),
+  UTXO_TO_ACCOUNT("UtxoToAccount", OpenTransactionTypeEnum.UTXO),
   COMPOSITE_SWAP("CompositeSwap", OpenTransactionTypeEnum.UTXO),
 
   // Withdrawal ...

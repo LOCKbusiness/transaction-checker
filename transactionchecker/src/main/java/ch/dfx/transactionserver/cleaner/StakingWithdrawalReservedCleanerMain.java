@@ -1,5 +1,8 @@
 package ch.dfx.transactionserver.cleaner;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
+
 import java.sql.Connection;
 import java.util.stream.Stream;
 
@@ -58,18 +61,25 @@ public class StakingWithdrawalReservedCleanerMain {
       DatabaseBlockHelper databaseBlockHelper = new DatabaseBlockHelper(network);
       databaseBlockHelper.openStatements(connection);
 
-      DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(network);
-      databaseBalanceHelper.openStatements(connection);
+      DatabaseBalanceHelper databaseStakingBalanceHelper = new DatabaseBalanceHelper(network);
+      databaseStakingBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
+
+      DatabaseBalanceHelper databaseYieldmachineBalanceHelper = new DatabaseBalanceHelper(network);
+      databaseYieldmachineBalanceHelper.openStatements(connection, TOKEN_YIELDMACHINE_SCHEMA);
 
       // ...
       StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
-          new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseBalanceHelper);
-      stakingWithdrawalReservedCleaner.clean(connection, TokenEnum.DFI);
-      stakingWithdrawalReservedCleaner.clean(connection, TokenEnum.DUSD);
+          new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseStakingBalanceHelper);
+      stakingWithdrawalReservedCleaner.clean(connection, TOKEN_STAKING_SCHEMA, TokenEnum.DFI);
+
+      StakingWithdrawalReservedCleaner yieldmachineWithdrawalReservedCleaner =
+          new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
+      yieldmachineWithdrawalReservedCleaner.clean(connection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DUSD);
 
       // ...
       databaseBlockHelper.closeStatements();
-      databaseBalanceHelper.closeStatements();
+      databaseStakingBalanceHelper.closeStatements();
+      databaseYieldmachineBalanceHelper.closeStatements();
       databaseManager.closeConnection(connection);
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);

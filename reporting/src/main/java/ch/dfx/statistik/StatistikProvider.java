@@ -1,8 +1,8 @@
 package ch.dfx.statistik;
 
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -84,7 +84,7 @@ public class StatistikProvider extends DepositBuilder {
 
       // ...
       List<StakingAddressDTO> stakingAddressDTOList =
-          databaseBalanceHelper.getStakingAddressDTOList(token)
+          databaseBalanceHelper.getStakingAddressDTOList()
               .stream().filter(dto -> -1 == dto.getRewardAddressNumber()).collect(Collectors.toList());
 
       for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
@@ -117,7 +117,7 @@ public class StatistikProvider extends DepositBuilder {
       // Deposit ...
       String depositCountSelectSql =
           "SELECT COUNT(*) AS count"
-              + " FROM " + TOKEN_NETWORK_SCHEMA + ".deposit d"
+              + " FROM " + TOKEN_STAKING_SCHEMA + ".deposit d"
               + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".block b ON"
               + " d.start_block_number = b.number"
               + " WHERE"
@@ -140,7 +140,7 @@ public class StatistikProvider extends DepositBuilder {
               + " b.timestamp>=? AND b.timestamp<=?"
               + " AND at_out.address_number=?"
               + " AND at_in.address_number IN"
-              + " (SELECT deposit_address_number FROM " + TOKEN_NETWORK_SCHEMA + ".deposit"
+              + " (SELECT deposit_address_number FROM " + TOKEN_STAKING_SCHEMA + ".deposit"
               + " WHERE token_number=? AND liquidity_address_number=?)"
               + " GROUP BY"
               + " at_out.block_number,"
@@ -169,7 +169,7 @@ public class StatistikProvider extends DepositBuilder {
               + " b.timestamp>=? AND b.timestamp<=?"
               + " AND at_in.address_number=?"
               + " AND at_out.address_number IN"
-              + " (SELECT customer_address_number FROM " + TOKEN_NETWORK_SCHEMA + ".deposit"
+              + " (SELECT customer_address_number FROM " + TOKEN_STAKING_SCHEMA + ".deposit"
               + " WHERE token_number=? AND liquidity_address_number=?)"
               + " GROUP BY"
               + " at_out.block_number,"

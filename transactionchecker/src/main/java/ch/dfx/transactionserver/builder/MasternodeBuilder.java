@@ -22,7 +22,6 @@ import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
@@ -40,7 +39,6 @@ public class MasternodeBuilder {
   private final NetworkEnum network;
 
   private final DatabaseBlockHelper databaseBlockHelper;
-  private final DatabaseBalanceHelper databaseBalanceHelper;
 
   private final DefiDataProvider dataProvider;
 
@@ -49,12 +47,10 @@ public class MasternodeBuilder {
    */
   public MasternodeBuilder(
       @Nonnull NetworkEnum network,
-      @Nonnull DatabaseBlockHelper databaseBlockHelper,
-      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
+      @Nonnull DatabaseBlockHelper databaseBlockHelper) {
     this.network = network;
 
     this.databaseBlockHelper = databaseBlockHelper;
-    this.databaseBalanceHelper = databaseBalanceHelper;
 
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
@@ -70,7 +66,7 @@ public class MasternodeBuilder {
     try {
       openStatements(connection);
 
-      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBalanceHelper.getMasternodeWhitelistDTOList();
+      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBlockHelper.getMasternodeWhitelistDTOList();
 
       fillMasternodeWhitelistDTO(masternodeWhitelistDTOList);
       updateMasternodeWhitelistDTO(connection, masternodeWhitelistDTOList);

@@ -1,7 +1,7 @@
 package ch.dfx.transactionserver.builder;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -61,7 +61,7 @@ public class StakingBuilder {
   public void build(
       @Nonnull Connection connection,
       @Nonnull TokenEnum token) throws DfxException {
-    LOGGER.debug("build()");
+    LOGGER.debug("build(): token=" + token);
 
     long startTime = System.currentTimeMillis();
 
@@ -104,7 +104,7 @@ public class StakingBuilder {
               + " WHERE"
               + " at_out.address_number=?"
               + " AND at_in.address_number IN"
-              + " (SELECT deposit_address_number FROM " + TOKEN_NETWORK_SCHEMA + ".deposit"
+              + " (SELECT deposit_address_number FROM " + TOKEN_STAKING_SCHEMA + ".deposit"
               + " WHERE token_number=? AND liquidity_address_number=?)"
               + " GROUP BY"
               + " at_out.block_number,"
@@ -136,7 +136,7 @@ public class StakingBuilder {
               + " WHERE"
               + " at_in.address_number=?"
               + " AND at_out.address_number IN"
-              + " (SELECT customer_address_number FROM " + TOKEN_NETWORK_SCHEMA + ".deposit"
+              + " (SELECT customer_address_number FROM " + TOKEN_STAKING_SCHEMA + ".deposit"
               + " WHERE token_number=? AND liquidity_address_number=?)"
               + " GROUP BY"
               + " at_out.block_number,"
@@ -154,7 +154,7 @@ public class StakingBuilder {
       stakingVoutSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingVoutSelectSql));
 
       String stakingSelectSql =
-          "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".staking"
+          "SELECT * FROM " + TOKEN_STAKING_SCHEMA + ".staking"
               + " WHERE token_number=?"
               + " AND liquidity_address_number=?"
               + " AND deposit_address_number=?"
@@ -162,7 +162,7 @@ public class StakingBuilder {
       stakingSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingSelectSql));
 
       String stakingInsertSql =
-          "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".staking"
+          "INSERT INTO " + TOKEN_STAKING_SCHEMA + ".staking"
               + " (token_number, liquidity_address_number, deposit_address_number, customer_address_number"
               + ", last_in_block_number, vin"
               + ", last_out_block_number, vout)"
@@ -170,7 +170,7 @@ public class StakingBuilder {
       stakingInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingInsertSql));
 
       String stakingUpdateSql =
-          "UPDATE " + TOKEN_NETWORK_SCHEMA + ".staking"
+          "UPDATE " + TOKEN_STAKING_SCHEMA + ".staking"
               + " SET last_in_block_number=?, vin=?"
               + " , last_out_block_number=?, vout=?"
               + " WHERE token_number=?"
@@ -210,7 +210,7 @@ public class StakingBuilder {
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("calcStakingBalance()");
 
-    List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
+    List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
 
     for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
       if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
@@ -253,7 +253,7 @@ public class StakingBuilder {
 
       // ...
       List<DepositDTO> depositDTOList =
-          databaseBalanceHelper.getDepositDTOListByLiquidityAddressNumber(token, liquidityAddressNumber);
+          databaseBalanceHelper.getDepositDTOListByLiquidityAddressNumber(liquidityAddressNumber);
 
       for (DepositDTO depositDTO : depositDTOList) {
         int depositAddressNumber = depositDTO.getDepositAddressNumber();

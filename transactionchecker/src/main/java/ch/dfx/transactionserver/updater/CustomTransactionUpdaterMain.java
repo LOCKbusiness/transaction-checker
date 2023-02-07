@@ -52,8 +52,8 @@ public class CustomTransactionUpdaterMain {
 
       // ...
       CustomTransactionUpdater customTransactionUpdater = new CustomTransactionUpdater(network, databaseManager);
-      customTransactionUpdater.updateTransaction();
-      // customTransactionUpdater.updateCustomTransaction();
+      // customTransactionUpdater.updateTransaction();
+      customTransactionUpdater.updateCustomTransaction();
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

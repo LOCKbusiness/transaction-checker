@@ -1,7 +1,7 @@
 package ch.dfx.transactionserver.ymbuilder;
 
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -59,7 +59,7 @@ public class YmBalanceBuilder {
   public void build(
       @Nonnull Connection connection,
       @Nonnull TokenEnum token) throws DfxException {
-    LOGGER.debug("build()");
+    LOGGER.debug("build(): token=" + token);
 
     long startTime = System.currentTimeMillis();
 
@@ -109,13 +109,13 @@ public class YmBalanceBuilder {
 
       // Balance ...
       String balanceInsertSql =
-          "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".balance"
+          "INSERT INTO " + TOKEN_YIELDMACHINE_SCHEMA + ".balance"
               + " (token_number, address_number, block_number, transaction_count, vout, vin)"
               + " VALUES(?, ?, ?, ?, ?, ?)";
       balanceInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, balanceInsertSql));
 
       String balanceUpdateSql =
-          "UPDATE " + TOKEN_NETWORK_SCHEMA + ".balance"
+          "UPDATE " + TOKEN_YIELDMACHINE_SCHEMA + ".balance"
               + " SET block_number=?, transaction_count=?, vout=?, vin=?"
               + " WHERE token_number=? AND address_number=?";
       balanceUpdateStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, balanceUpdateSql));
@@ -151,7 +151,7 @@ public class YmBalanceBuilder {
 
     Set<Integer> stakingAddressNumberSet = new HashSet<>();
 
-    List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
+    List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
 
     for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
       stakingAddressNumberSet.add(stakingAddressDTO.getLiquidityAddressNumber());
@@ -173,7 +173,7 @@ public class YmBalanceBuilder {
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("calcDepositBalance()");
 
-    List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList(token);
+    List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList();
 
     for (DepositDTO depositDTO : depositDTOList) {
       calcBalance(connection, token, depositDTO.getDepositAddressNumber());
@@ -216,10 +216,12 @@ public class YmBalanceBuilder {
       balanceDTO.addVin(vinBalanceDTO.getVin());
 
       // ...
-      if (-1 == balanceBlockNumber) {
-        insertBalance(balanceDTO);
-      } else if (balanceDTO.isInternalStateChanged()) {
-        updateBalance(balanceDTO);
+      if (-1 != balanceDTO.getBlockNumber()) {
+        if (-1 == balanceBlockNumber) {
+          insertBalance(balanceDTO);
+        } else if (balanceDTO.isInternalStateChanged()) {
+          updateBalance(balanceDTO);
+        }
       }
     } catch (DfxException e) {
       throw e;

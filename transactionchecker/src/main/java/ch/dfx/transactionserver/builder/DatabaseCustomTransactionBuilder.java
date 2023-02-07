@@ -8,8 +8,10 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -23,6 +25,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
+import ch.dfx.defichain.data.transaction.DefiTransactionVinData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.data.AddressDTO;
@@ -43,13 +46,14 @@ public class DatabaseCustomTransactionBuilder {
   private static final String CUSTOM_TYPE_NONE = "0";
   private static final String CUSTOM_TYPE_ANY_ACCOUNTS_TO_ACCOUNTS = "a";
   private static final String CUSTOM_TYPE_ACCOUNT_TO_ACCOUNT = "B";
+  private static final String CUSTOM_TYPE_UTXOS_TO_ACCOUNT = "U";
 
   private final Map<String, CustomTransactionMethod> customTransactionMethodMap;
 
   private interface CustomTransactionMethod {
     void fillCustomInfo(
         @Nonnull Integer typeNumber,
-        @Nonnull String transactionHex,
+        @Nonnull DefiTransactionData transactionData,
         @Nonnull TransactionDTO transactionDTO) throws DfxException;
   }
 
@@ -90,10 +94,13 @@ public class DatabaseCustomTransactionBuilder {
 
     customTransactionMethodMap.put(
         CUSTOM_TYPE_ANY_ACCOUNTS_TO_ACCOUNTS,
-        (typeNumber, hex, transactionDTO) -> fillCustomAnyAccountToAccountInfo(typeNumber, hex, transactionDTO));
+        (typeNumber, transactionData, transactionDTO) -> fillCustomAnyAccountToAccountInfo(typeNumber, transactionData, transactionDTO));
     customTransactionMethodMap.put(
         CUSTOM_TYPE_ACCOUNT_TO_ACCOUNT,
-        (typeNumber, hex, transactionDTO) -> fillCustomAccountToAccountInfo(typeNumber, hex, transactionDTO));
+        (typeNumber, transactionData, transactionDTO) -> fillCustomAccountToAccountInfo(typeNumber, transactionData, transactionDTO));
+    customTransactionMethodMap.put(
+        CUSTOM_TYPE_UTXOS_TO_ACCOUNT,
+        (typeNumber, transactionData, transactionDTO) -> fillCustomUtxosToAccountInfo(typeNumber, transactionData, transactionDTO));
   }
 
   /**
@@ -153,7 +160,7 @@ public class DatabaseCustomTransactionBuilder {
             throw new DfxException("Unknown type '" + typeCode + "'");
           }
 
-          customTransactionMethod.fillCustomInfo(typeNumber, transactionData.getHex(), transactionDTO);
+          customTransactionMethod.fillCustomInfo(typeNumber, transactionData, transactionDTO);
         }
       }
     }
@@ -184,11 +191,12 @@ public class DatabaseCustomTransactionBuilder {
    */
   private void fillCustomAnyAccountToAccountInfo(
       @Nonnull Integer typeNumber,
-      @Nonnull String hex,
+      @Nonnull DefiTransactionData transactionData,
       @Nonnull TransactionDTO transactionDTO) throws DfxException {
     LOGGER.trace("fillCustomAnyAccountToAccountInfo()");
 
     // ...
+    String hex = transactionData.getHex();
     DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
     Map<String, Object> resultMap = customData.getResults();
 
@@ -269,11 +277,12 @@ public class DatabaseCustomTransactionBuilder {
    */
   private void fillCustomAccountToAccountInfo(
       @Nonnull Integer typeNumber,
-      @Nonnull String hex,
+      @Nonnull DefiTransactionData transactionData,
       @Nonnull TransactionDTO transactionDTO) throws DfxException {
     LOGGER.trace("fillCustomAccountToAccountInfo()");
 
     // ...
+    String hex = transactionData.getHex();
     DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
 
     Map<String, Object> resultMap = customData.getResults();
@@ -332,5 +341,77 @@ public class DatabaseCustomTransactionBuilder {
 
       transactionDTO.addCustomAccountToAccountInDTO(customAccountToAccountInDTO);
     }
+  }
+
+  /**
+   * 
+   */
+  private void fillCustomUtxosToAccountInfo(
+      @Nonnull Integer typeNumber,
+      @Nonnull DefiTransactionData transactionData,
+      @Nonnull TransactionDTO transactionDTO) throws DfxException {
+    LOGGER.trace("fillCustomUtxosToAccountInfo()");
+
+    // ...
+    String hex = transactionData.getHex();
+    DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+
+    Map<String, Object> resultMap = customData.getResults();
+
+    Set<String> resultMapToAddressSet = resultMap.keySet();
+
+    BigDecimal fromAmount = BigDecimal.ZERO;
+
+    for (String toAddress : resultMapToAddressSet) {
+      AddressDTO toAddressDTO = databaseAddressHandler.getAddressDTO(databaseBlockHelper, toAddress);
+
+      String toToken = (String) resultMap.get(toAddress);
+      String[] toValueSplit = toToken.split("\\@");
+
+      if (2 == toValueSplit.length) {
+        BigDecimal toAmount = new BigDecimal(toValueSplit[0]);
+        Integer toTokenNumber = Integer.valueOf(toValueSplit[1]);
+        fromAmount = fromAmount.add(toAmount);
+
+        // ...
+        TransactionCustomAccountToAccountOutDTO customAccountToAccountOutDTO =
+            new TransactionCustomAccountToAccountOutDTO(
+                transactionDTO.getBlockNumber(),
+                transactionDTO.getNumber(),
+                typeNumber,
+                toAddressDTO.getNumber(),
+                toTokenNumber);
+
+        customAccountToAccountOutDTO.setAmount(toAmount);
+
+        transactionDTO.addCustomAccountToAccountOutDTO(customAccountToAccountOutDTO);
+      }
+    }
+
+    // ...
+    List<DefiTransactionVinData> transactionVinDataList = transactionData.getVin();
+    DefiTransactionVinData firstTransactionVinData = transactionVinDataList.get(0);
+    String firstVinTxid = firstTransactionVinData.getTxid();
+    Long vout = firstTransactionVinData.getVout();
+
+    DefiTransactionData firstVinTransactionData = dataProvider.getTransaction(firstVinTxid);
+    DefiTransactionVoutData firstVinTransactionVoutData = firstVinTransactionData.getVout().get(vout.intValue());
+    List<String> fromAddressList = firstVinTransactionVoutData.getScriptPubKey().getAddresses();
+    String fromAddress = fromAddressList.get(0);
+
+    AddressDTO fromAddressDTO = databaseAddressHandler.getAddressDTO(databaseBlockHelper, fromAddress);
+
+    // ...
+    TransactionCustomAccountToAccountInDTO customAccountToAccountInDTO =
+        new TransactionCustomAccountToAccountInDTO(
+            transactionDTO.getBlockNumber(),
+            transactionDTO.getNumber(),
+            typeNumber,
+            fromAddressDTO.getNumber(),
+            0);
+
+    customAccountToAccountInDTO.setAmount(fromAmount);
+
+    transactionDTO.addCustomAccountToAccountInDTO(customAccountToAccountInDTO);
   }
 }

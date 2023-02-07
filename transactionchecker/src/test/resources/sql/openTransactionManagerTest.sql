@@ -21,18 +21,6 @@ VALUES (4, 'df1qgz2xyzqwnsn5979syu6ng9wxlc4c2ac98m377f');
 -- SCHEMA: TESTNET
 -- ============================================================================
 
--- =======================
--- TESTNET.STAKING_ADDRESS
--- =======================
-INSERT INTO testnet.staking_address (token_number, liquidity_address_number, start_block_number, start_transaction_number)
-VALUES (0, 1, 0, 0);
-
--- ===============
--- TESTNET.STAKING
--- ===============
-INSERT INTO testnet.staking (token_number, liquidity_address_number, deposit_address_number, customer_address_number, last_in_block_number, vin, last_out_block_number, vout)
-VALUES (0, 1, 2, 3, 0, 500.00000000, 0, 100.00000000);
-
 -- ==================
 -- TESTNET.MASTERNODE
 -- ==================
@@ -41,3 +29,19 @@ VALUES (1, 1, 'tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z');
 
 INSERT INTO testnet.masternode_whitelist (wallet_id, idx, owner_address)
 VALUES (1, 2, 'tf1qqkzs9mrlwq0qy0dw74wpvyuup0gwhak7jppxcv');
+
+-- ============================================================================
+-- SCHEMA: TESTNET_STAKING
+-- ============================================================================
+
+-- ===============================
+-- TESTNET_STAKING.STAKING_ADDRESS
+-- ===============================
+INSERT INTO testnet_staking.staking_address (token_number, liquidity_address_number, start_block_number, start_transaction_number)
+VALUES (0, 1, 0, 0);
+
+-- =======================
+-- TESTNET_STAKING.STAKING
+-- =======================
+INSERT INTO testnet_staking.staking (token_number, liquidity_address_number, deposit_address_number, customer_address_number, last_in_block_number, vin, last_out_block_number, vout)
+VALUES (0, 1, 2, 3, 0, 500.00000000, 0, 100.00000000);

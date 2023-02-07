@@ -1,6 +1,6 @@
 package ch.dfx.manager.checker.withdrawal;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -22,6 +22,7 @@ import ch.dfx.api.data.join.TransactionWithdrawalDTO;
 import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
 import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
+import ch.dfx.api.data.transaction.OpenTransactionPayloadDTO;
 import ch.dfx.api.data.transaction.OpenTransactionTypeEnum;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.common.enumeration.NetworkEnum;
@@ -68,9 +69,9 @@ public class StakingBalanceCheckerTest {
 
   @Before
   public void before() {
-    TestUtils.sqlDelete(TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+    TestUtils.sqlDelete(TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
     TestUtils
-        .sqlDelete(TOKEN_NETWORK_SCHEMA, "staking", "token_number=0 AND liquidity_address_number=1 AND deposit_address_number=2 AND customer_address_number=4");
+        .sqlDelete(TOKEN_STAKING_SCHEMA, "staking", "token_number=0 AND liquidity_address_number=1 AND deposit_address_number=2 AND customer_address_number=4");
   }
 
   @Test
@@ -79,7 +80,7 @@ public class StakingBalanceCheckerTest {
 
     try {
       TestUtils.sqlInsert(
-          TOKEN_NETWORK_SCHEMA, "staking",
+          TOKEN_STAKING_SCHEMA, "staking",
           "token_number, liquidity_address_number, deposit_address_number, customer_address_number, last_in_block_number, vin, last_out_block_number, vout",
           "0, 1, 2, 4, 0, 175.00000000, 0, 25.00000000");
 
@@ -93,7 +94,7 @@ public class StakingBalanceCheckerTest {
       // ...
       List<Map<String, Object>> reservedBeforeDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       StakingBalanceChecker stakingBalanceChecker = new StakingBalanceChecker(NetworkEnum.TESTNET, databaseManagerMock);
 
@@ -102,7 +103,7 @@ public class StakingBalanceCheckerTest {
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       // ...
       assertEquals("staking_withdrawal_reserved Size", 0, reservedBeforeDataList.size());
@@ -134,7 +135,7 @@ public class StakingBalanceCheckerTest {
 
     try {
       TestUtils.sqlInsert(
-          TOKEN_NETWORK_SCHEMA, "staking",
+          TOKEN_STAKING_SCHEMA, "staking",
           "token_number, liquidity_address_number, deposit_address_number, customer_address_number, last_in_block_number, vin, last_out_block_number, vout",
           "0, 1, 2, 4, 0, 175.00000000, 0, 25.00000000");
 
@@ -149,7 +150,7 @@ public class StakingBalanceCheckerTest {
       // ...
       List<Map<String, Object>> reservedBeforeDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       StakingBalanceChecker stakingBalanceChecker = new StakingBalanceChecker(NetworkEnum.TESTNET, databaseManagerMock);
 
@@ -158,7 +159,7 @@ public class StakingBalanceCheckerTest {
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       // ...
       assertEquals("staking_withdrawal_reserved Size", 0, reservedBeforeDataList.size());
@@ -194,7 +195,7 @@ public class StakingBalanceCheckerTest {
 
     try {
       TestUtils.sqlInsert(
-          TOKEN_NETWORK_SCHEMA, "staking",
+          TOKEN_STAKING_SCHEMA, "staking",
           "token_number, liquidity_address_number, deposit_address_number, customer_address_number, last_in_block_number, vin, last_out_block_number, vout",
           "0, 1, 2, 4, 0, 175.00000000, 0, 25.00000000");
 
@@ -212,7 +213,7 @@ public class StakingBalanceCheckerTest {
       // ...
       List<Map<String, Object>> reservedBeforeDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       StakingBalanceChecker stakingBalanceChecker = new StakingBalanceChecker(NetworkEnum.TESTNET, databaseManagerMock);
 
@@ -221,7 +222,7 @@ public class StakingBalanceCheckerTest {
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       // ...
       assertEquals("staking_withdrawal_reserved Size", 0, reservedBeforeDataList.size());
@@ -272,7 +273,7 @@ public class StakingBalanceCheckerTest {
       // ...
       List<Map<String, Object>> reservedBeforeDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       StakingBalanceChecker stakingBalanceChecker = new StakingBalanceChecker(NetworkEnum.TESTNET, databaseManagerMock);
 
@@ -281,7 +282,7 @@ public class StakingBalanceCheckerTest {
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       // ...
       assertEquals("staking_withdrawal_reserved Size", 0, reservedBeforeDataList.size());
@@ -305,7 +306,7 @@ public class StakingBalanceCheckerTest {
 
     try {
       TestUtils.sqlInsert(
-          TOKEN_NETWORK_SCHEMA, "staking",
+          TOKEN_STAKING_SCHEMA, "staking",
           "token_number, liquidity_address_number, deposit_address_number, customer_address_number, last_in_block_number, vin, last_out_block_number, vout",
           "0, 1, 2, 4, 0, 175.00000000, 0, 25.00000001");
 
@@ -319,7 +320,7 @@ public class StakingBalanceCheckerTest {
       // ...
       List<Map<String, Object>> reservedBeforeDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       StakingBalanceChecker stakingBalanceChecker = new StakingBalanceChecker(NetworkEnum.TESTNET, databaseManagerMock);
 
@@ -328,7 +329,7 @@ public class StakingBalanceCheckerTest {
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       // ...
       assertEquals("staking_withdrawal_reserved Size", 0, reservedBeforeDataList.size());
@@ -352,7 +353,7 @@ public class StakingBalanceCheckerTest {
 
     try {
       TestUtils.sqlInsert(
-          TOKEN_NETWORK_SCHEMA, "staking",
+          TOKEN_STAKING_SCHEMA, "staking",
           "token_number, liquidity_address_number, deposit_address_number, customer_address_number, last_in_block_number, vin, last_out_block_number, vout",
           "0, 1, 2, 4, 0, 175.00000000, 0, 25.00000000");
 
@@ -374,7 +375,7 @@ public class StakingBalanceCheckerTest {
       // ...
       List<Map<String, Object>> reservedBeforeDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       StakingBalanceChecker stakingBalanceChecker = new StakingBalanceChecker(NetworkEnum.TESTNET, databaseManagerMock);
 
@@ -383,7 +384,7 @@ public class StakingBalanceCheckerTest {
 
       List<Map<String, Object>> reservedAfterDataList =
           TestUtils.sqlSelect(
-              TOKEN_NETWORK_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
+              TOKEN_STAKING_SCHEMA, "staking_withdrawal_reserved", "token_number=0 AND customer_address='" + CUSTOMER_ADDRESS + "'");
 
       // ...
       assertEquals("staking_withdrawal_reserved Size", 0, reservedBeforeDataList.size());
@@ -441,6 +442,11 @@ public class StakingBalanceCheckerTest {
     OpenTransactionDTO openTransactionDTO = new OpenTransactionDTO();
     openTransactionDTO.setType(OpenTransactionTypeEnum.WITHDRAWAL);
     openTransactionDTO.setId(transactionId);
+
+    OpenTransactionPayloadDTO openTransactionPayloadDTO = new OpenTransactionPayloadDTO();
+    openTransactionPayloadDTO.setAssetType("Coin");
+    openTransactionPayloadDTO.setType("Withdrawal");
+    openTransactionDTO.setPayload(openTransactionPayloadDTO);
 
     transactionWithdrawalDTO.setOpenTransactionDTO(openTransactionDTO);
 

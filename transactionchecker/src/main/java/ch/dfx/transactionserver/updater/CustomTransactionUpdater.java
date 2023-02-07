@@ -43,6 +43,7 @@ public class CustomTransactionUpdater {
   private static final String CUSTOM_TYPE_NONE = "0";
   private static final String CUSTOM_TYPE_ANY_ACCOUNTS_TO_ACCOUNTS = "a";
   private static final String CUSTOM_TYPE_ACCOUNT_TO_ACCOUNT = "B";
+  private static final String CUSTOM_TYPE_UTXOS_TO_ACCOUNT = "U";
 
   // ...
   private PreparedStatement transactionSelectStatement = null;
@@ -134,8 +135,9 @@ public class CustomTransactionUpdater {
   public void updateCustomTransaction() throws DfxException {
     LOGGER.trace("updateCustomTransaction()");
 
-    updateCustomTransaction(CUSTOM_TYPE_ANY_ACCOUNTS_TO_ACCOUNTS);
-    updateCustomTransaction(CUSTOM_TYPE_ACCOUNT_TO_ACCOUNT);
+    // updateCustomTransaction(CUSTOM_TYPE_ANY_ACCOUNTS_TO_ACCOUNTS);
+    // updateCustomTransaction(CUSTOM_TYPE_ACCOUNT_TO_ACCOUNT);
+    updateCustomTransaction(CUSTOM_TYPE_UTXOS_TO_ACCOUNT);
   }
 
   /**
@@ -159,8 +161,13 @@ public class CustomTransactionUpdater {
       // ...
       int limit = 10000;
 
-      for (int i = 0; i < 1; i++) {
+      for (int i = 0; i < 10; i++) {
         List<BlockTransactionDTO> blockTransactionDTOList = getBlockTransactionDTOList(customTypeCode, limit);
+//        List<BlockTransactionDTO> blockTransactionDTOList = getTestBlockTransactionDTOList();
+
+        if (blockTransactionDTOList.isEmpty()) {
+          break;
+        }
 
         for (BlockTransactionDTO blockTransactionDTO : blockTransactionDTOList) {
           LOGGER.debug("Block: " + blockTransactionDTO.getBlockNumber() + " / " + blockTransactionDTO.getTransactionNumber());
@@ -212,28 +219,49 @@ public class CustomTransactionUpdater {
       transactionUpdateStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionUpdateSql));
 
       // Custom Transaction ...
+//      String missingCustomTransactionSelectSql =
+//          "SELECT"
+//              + " b.number AS block_number,"
+//              + " b.hash AS block_hash,"
+//              + " t.number AS transaction_number,"
+//              + " t.txid AS transaction_id"
+//              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction t"
+//              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".block b ON"
+//              + " b.number = t.block_number"
+//              + " LEFT OUTER JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out ON"
+//              + " ata_out.block_number = t.block_number"
+//              + " AND ata_out.transaction_number = t.number"
+//              + " WHERE"
+//              + " t.custom_type_code=?"
+//              + " AND ata_out.block_number IS NULL"
+//              + " GROUP BY"
+//              + " t.block_number,"
+//              + " t.txid,"
+//              + " b.hash"
+//              + " LIMIT ?";
+//      missingCustomTransactionSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, missingCustomTransactionSelectSql));
+
       String missingCustomTransactionSelectSql =
           "SELECT"
               + " b.number AS block_number,"
               + " b.hash AS block_hash,"
               + " t.number AS transaction_number,"
               + " t.txid AS transaction_id"
-              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction t"
-              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".block b ON"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".block b"
+              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".transaction t ON"
               + " b.number = t.block_number"
-              + " LEFT OUTER JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_in ata_in ON"
-              + " ata_in.block_number = t.block_number"
-              + " AND ata_in.transaction_number = t.number"
+              + " LEFT OUTER JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out ON"
+              + " t.block_number = ata_out.block_number"
+              + " AND t.number = ata_out.transaction_number"
               + " WHERE"
-              + " t.custom_type_code=?"
-              + " AND ata_in.block_number IS NULL"
+              + " custom_type_code=?"
+              + " AND ata_out.block_number IS NULL"
               + " GROUP BY"
               + " t.block_number,"
               + " t.txid,"
               + " b.hash"
               + " LIMIT ?";
       missingCustomTransactionSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, missingCustomTransactionSelectSql));
-
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -386,6 +414,21 @@ public class CustomTransactionUpdater {
   /**
    * 
    */
+  private List<BlockTransactionDTO> getTestBlockTransactionDTOList() {
+    LOGGER.trace("getBlockTransactionDTOList()");
+
+    List<BlockTransactionDTO> blockTransactionDTOList = new ArrayList<>();
+
+    BlockTransactionDTO blockTransactionDTO =
+        new BlockTransactionDTO(
+            2637549, "5290cf08042d71311ecf6b417515fe3f23443d77924aa508ba1ec0ef18d0a95e",
+            42, "11acf574962ddef2dd91b84876f1185fd6170c60a269f821dfcba92cbcc1595c");
+
+    blockTransactionDTOList.add(blockTransactionDTO);
+
+    return blockTransactionDTOList;
+  }
+
   /**
    * 
    */

@@ -1,5 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS testnet AUTHORIZATION SA;
 CREATE SCHEMA IF NOT EXISTS testnet_custom AUTHORIZATION SA;
+CREATE SCHEMA IF NOT EXISTS testnet_staking AUTHORIZATION SA;
+CREATE SCHEMA IF NOT EXISTS testnet_yieldmachine AUTHORIZATION SA;
 
 -- ============================================================================
 -- SCHEMA: PUBLIC
@@ -84,96 +86,6 @@ CREATE INDEX idx4_address_transaction_in ON address_transaction_in(block_number)
 -- SCHEMA: TESTNET
 -- ============================================================================
 
--- =======================
--- TESTNET.STAKING_ADDRESS
--- =======================
-CREATE TABLE IF NOT EXISTS testnet.staking_address (
-  token_number             INT    NOT NULL,
-  liquidity_address_number BIGINT NOT NULL,
-  reward_address_number    BIGINT NOT NULL DEFAULT -1,
-  start_block_number       BIGINT NOT NULL,
-  start_transaction_number BIGINT NOT NULL,
-  change_time              TIMESTAMP WITH TIME ZONE
-                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX idx1_staking_address ON testnet.staking_address(token_number, liquidity_address_number, reward_address_number);
-CREATE UNIQUE INDEX idx2_staking_address ON testnet.staking_address(liquidity_address_number, reward_address_number);
-CREATE INDEX idx3_staking_address ON testnet.staking_address(token_number);
-
--- ===============
--- TESTNET.DEPOSIT
--- ===============
-CREATE TABLE IF NOT EXISTS testnet.deposit (
-  token_number             INT    NOT NULL,
-  liquidity_address_number BIGINT NOT NULL,
-  deposit_address_number   BIGINT NOT NULL,
-  customer_address_number  BIGINT NOT NULL,
-  start_block_number       BIGINT NOT NULL,
-  start_transaction_number BIGINT NOT NULL,
-  change_time              TIMESTAMP WITH TIME ZONE
-                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX idx1_deposit ON testnet.deposit(token_number, liquidity_address_number, customer_address_number, deposit_address_number);
-CREATE UNIQUE INDEX idx2_deposit ON testnet.deposit(liquidity_address_number, customer_address_number, deposit_address_number);
-CREATE INDEX idx3_deposit ON testnet.deposit(token_number);
-
--- ===============
--- TESTNET.BALANCE
--- ===============
-CREATE TABLE IF NOT EXISTS testnet.balance (
-  token_number      INT           NOT NULL,
-  address_number    BIGINT        NOT NULL,
-  block_number      BIGINT        NOT NULL,
-  transaction_count BIGINT        NOT NULL,
-  vout              DECIMAL(20,8) NOT NULL,
-  vin               DECIMAL(20,8) NOT NULL,
-  change_time       TIMESTAMP WITH TIME ZONE
-                    GENERATED ALWAYS AS CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX idx1_balance ON testnet.balance(token_number, address_number);
-CREATE INDEX idx2_balance ON testnet.balance(token_number);
-
--- ===============
--- TESTNET.STAKING
--- ===============
-CREATE TABLE IF NOT EXISTS testnet.staking (
-  token_number             INT           NOT NULL,
-  liquidity_address_number BIGINT        NOT NULL,
-  deposit_address_number   BIGINT        NOT NULL,
-  customer_address_number  BIGINT        NOT NULL,
-  last_in_block_number     BIGINT        NOT NULL,
-  vin                      DECIMAL(20,8) NOT NULL,
-  last_out_block_number    BIGINT        NOT NULL,
-  vout                     DECIMAL(20,8) NOT NULL,
-  change_time              TIMESTAMP WITH TIME ZONE
-                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX idx1_staking ON testnet.staking(token_number, liquidity_address_number, deposit_address_number, customer_address_number);
-CREATE UNIQUE INDEX idx2_staking ON testnet.staking(liquidity_address_number, deposit_address_number, customer_address_number);
-CREATE INDEX idx3_staking ON testnet.staking(token_number);
-
--- ===================================
--- TESTNET.STAKING_WITHDRAWAL_RESERVED
--- ===================================
-CREATE TABLE IF NOT EXISTS testnet.staking_withdrawal_reserved (
-  token_number     INT         NOT NULL,
-  withdrawal_id    BIGINT      NOT NULL,
-  transaction_id   VARCHAR(64) NOT NULL,
-  customer_address VARCHAR(64) NOT NULL,
-  vout             DECIMAL(20,8) NOT NULL,
-  create_time      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  change_time      TIMESTAMP WITH TIME ZONE
-                   GENERATED ALWAYS AS CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX idx1_staking_withdrawal_reserved ON testnet.staking_withdrawal_reserved(withdrawal_id);
-CREATE UNIQUE INDEX idx2_staking_withdrawal_reserved ON testnet.staking_withdrawal_reserved(transaction_id);
-CREATE INDEX idx3_staking_withdrawal_reserved ON testnet.staking_withdrawal_reserved(token_number);
-
 -- ===========================
 -- TESTNET.API_DUPLICATE_CHECK
 -- ===========================
@@ -207,6 +119,100 @@ CREATE TABLE IF NOT EXISTS testnet.masternode_whitelist (
 
 CREATE UNIQUE INDEX idx1_masternode_whitelist ON testnet.masternode_whitelist(wallet_id, idx, owner_address);
 CREATE UNIQUE INDEX idx2_masternode_whitelist ON testnet.masternode_whitelist(owner_address);
+
+-- ============================================================================
+-- SCHEMA: TESTNET_STAKING
+-- ============================================================================
+
+-- ===============================
+-- TESTNET_STAKING.STAKING_ADDRESS
+-- ===============================
+CREATE TABLE IF NOT EXISTS testnet_staking.staking_address (
+  token_number             INT    NOT NULL,
+  liquidity_address_number BIGINT NOT NULL,
+  reward_address_number    BIGINT NOT NULL DEFAULT -1,
+  start_block_number       BIGINT NOT NULL,
+  start_transaction_number BIGINT NOT NULL,
+  change_time              TIMESTAMP WITH TIME ZONE
+                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_staking_address ON testnet_staking.staking_address(token_number, liquidity_address_number, reward_address_number);
+CREATE UNIQUE INDEX idx2_staking_address ON testnet_staking.staking_address(liquidity_address_number, reward_address_number);
+CREATE INDEX idx3_staking_address ON testnet_staking.staking_address(token_number);
+
+-- =======================
+-- TESTNET_STAKING.DEPOSIT
+-- =======================
+CREATE TABLE IF NOT EXISTS testnet_staking.deposit (
+  token_number             INT    NOT NULL,
+  liquidity_address_number BIGINT NOT NULL,
+  deposit_address_number   BIGINT NOT NULL,
+  customer_address_number  BIGINT NOT NULL,
+  start_block_number       BIGINT NOT NULL,
+  start_transaction_number BIGINT NOT NULL,
+  change_time              TIMESTAMP WITH TIME ZONE
+                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_deposit ON testnet_staking.deposit(token_number, liquidity_address_number, customer_address_number, deposit_address_number);
+CREATE UNIQUE INDEX idx2_deposit ON testnet_staking.deposit(liquidity_address_number, customer_address_number, deposit_address_number);
+CREATE INDEX idx3_deposit ON testnet_staking.deposit(token_number);
+
+-- =======================
+-- TESTNET_STAKING.BALANCE
+-- =======================
+CREATE TABLE IF NOT EXISTS testnet_staking.balance (
+  token_number      INT           NOT NULL,
+  address_number    BIGINT        NOT NULL,
+  block_number      BIGINT        NOT NULL,
+  transaction_count BIGINT        NOT NULL,
+  vout              DECIMAL(20,8) NOT NULL,
+  vin               DECIMAL(20,8) NOT NULL,
+  change_time       TIMESTAMP WITH TIME ZONE
+                    GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_balance ON testnet_staking.balance(token_number, address_number);
+CREATE INDEX idx2_balance ON testnet_staking.balance(token_number);
+
+-- =======================
+-- TESTNET_STAKING.STAKING
+-- =======================
+CREATE TABLE IF NOT EXISTS testnet_staking.staking (
+  token_number             INT           NOT NULL,
+  liquidity_address_number BIGINT        NOT NULL,
+  deposit_address_number   BIGINT        NOT NULL,
+  customer_address_number  BIGINT        NOT NULL,
+  last_in_block_number     BIGINT        NOT NULL,
+  vin                      DECIMAL(20,8) NOT NULL,
+  last_out_block_number    BIGINT        NOT NULL,
+  vout                     DECIMAL(20,8) NOT NULL,
+  change_time              TIMESTAMP WITH TIME ZONE
+                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_staking ON testnet_staking.staking(token_number, liquidity_address_number, deposit_address_number, customer_address_number);
+CREATE UNIQUE INDEX idx2_staking ON testnet_staking.staking(liquidity_address_number, deposit_address_number, customer_address_number);
+CREATE INDEX idx3_staking ON testnet_staking.staking(token_number);
+
+-- ===========================================
+-- TESTNET_STAKING.STAKING_WITHDRAWAL_RESERVED
+-- ===========================================
+CREATE TABLE IF NOT EXISTS testnet_staking.staking_withdrawal_reserved (
+  token_number     INT         NOT NULL,
+  withdrawal_id    BIGINT      NOT NULL,
+  transaction_id   VARCHAR(64) NOT NULL,
+  customer_address VARCHAR(64) NOT NULL,
+  vout             DECIMAL(20,8) NOT NULL,
+  create_time      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  change_time      TIMESTAMP WITH TIME ZONE
+                   GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_staking_withdrawal_reserved ON testnet_staking.staking_withdrawal_reserved(withdrawal_id);
+CREATE UNIQUE INDEX idx2_staking_withdrawal_reserved ON testnet_staking.staking_withdrawal_reserved(transaction_id);
+CREATE INDEX idx3_staking_withdrawal_reserved ON testnet_staking.staking_withdrawal_reserved(token_number);
 
 -- ============================================================================
 -- SCHEMA: TESTNET_CUSTOM
@@ -274,3 +280,97 @@ CREATE UNIQUE INDEX idx1_account_to_account_out ON testnet_custom.account_to_acc
 CREATE INDEX idx2_account_to_account_out ON testnet_custom.account_to_account_out(block_number, transaction_number);
 CREATE INDEX idx3_account_to_account_out ON testnet_custom.account_to_account_out(address_number);
 CREATE INDEX idx4_account_to_account_out ON testnet_custom.account_to_account_out(block_number);
+
+-- ============================================================================
+-- SCHEMA: TESTNET_YIELDMACHINE
+-- ============================================================================
+
+-- ====================================
+-- TESTNET_YIELDMACHINE.STAKING_ADDRESS
+-- ====================================
+CREATE TABLE IF NOT EXISTS testnet_yieldmachine.staking_address (
+  token_number             INT    NOT NULL,
+  liquidity_address_number BIGINT NOT NULL,
+  reward_address_number    BIGINT NOT NULL DEFAULT -1,
+  start_block_number       BIGINT NOT NULL,
+  start_transaction_number BIGINT NOT NULL,
+  change_time              TIMESTAMP WITH TIME ZONE
+                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_staking_address ON testnet_yieldmachine.staking_address(token_number, liquidity_address_number, reward_address_number);
+CREATE UNIQUE INDEX idx2_staking_address ON testnet_yieldmachine.staking_address(liquidity_address_number, reward_address_number);
+CREATE INDEX idx3_staking_address ON testnet_yieldmachine.staking_address(token_number);
+
+-- ============================
+-- TESTNET_YIELDMACHINE.DEPOSIT
+-- ============================
+CREATE TABLE IF NOT EXISTS testnet_yieldmachine.deposit (
+  token_number             INT    NOT NULL,
+  liquidity_address_number BIGINT NOT NULL,
+  deposit_address_number   BIGINT NOT NULL,
+  customer_address_number  BIGINT NOT NULL,
+  start_block_number       BIGINT NOT NULL,
+  start_transaction_number BIGINT NOT NULL,
+  change_time              TIMESTAMP WITH TIME ZONE
+                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_deposit ON testnet_yieldmachine.deposit(token_number, liquidity_address_number, customer_address_number, deposit_address_number);
+CREATE UNIQUE INDEX idx2_deposit ON testnet_yieldmachine.deposit(liquidity_address_number, customer_address_number, deposit_address_number);
+CREATE INDEX idx3_deposit ON testnet_yieldmachine.deposit(token_number);
+
+-- ============================
+-- TESTNET_YIELDMACHINE.BALANCE
+-- ============================
+CREATE TABLE IF NOT EXISTS testnet_yieldmachine.balance (
+  token_number      INT           NOT NULL,
+  address_number    BIGINT        NOT NULL,
+  block_number      BIGINT        NOT NULL,
+  transaction_count BIGINT        NOT NULL,
+  vout              DECIMAL(20,8) NOT NULL,
+  vin               DECIMAL(20,8) NOT NULL,
+  change_time       TIMESTAMP WITH TIME ZONE
+                    GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_balance ON testnet_yieldmachine.balance(token_number, address_number);
+CREATE INDEX idx2_balance ON testnet_yieldmachine.balance(token_number);
+
+-- ============================
+-- TESTNET_YIELDMACHINE.STAKING
+-- ============================
+CREATE TABLE IF NOT EXISTS testnet_yieldmachine.staking (
+  token_number             INT           NOT NULL,
+  liquidity_address_number BIGINT        NOT NULL,
+  deposit_address_number   BIGINT        NOT NULL,
+  customer_address_number  BIGINT        NOT NULL,
+  last_in_block_number     BIGINT        NOT NULL,
+  vin                      DECIMAL(20,8) NOT NULL,
+  last_out_block_number    BIGINT        NOT NULL,
+  vout                     DECIMAL(20,8) NOT NULL,
+  change_time              TIMESTAMP WITH TIME ZONE
+                           GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_staking ON testnet_yieldmachine.staking(token_number, liquidity_address_number, deposit_address_number, customer_address_number);
+CREATE UNIQUE INDEX idx2_staking ON testnet_yieldmachine.staking(liquidity_address_number, deposit_address_number, customer_address_number);
+CREATE INDEX idx3_staking ON testnet_yieldmachine.staking(token_number);
+
+-- ================================================
+-- TESTNET_YIELDMACHINE.STAKING_WITHDRAWAL_RESERVED
+-- ================================================
+CREATE TABLE IF NOT EXISTS testnet_yieldmachine.staking_withdrawal_reserved (
+  token_number     INT         NOT NULL,
+  withdrawal_id    BIGINT      NOT NULL,
+  transaction_id   VARCHAR(64) NOT NULL,
+  customer_address VARCHAR(64) NOT NULL,
+  vout             DECIMAL(20,8) NOT NULL,
+  create_time      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  change_time      TIMESTAMP WITH TIME ZONE
+                   GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_staking_withdrawal_reserved ON testnet_yieldmachine.staking_withdrawal_reserved(withdrawal_id);
+CREATE UNIQUE INDEX idx2_staking_withdrawal_reserved ON testnet_yieldmachine.staking_withdrawal_reserved(transaction_id);
+CREATE INDEX idx3_staking_withdrawal_reserved ON testnet_yieldmachine.staking_withdrawal_reserved(token_number);

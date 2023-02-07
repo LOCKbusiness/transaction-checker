@@ -1,5 +1,8 @@
 package ch.dfx;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
+
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +37,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   private final H2DBManager databaseManager;
 
   private final DatabaseBlockHelper databaseBlockHelper;
-  private final DatabaseBalanceHelper databaseBalanceHelper;
+  private final DatabaseBalanceHelper databaseStakingBalanceHelper;
+  private final DatabaseBalanceHelper databaseYieldmachineBalanceHelper;
 
   private boolean isProcessing = false;
 
@@ -48,7 +52,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
     this.databaseManager = databaseManager;
 
     this.databaseBlockHelper = new DatabaseBlockHelper(network);
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseStakingBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseYieldmachineBalanceHelper = new DatabaseBalanceHelper(network);
   }
 
   @Override
@@ -87,21 +92,23 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       connection = databaseManager.openConnection();
 
       databaseBlockHelper.openStatements(connection);
-      databaseBalanceHelper.openStatements(connection);
+      databaseStakingBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
+      databaseYieldmachineBalanceHelper.openStatements(connection, TOKEN_YIELDMACHINE_SCHEMA);
 
       List<String> logInfoList = new ArrayList<>();
 
       createStakingBalanceReport(connection, logInfoList);
-      createLiquidityMasternodeStakingBalanceReport(connection, logInfoList);
-      createVaultReport(connection, logInfoList);
+//      createLiquidityMasternodeStakingBalanceReport(connection, logInfoList);
+//      createVaultReport(connection, logInfoList);
 
-      createStatistikReport(connection);
+//      createStatistikReport(connection);
 
       writeLogInfo(logInfoList);
 
       // ...
-      databaseBalanceHelper.closeStatements();
       databaseBlockHelper.closeStatements();
+      databaseStakingBalanceHelper.closeStatements();
+      databaseYieldmachineBalanceHelper.closeStatements();
     } catch (Exception e) {
       LOGGER.error("doRun", e);
     } finally {
@@ -121,15 +128,22 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
       String balanceFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_FILENAME);
       String stakingBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_STAKING_SHEET);
-      String yieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_YIELDMACHINE_SHEET);
+      String dfiYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_DFI_YIELDMACHINE_SHEET);
+      String dusdYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_DUSD_YIELDMACHINE_SHEET);
 
       if (null != rootPath
           && null != balanceFileName
           && null != stakingBalanceSheet
-          && null != yieldmachineBalanceSheet) {
-        BalanceReporting stakingBalanceReporting = new BalanceReporting(network, databaseBlockHelper, databaseBalanceHelper, logInfoList);
+          && null != dfiYieldmachineBalanceSheet
+          && null != dusdYieldmachineBalanceSheet) {
+        BalanceReporting stakingBalanceReporting =
+            new BalanceReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
         stakingBalanceReporting.report(connection, TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
-        stakingBalanceReporting.report(connection, TokenEnum.DUSD, rootPath, balanceFileName, yieldmachineBalanceSheet);
+
+        BalanceReporting yieldmachineBalanceReporting =
+            new BalanceReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper, logInfoList);
+        yieldmachineBalanceReporting.report(connection, TokenEnum.DFI, rootPath, balanceFileName, dfiYieldmachineBalanceSheet);
+        yieldmachineBalanceReporting.report(connection, TokenEnum.DUSD, rootPath, balanceFileName, dusdYieldmachineBalanceSheet);
 
         logInfoList.add("");
       }
@@ -155,7 +169,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != checkFileName
           && null != checkSheet) {
         LiquidityMasternodeStakingReporting liquidityMasternodeStakingReporting =
-            new LiquidityMasternodeStakingReporting(network, databaseBlockHelper, databaseBalanceHelper, logInfoList);
+            new LiquidityMasternodeStakingReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
         liquidityMasternodeStakingReporting.report(connection, TokenEnum.DFI, rootPath, checkFileName, checkSheet);
 
         logInfoList.add("");
@@ -182,7 +196,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != checkFileName
           && null != checkSheet) {
         VaultReporting vaultReporting =
-            new VaultReporting(network, databaseBlockHelper, databaseBalanceHelper, logInfoList);
+            new VaultReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
         vaultReporting.report(connection, TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
       }
     } catch (Exception e) {
@@ -206,9 +220,13 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != statistikFileName
           && null != statistikDfiDataSheet
           && null != statistikDusdDataSheet) {
-        StatistikReporting statistikReporting = new StatistikReporting(network, databaseBlockHelper, databaseBalanceHelper);
-        statistikReporting.report(connection, TokenEnum.DFI, rootPath, statistikFileName, statistikDfiDataSheet);
-        statistikReporting.report(connection, TokenEnum.DUSD, rootPath, statistikFileName, statistikDusdDataSheet);
+        StatistikReporting statistikStakingReporting =
+            new StatistikReporting(network, databaseBlockHelper, databaseStakingBalanceHelper);
+        statistikStakingReporting.report(connection, TokenEnum.DFI, rootPath, statistikFileName, statistikDfiDataSheet);
+
+        StatistikReporting statistikYieldmachineReporting =
+            new StatistikReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
+        statistikYieldmachineReporting.report(connection, TokenEnum.DUSD, rootPath, statistikFileName, statistikDusdDataSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createStatistikReport", e);

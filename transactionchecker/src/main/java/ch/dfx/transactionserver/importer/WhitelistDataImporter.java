@@ -24,7 +24,7 @@ import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
-import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 import ch.dfx.transactionserver.importer.data.DataImporterMasternodeOwnerData;
 import ch.dfx.transactionserver.importer.data.DataImporterMasternodeOwnerDataList;
 
@@ -41,7 +41,7 @@ public abstract class WhitelistDataImporter {
 
   // ...
   private final H2DBManager databaseManager;
-  private final DatabaseBalanceHelper databaseBalanceHelper;
+  private final DatabaseBlockHelper databaseBlockHelper;
 
   // ...
   private PreparedStatement masternodeWhitelistInsertStatement = null;
@@ -53,7 +53,7 @@ public abstract class WhitelistDataImporter {
     this.network = network;
 
     this.databaseManager = new H2DBManagerImpl();
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseBlockHelper = new DatabaseBlockHelper(network);
 
     this.gson = new GsonBuilder().setPrettyPrinting().create();
   }
@@ -73,7 +73,7 @@ public abstract class WhitelistDataImporter {
     try {
       connection = databaseManager.openConnection();
 
-      databaseBalanceHelper.openStatements(connection);
+      databaseBlockHelper.openStatements(connection);
       openStatements(connection);
 
       Set<String> ownerAddressSet = getOwnerAddressSet();
@@ -94,7 +94,7 @@ public abstract class WhitelistDataImporter {
       }
 
       closeStatements();
-      databaseBalanceHelper.closeStatements();
+      databaseBlockHelper.closeStatements();
 
       connection.commit();
     } catch (DfxException e) {
@@ -116,7 +116,7 @@ public abstract class WhitelistDataImporter {
 
     Set<String> ownerAddressSet = new HashSet<>();
 
-    List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBalanceHelper.getMasternodeWhitelistDTOList();
+    List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBlockHelper.getMasternodeWhitelistDTOList();
     masternodeWhitelistDTOList.forEach(dto -> ownerAddressSet.add(dto.getOwnerAddress()));
 
     return ownerAddressSet;

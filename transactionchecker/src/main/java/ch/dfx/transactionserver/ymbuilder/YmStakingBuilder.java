@@ -1,7 +1,7 @@
 package ch.dfx.transactionserver.ymbuilder;
 
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -57,7 +57,7 @@ public class YmStakingBuilder {
   public void build(
       @Nonnull Connection connection,
       @Nonnull TokenEnum token) throws DfxException {
-    LOGGER.debug("build()");
+    LOGGER.debug("build(): token=" + token);
 
     long startTime = System.currentTimeMillis();
 
@@ -102,7 +102,7 @@ public class YmStakingBuilder {
       stakingAmountSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingAmountSelectSql));
 
       String stakingSelectSql =
-          "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".staking"
+          "SELECT * FROM " + TOKEN_YIELDMACHINE_SCHEMA + ".staking"
               + " WHERE token_number=?"
               + " AND liquidity_address_number=?"
               + " AND deposit_address_number=?"
@@ -110,7 +110,7 @@ public class YmStakingBuilder {
       stakingSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingSelectSql));
 
       String stakingInsertSql =
-          "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".staking"
+          "INSERT INTO " + TOKEN_YIELDMACHINE_SCHEMA + ".staking"
               + " (token_number, liquidity_address_number, deposit_address_number, customer_address_number"
               + ", last_in_block_number, vin"
               + ", last_out_block_number, vout)"
@@ -118,7 +118,7 @@ public class YmStakingBuilder {
       stakingInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingInsertSql));
 
       String stakingUpdateSql =
-          "UPDATE " + TOKEN_NETWORK_SCHEMA + ".staking"
+          "UPDATE " + TOKEN_YIELDMACHINE_SCHEMA + ".staking"
               + " SET last_in_block_number=?, vin=?"
               + " , last_out_block_number=?, vout=?"
               + " WHERE token_number=?"
@@ -155,10 +155,10 @@ public class YmStakingBuilder {
     LOGGER.trace("calcStakingBalance()");
 
     // ...
-    List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList(token);
+    List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList();
 
     for (DepositDTO depositDTO : depositDTOList) {
-      calcBalance(connection, depositDTO);
+      calcBalance(connection, depositDTO, token);
     }
   }
 
@@ -167,11 +167,12 @@ public class YmStakingBuilder {
    */
   private void calcBalance(
       @Nonnull Connection connection,
-      @Nonnull DepositDTO depositDTO) throws DfxException {
+      @Nonnull DepositDTO depositDTO,
+      @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("calcBalance()");
 
     try {
-      int tokenNumber = depositDTO.getTokenNumber();
+      int tokenNumber = token.getNumber();
       int liquidityAddressNumber = depositDTO.getLiquidityAddressNumber();
       int depositAddressNumber = depositDTO.getDepositAddressNumber();
       int customerAddressNumber = depositDTO.getCustomerAddressNumber();
@@ -205,11 +206,13 @@ public class YmStakingBuilder {
       stakingDTO.addVout(voutStakingDTO.getVout());
 
       // ...
-      if (-1 == stakingLastInBlockNumber
-          && -1 == stakingLastOutBlockNumber) {
-        insertStaking(stakingDTO);
-      } else if (stakingDTO.isInternalStateChanged()) {
-        updateStaking(stakingDTO);
+      if (-1 != maxStakingLastInBlockNumber) {
+        if (-1 == stakingLastInBlockNumber
+            && -1 == stakingLastOutBlockNumber) {
+          insertStaking(stakingDTO);
+        } else if (stakingDTO.isInternalStateChanged()) {
+          updateStaking(stakingDTO);
+        }
       }
     } catch (DfxException e) {
       throw e;

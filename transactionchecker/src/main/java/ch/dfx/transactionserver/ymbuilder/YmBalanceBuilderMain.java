@@ -1,5 +1,7 @@
 package ch.dfx.transactionserver.ymbuilder;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
+
 import java.sql.Connection;
 import java.util.stream.Stream;
 
@@ -55,10 +57,11 @@ public class YmBalanceBuilderMain {
       Connection connection = databaseManager.openConnection();
 
       DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(network);
-      databaseBalanceHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection, TOKEN_YIELDMACHINE_SCHEMA);
 
       // ...
       YmBalanceBuilder ymBalanceBuilder = new YmBalanceBuilder(network, databaseBalanceHelper);
+      ymBalanceBuilder.build(connection, TokenEnum.DFI);
       ymBalanceBuilder.build(connection, TokenEnum.DUSD);
 
       // ...

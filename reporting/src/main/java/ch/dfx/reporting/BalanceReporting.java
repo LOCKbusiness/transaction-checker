@@ -70,7 +70,7 @@ public class BalanceReporting extends Reporting {
     try {
       totalBalance = BigDecimal.ZERO;
 
-      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
+      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
 
       RowDataList rowDataList = createRowDataList(token, stakingAddressDTOList);
 
@@ -126,7 +126,7 @@ public class BalanceReporting extends Reporting {
     LOGGER.trace("addDeposit()");
 
     List<DepositDTO> depositDTOList =
-        databaseBalanceHelper.getDepositDTOListByLiquidityAddressNumber(token, stakingAddressDTO.getLiquidityAddressNumber());
+        databaseBalanceHelper.getDepositDTOListByLiquidityAddressNumber(stakingAddressDTO.getLiquidityAddressNumber());
     LOGGER.debug("Number of Deposit Addresses: " + depositDTOList.size());
 
     // ...

@@ -11,6 +11,7 @@ public class OpenTransactionDTO {
   private OpenTransactionTypeEnum type = null;
 
   private String id = null;
+  private String assetType = null;
   private String issuerSignature = null;
 
   private OpenTransactionRawTxDTO rawTx = null;
@@ -39,6 +40,14 @@ public class OpenTransactionDTO {
 
   public void setId(String id) {
     this.id = id;
+  }
+
+  public String getAssetType() {
+    return assetType;
+  }
+
+  public void setAssetType(String assetType) {
+    this.assetType = assetType;
   }
 
   public String getIssuerSignature() {

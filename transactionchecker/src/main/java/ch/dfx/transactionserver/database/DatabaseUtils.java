@@ -23,6 +23,9 @@ public class DatabaseUtils {
   public static final String TOKEN_NETWORK_SCHEMA = "${network_schema}";
   public static final String TOKEN_NETWORK_CUSTOM_SCHEMA = "${network_custom_schema}";
 
+  public static final String TOKEN_STAKING_SCHEMA = "${staking_schema}";
+  public static final String TOKEN_YIELDMACHINE_SCHEMA = "${yieldmachine_schema}";
+
   /**
    * 
    */
@@ -32,6 +35,8 @@ public class DatabaseUtils {
     String schemaReplacedSql = replacePublicSchema(sql);
     schemaReplacedSql = replaceNetworkSchema(network, schemaReplacedSql);
     schemaReplacedSql = replaceNetworkCustomSchema(network, schemaReplacedSql);
+    schemaReplacedSql = replaceStakingSchema(network, schemaReplacedSql);
+    schemaReplacedSql = replaceYieldmachineSchema(network, schemaReplacedSql);
 
     return schemaReplacedSql;
   }
@@ -59,6 +64,24 @@ public class DatabaseUtils {
       @Nonnull NetworkEnum network,
       @Nonnull String sql) {
     return sql.replace(TOKEN_NETWORK_CUSTOM_SCHEMA, network.toString() + "_custom");
+  }
+
+  /**
+   * 
+   */
+  private static String replaceStakingSchema(
+      @Nonnull NetworkEnum network,
+      @Nonnull String sql) {
+    return sql.replace(TOKEN_STAKING_SCHEMA, network.toString() + "_staking");
+  }
+
+  /**
+   * 
+   */
+  private static String replaceYieldmachineSchema(
+      @Nonnull NetworkEnum network,
+      @Nonnull String sql) {
+    return sql.replace(TOKEN_YIELDMACHINE_SCHEMA, network.toString() + "_yieldmachine");
   }
 
   /**

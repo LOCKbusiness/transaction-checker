@@ -1,7 +1,7 @@
 package ch.dfx.transactionserver.builder;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -80,7 +80,7 @@ public class StatistikBuilder {
       connection = databaseManager.openConnection();
 
       databaseBlockHelper.openStatements(connection);
-      databaseBalanceHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
       databaseStatistikHelper.openStatements(connection);
       openStatements(connection);
 
@@ -90,7 +90,7 @@ public class StatistikBuilder {
 
       // ...
       List<StakingAddressDTO> stakingAddressDTOList =
-          databaseBalanceHelper.getStakingAddressDTOList(token)
+          databaseBalanceHelper.getStakingAddressDTOList()
               .stream().filter(dto -> -1 == dto.getRewardAddressNumber()).collect(Collectors.toList());
 
       List<StatistikDTO> newStatistikDTOList = new ArrayList<>();
@@ -138,7 +138,7 @@ public class StatistikBuilder {
       // Deposit ...
       String depositCountSelectSql =
           "SELECT COUNT(*) AS count"
-              + " FROM " + TOKEN_NETWORK_SCHEMA + ".deposit d"
+              + " FROM " + TOKEN_STAKING_SCHEMA + ".deposit d"
               + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".block b ON"
               + " d.start_block_number = b.number"
               + " WHERE"

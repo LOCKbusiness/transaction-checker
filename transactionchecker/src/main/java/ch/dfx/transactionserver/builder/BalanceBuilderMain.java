@@ -1,5 +1,7 @@
 package ch.dfx.transactionserver.builder;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+
 import java.sql.Connection;
 import java.util.stream.Stream;
 
@@ -55,7 +57,7 @@ public class BalanceBuilderMain {
       Connection connection = databaseManager.openConnection();
 
       DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(network);
-      databaseBalanceHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
 
       // ...
       BalanceBuilder balanceBuilder = new BalanceBuilder(network, databaseBalanceHelper);

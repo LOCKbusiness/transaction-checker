@@ -7,19 +7,26 @@ import ch.dfx.common.TransactionCheckerUtils;
  */
 public class OpenTransactionPayloadDTO {
   // ...
+  private Integer id = null;
   private String type = null;
+  private String assetType = null;
 
-  // Masternode ...
+  // ...
   private String ownerWallet = null;
   private Integer accountIndex = null;
-
-  // Withdrawal ...
-  private Integer id = null;
 
   /**
    * 
    */
   public OpenTransactionPayloadDTO() {
+  }
+
+  public Integer getId() {
+    return id;
+  }
+
+  public void setId(Integer id) {
+    this.id = id;
   }
 
   public String getType() {
@@ -28,6 +35,14 @@ public class OpenTransactionPayloadDTO {
 
   public void setType(String type) {
     this.type = type;
+  }
+
+  public String getAssetType() {
+    return assetType;
+  }
+
+  public void setAssetType(String assetType) {
+    this.assetType = assetType;
   }
 
   public String getOwnerWallet() {
@@ -44,14 +59,6 @@ public class OpenTransactionPayloadDTO {
 
   public void setAccountIndex(Integer accountIndex) {
     this.accountIndex = accountIndex;
-  }
-
-  public Integer getId() {
-    return id;
-  }
-
-  public void setId(Integer id) {
-    this.id = id;
   }
 
   @Override

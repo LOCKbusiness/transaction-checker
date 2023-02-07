@@ -1,5 +1,7 @@
 package ch.dfx.ocean;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -151,9 +153,9 @@ public class OceanHandlerMain {
 
     try {
       connection = databaseManager.openConnection();
-      databaseBalanceHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
 
-      List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList(token);
+      List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList();
 
       databaseBalanceHelper.closeStatements();
 

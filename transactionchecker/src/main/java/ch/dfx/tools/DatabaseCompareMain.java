@@ -52,7 +52,7 @@ public class DatabaseCompareMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      DatabaseCompare databaseCompare = new DatabaseCompare(network);
+      DatabaseDepositStakingCompare databaseCompare = new DatabaseDepositStakingCompare(network);
       databaseCompare.compare();
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);

@@ -1,6 +1,7 @@
 package ch.dfx.manager.checker.withdrawal;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -70,6 +71,36 @@ public class StakingBalanceChecker {
 
     TransactionWithdrawalDTOList checkedTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
 
+    TransactionWithdrawalDTOList stakingTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
+    TransactionWithdrawalDTOList yieldmachineTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
+
+    for (TransactionWithdrawalDTO transactionWithdrawalDTO : transactionWithdrawalDTOList) {
+      OpenTransactionDTO openTransactionDTO = transactionWithdrawalDTO.getOpenTransactionDTO();
+      String assetType = openTransactionDTO.getPayload().getAssetType();
+
+      if ("Coin".equals(assetType)) {
+        stakingTransactionWithdrawalDTOList.add(transactionWithdrawalDTO);
+      } else {
+        yieldmachineTransactionWithdrawalDTOList.add(transactionWithdrawalDTO);
+      }
+    }
+
+    checkedTransactionWithdrawalDTOList.addAll(checkStakingBalance(TOKEN_STAKING_SCHEMA, stakingTransactionWithdrawalDTOList));
+    checkedTransactionWithdrawalDTOList.addAll(checkStakingBalance(TOKEN_YIELDMACHINE_SCHEMA, yieldmachineTransactionWithdrawalDTOList));
+
+    return checkedTransactionWithdrawalDTOList;
+  }
+
+  /**
+   * 
+   */
+  private TransactionWithdrawalDTOList checkStakingBalance(
+      @Nonnull String dbSchema,
+      @Nonnull TransactionWithdrawalDTOList transactionWithdrawalDTOList) {
+    LOGGER.trace("checkStakingBalance()");
+
+    TransactionWithdrawalDTOList checkedTransactionWithdrawalDTOList = new TransactionWithdrawalDTOList();
+
     if (!transactionWithdrawalDTOList.isEmpty()) {
       Connection connection = null;
 
@@ -77,8 +108,8 @@ public class StakingBalanceChecker {
         connection = databaseManager.openConnection();
 
         databaseBlockHelper.openStatements(connection);
-        databaseBalanceHelper.openStatements(connection);
-        openStatements(connection);
+        databaseBalanceHelper.openStatements(connection, dbSchema);
+        openStatements(connection, dbSchema);
 
         for (TransactionWithdrawalDTO transactionWithdrawalDTO : transactionWithdrawalDTOList) {
           if (checkStakingBalance(connection, transactionWithdrawalDTO)) {
@@ -102,17 +133,19 @@ public class StakingBalanceChecker {
   /**
    * 
    */
-  private void openStatements(@Nonnull Connection connection) throws DfxException {
+  private void openStatements(
+      @Nonnull Connection connection,
+      @Nonnull String dbSchema) throws DfxException {
     LOGGER.trace("openStatements()");
 
     try {
       String stakingWithdrawalReservedSelectByCustomerAddressSql =
-          "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".staking_withdrawal_reserved WHERE token_number=? AND customer_address=?";
+          "SELECT * FROM " + dbSchema + ".staking_withdrawal_reserved WHERE token_number=? AND customer_address=?";
       stakingWithdrawalReservedSelectByCustomerAddressStatement =
           connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingWithdrawalReservedSelectByCustomerAddressSql));
 
       String stakingWithdrawalReservedInsertSql =
-          "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".staking_withdrawal_reserved"
+          "INSERT INTO " + dbSchema + ".staking_withdrawal_reserved"
               + " (token_number, withdrawal_id, transaction_id, customer_address, vout)"
               + " VALUES (?, ?, ?, ?, ?)";
       stakingWithdrawalReservedInsertStatement =

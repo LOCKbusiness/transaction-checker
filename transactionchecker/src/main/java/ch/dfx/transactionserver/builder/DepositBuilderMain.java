@@ -1,5 +1,7 @@
 package ch.dfx.transactionserver.builder;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+
 import java.sql.Connection;
 import java.util.stream.Stream;
 
@@ -9,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
@@ -55,11 +56,11 @@ public class DepositBuilderMain {
       Connection connection = databaseManager.openConnection();
 
       DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(network);
-      databaseBalanceHelper.openStatements(connection);
+      databaseBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
 
       // ...
       DepositBuilder depositBuilder = new DepositBuilder(network, databaseBalanceHelper);
-      depositBuilder.build(connection, TokenEnum.DFI);
+      depositBuilder.build(connection);
 
       // ...
       databaseBalanceHelper.closeStatements();

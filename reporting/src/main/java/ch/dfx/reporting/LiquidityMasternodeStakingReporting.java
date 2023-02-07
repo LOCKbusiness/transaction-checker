@@ -1,7 +1,7 @@
 package ch.dfx.reporting;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -94,8 +94,8 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
     try {
       openStatements(connection);
 
-      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
-      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBalanceHelper.getMasternodeWhitelistDTOList();
+      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
+      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = databaseBlockHelper.getMasternodeWhitelistDTOList();
       List<StakingDTO> stakingDTOList = databaseBalanceHelper.getStakingDTOList(token);
 
       RowDataList rowDataList = createRowDataList(connection, token, stakingAddressDTOList, masternodeWhitelistDTOList, stakingDTOList);
@@ -141,7 +141,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
               + " AND at_in.address_number != at_out.address_number"
               + " WHERE"
               + " at_in.address_number not in"
-              + " (SELECT deposit_address_number FROM " + TOKEN_NETWORK_SCHEMA + ".staking WHERE token_number=?)"
+              + " (SELECT deposit_address_number FROM " + TOKEN_STAKING_SCHEMA + ".staking WHERE token_number=?)"
               + " AND at_out.address_number=?"
               + " GROUP BY"
               + " at_in.address_number,"
@@ -362,8 +362,9 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
 
     for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
       if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
-        totalNetworkFee = totalNetworkFee.add(
-            fillNetworkFee(connection, stakingAddressDTO.getLiquidityAddressNumber()));
+        totalNetworkFee =
+            totalNetworkFee.add(
+                fillNetworkFee(connection, stakingAddressDTO.getLiquidityAddressNumber()));
       }
     }
 

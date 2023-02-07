@@ -1,7 +1,5 @@
 package ch.dfx.transactionserver.cleaner;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
-
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -58,13 +56,14 @@ public class StakingWithdrawalReservedCleaner {
    */
   public void clean(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.debug("clean()");
 
     long startTime = System.currentTimeMillis();
 
     try {
-      openStatements(connection);
+      openStatements(connection, dbSchema);
 
       List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = databaseBalanceHelper.getStakingWithdrawalReservedDTOList(token);
 
@@ -85,12 +84,14 @@ public class StakingWithdrawalReservedCleaner {
   /**
    * 
    */
-  private void openStatements(@Nonnull Connection connection) throws DfxException {
+  private void openStatements(
+      @Nonnull Connection connection,
+      @Nonnull String dbSchema) throws DfxException {
     LOGGER.trace("openStatements()");
 
     try {
       String stakingWithdrawalReservedDeleteSql =
-          "DELETE FROM " + TOKEN_NETWORK_SCHEMA + ".staking_withdrawal_reserved"
+          "DELETE FROM " + dbSchema + ".staking_withdrawal_reserved"
               + " WHERE token_number=?"
               + " AND withdrawal_id=?"
               + " AND transaction_id=?"

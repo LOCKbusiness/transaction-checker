@@ -1,6 +1,8 @@
 package ch.dfx.tools;
 
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -74,9 +76,12 @@ public class DatabaseCompare extends DatabaseTool {
       DatabaseData remoteDatabaseData = databaseConnectionData.getRemoteDatabaseData();
       remoteConnection = openConnection(remoteDatabaseData);
 
-      doCompare(localConnection, remoteConnection);
-      doCompare(localConnection, remoteConnection, TokenEnum.DFI);
-      doCompare(localConnection, remoteConnection, TokenEnum.DUSD);
+      // doCompare(localConnection, remoteConnection);
+
+      doCompare(localConnection, remoteConnection, TOKEN_STAKING_SCHEMA, TokenEnum.DFI);
+
+      doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DFI);
+      doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DUSD);
     } finally {
       closeConnection(localConnection);
       closeConnection(remoteConnection);
@@ -131,27 +136,28 @@ public class DatabaseCompare extends DatabaseTool {
   private void doCompare(
       @Nonnull Connection localConnection,
       @Nonnull Connection remoteConnection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("doCompare()");
 
     // ...
-    List<StakingAddressDTO> localStakingAddressDTOList = getLocalStakingAddressDTOList(localConnection, token);
-    List<StakingAddressDTO> remoteStakingAddressDTOList = getRemoteStakingAddressDTOList(remoteConnection, token);
+    List<StakingAddressDTO> localStakingAddressDTOList = getLocalStakingAddressDTOList(localConnection, dbSchema, token);
+    List<StakingAddressDTO> remoteStakingAddressDTOList = getRemoteStakingAddressDTOList(remoteConnection, dbSchema, token);
     compareStakingAddress(localStakingAddressDTOList, remoteStakingAddressDTOList);
 
     // ...
-    List<BalanceDTO> localBalanceDTOList = getLocalBalanceDTOList(localConnection, token);
-    List<BalanceDTO> remoteBalanceDTOList = getRemoteBalanceDTOList(remoteConnection, token);
+    List<BalanceDTO> localBalanceDTOList = getLocalBalanceDTOList(localConnection, dbSchema, token);
+    List<BalanceDTO> remoteBalanceDTOList = getRemoteBalanceDTOList(remoteConnection, dbSchema, token);
     compareBalance(localBalanceDTOList, remoteBalanceDTOList);
 
     // ...
-    List<DepositDTO> localDepositDTOList = getLocalDepositDTOList(localConnection, token);
-    List<DepositDTO> remoteDepositDTOList = getRemoteDepositDTOList(remoteConnection, token);
+    List<DepositDTO> localDepositDTOList = getLocalDepositDTOList(localConnection, dbSchema, token);
+    List<DepositDTO> remoteDepositDTOList = getRemoteDepositDTOList(remoteConnection, dbSchema, token);
     compareDeposit(localDepositDTOList, remoteDepositDTOList);
 
     // ...
-    List<StakingDTO> localStakingDTOList = getLocalStakingDTOList(localConnection, token);
-    List<StakingDTO> remoteStakingDTOList = getRemoteStakingDTOList(remoteConnection, token);
+    List<StakingDTO> localStakingDTOList = getLocalStakingDTOList(localConnection, dbSchema, token);
+    List<StakingDTO> remoteStakingDTOList = getRemoteStakingDTOList(remoteConnection, dbSchema, token);
     compareStaking(localStakingDTOList, remoteStakingDTOList);
   }
 
@@ -356,6 +362,7 @@ public class DatabaseCompare extends DatabaseTool {
    */
   private List<StakingAddressDTO> getLocalStakingAddressDTOList(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getLocalStakingAddressDTOList()");
 
@@ -364,7 +371,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " s.*,"
             + " a1.address AS liquidity_address,"
             + " a2.address AS reward_address,"
-            + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking_address s"
+            + " FROM " + dbSchema + ".staking_address s"
             + " JOIN public.address a1 ON"
             + " s.liquidity_address_number = a1.number"
             + " LEFT JOIN public.address a2 ON"
@@ -378,6 +385,7 @@ public class DatabaseCompare extends DatabaseTool {
    */
   private List<StakingAddressDTO> getRemoteStakingAddressDTOList(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getRemoteStakingAddressDTOList()");
 
@@ -386,7 +394,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " s.*,"
             + " a1.address AS liquidity_address,"
             + " a2.address AS reward_address,"
-            + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking_address s"
+            + " FROM " + dbSchema + ".staking_address s"
             + " JOIN public.address a1 ON"
             + " s.liquidity_address_number = a1.number"
             + " LEFT JOIN public.address a2 ON"
@@ -464,6 +472,7 @@ public class DatabaseCompare extends DatabaseTool {
    */
   private List<BalanceDTO> getLocalBalanceDTOList(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getLocalBalanceDTOList()");
 
@@ -471,7 +480,7 @@ public class DatabaseCompare extends DatabaseTool {
         "SELECT"
             + " b.*,"
             + " a.address"
-            + " FROM " + TOKEN_NETWORK_SCHEMA + ".balance b"
+            + " FROM " + dbSchema + ".balance b"
             + " JOIN public.address a ON"
             + " b.address_number = a.number"
             + " WHERE b.token_number=" + token.getNumber();
@@ -483,6 +492,7 @@ public class DatabaseCompare extends DatabaseTool {
    */
   private List<BalanceDTO> getRemoteBalanceDTOList(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getRemoteBalanceDTOList()");
 
@@ -490,7 +500,7 @@ public class DatabaseCompare extends DatabaseTool {
         "SELECT"
             + " b.*,"
             + " a.address"
-            + " FROM " + TOKEN_NETWORK_SCHEMA + ".balance b"
+            + " FROM " + dbSchema + ".balance b"
             + " JOIN public.address a ON"
             + " b.address_number = a.number"
             + " WHERE b.token_number=" + token.getNumber();
@@ -567,6 +577,7 @@ public class DatabaseCompare extends DatabaseTool {
    */
   private List<DepositDTO> getLocalDepositDTOList(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getLocalDepositDTOList()");
 
@@ -576,7 +587,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " a1.address AS liquidity_address,"
             + " a2.address AS deposit_address,"
             + " a3.address AS customer_address"
-            + " FROM " + TOKEN_NETWORK_SCHEMA + ".deposit d"
+            + " FROM " + dbSchema + ".deposit d"
             + " JOIN public.address a1 ON"
             + " d.liquidity_address_number = a1.number"
             + " JOIN public.address a2 ON"
@@ -592,6 +603,7 @@ public class DatabaseCompare extends DatabaseTool {
    */
   private List<DepositDTO> getRemoteDepositDTOList(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getRemoteDepositDTOList()");
 
@@ -601,7 +613,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " a1.address AS liquidity_address,"
             + " a2.address AS deposit_address,"
             + " a3.address AS customer_address"
-            + " FROM " + TOKEN_NETWORK_SCHEMA + ".deposit d"
+            + " FROM " + dbSchema + ".deposit d"
             + " JOIN public.address a1 ON"
             + " d.liquidity_address_number = a1.number"
             + " JOIN public.address a2 ON"
@@ -684,6 +696,7 @@ public class DatabaseCompare extends DatabaseTool {
    */
   private List<StakingDTO> getLocalStakingDTOList(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getLocalStakingDTOList()");
 
@@ -693,7 +706,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " a1.address AS liquidity_address,"
             + " a2.address AS deposit_address,"
             + " a3.address AS customer_address"
-            + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking s"
+            + " FROM " + dbSchema + ".staking s"
             + " JOIN public.address a1 ON"
             + " s.liquidity_address_number = a1.number"
             + " JOIN public.address a2 ON"
@@ -709,6 +722,7 @@ public class DatabaseCompare extends DatabaseTool {
    */
   private List<StakingDTO> getRemoteStakingDTOList(
       @Nonnull Connection connection,
+      @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("getRemoteStakingDTOList()");
 
@@ -718,7 +732,7 @@ public class DatabaseCompare extends DatabaseTool {
             + " a1.address AS liquidity_address,"
             + " a2.address AS deposit_address,"
             + " a3.address AS customer_address"
-            + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking s"
+            + " FROM " + dbSchema + ".staking s"
             + " JOIN public.address a1 ON"
             + " s.liquidity_address_number = a1.number"
             + " JOIN public.address a2 ON"
@@ -744,11 +758,12 @@ public class DatabaseCompare extends DatabaseTool {
       ResultSet resultSet = statement.executeQuery(stakingSelectSql);
 
       while (resultSet.next()) {
-        StakingDTO stakingDTO = new StakingDTO(
-            resultSet.getInt("token_number"),
-            0,
-            0,
-            0);
+        StakingDTO stakingDTO =
+            new StakingDTO(
+                resultSet.getInt("token_number"),
+                0,
+                0,
+                0);
 
         stakingDTO.setLiquidityAddress(resultSet.getString("liquidity_address"));
         stakingDTO.setDepositAddress(resultSet.getString("deposit_address"));

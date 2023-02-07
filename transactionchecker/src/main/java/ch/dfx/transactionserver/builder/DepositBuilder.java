@@ -1,7 +1,7 @@
 package ch.dfx.transactionserver.builder;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,14 +19,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.AddressTransactionInDTO;
 import ch.dfx.transactionserver.data.AddressTransactionOutDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
-import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 
 /**
@@ -59,9 +57,7 @@ public class DepositBuilder {
   /**
    * 
    */
-  public void build(
-      @Nonnull Connection connection,
-      @Nonnull TokenEnum token) throws DfxException {
+  public void build(@Nonnull Connection connection) throws DfxException {
     LOGGER.debug("build()");
 
     long startTime = System.currentTimeMillis();
@@ -71,11 +67,11 @@ public class DepositBuilder {
 
       // ...
       Set<Integer> depositAddressNumberSet =
-          databaseBalanceHelper.getDepositDTOList(token)
+          databaseBalanceHelper.getDepositDTOList()
               .stream().map(DepositDTO::getDepositAddressNumber).collect(Collectors.toSet());
 
       // ...
-      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList(token);
+      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
 
       Set<Integer> rewardAddressNumberSet = new HashSet<>();
       stakingAddressDTOList.stream()
@@ -137,7 +133,7 @@ public class DepositBuilder {
 
       // Deposit ...
       String depositInsertSql =
-          "INSERT INTO " + TOKEN_NETWORK_SCHEMA + ".deposit"
+          "INSERT INTO " + TOKEN_STAKING_SCHEMA + ".deposit"
               + " (token_number, liquidity_address_number, deposit_address_number, customer_address_number, start_block_number, start_transaction_number)"
               + " VALUES (?, ?, ?, ?, ?, ?)";
       depositInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, depositInsertSql));

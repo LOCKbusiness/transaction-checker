@@ -1,6 +1,6 @@
 package ch.dfx.reporting;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -137,7 +137,7 @@ public class VaultReporting extends Reporting {
 
       String selectSql =
           "SELECT sum(vin)-sum(vout) AS balance"
-              + " FROM " + TOKEN_NETWORK_SCHEMA + ".staking WHERE token_number=" + token.getNumber();
+              + " FROM " + TOKEN_YIELDMACHINE_SCHEMA + ".staking WHERE token_number=" + token.getNumber();
 
       Statement statement = connection.createStatement();
       ResultSet resultSet = statement.executeQuery(DatabaseUtils.replaceSchema(network, selectSql));

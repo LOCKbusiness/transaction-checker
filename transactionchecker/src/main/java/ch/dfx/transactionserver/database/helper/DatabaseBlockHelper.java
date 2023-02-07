@@ -1,11 +1,14 @@
 package ch.dfx.transactionserver.database.helper;
 
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
@@ -20,6 +23,7 @@ import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.AddressTransactionInDTO;
 import ch.dfx.transactionserver.data.AddressTransactionOutDTO;
 import ch.dfx.transactionserver.data.BlockDTO;
+import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.TransactionCustomAccountToAccountInDTO;
 import ch.dfx.transactionserver.data.TransactionCustomAccountToAccountOutDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
@@ -42,6 +46,9 @@ public class DatabaseBlockHelper {
   private PreparedStatement addressTransactionInByBlockNumberSelectStatement = null;
   private PreparedStatement addressTransactionOutByBlockNumberSelectStatement = null;
 
+  private PreparedStatement addressTransactionInByBlockAndTransactionSelectStatement = null;
+  private PreparedStatement addressTransactionOutByBlockAndTransactionSelectStatement = null;
+
   private PreparedStatement customTransactionAccountToAccountInByBlockNumberSelectStatement = null;
   private PreparedStatement customTransactionAccountToAccountInInsertStatement = null;
 
@@ -54,6 +61,9 @@ public class DatabaseBlockHelper {
 
   private PreparedStatement addressTransactionOutInsertStatement = null;
   private PreparedStatement addressTransactionInInsertStatement = null;
+
+  private PreparedStatement masternodeSelectStatement = null;
+  private PreparedStatement masternodeWhitelistByOwnerAddressSelectStatement = null;
 
   // ...
   private final NetworkEnum network;
@@ -90,9 +100,15 @@ public class DatabaseBlockHelper {
       transactionInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionInsertSql));
 
       // Address Transaction In / Out ...
-      String addressTransactionInByBlockNumberSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in WHERE block_number=?";
+      String addressTransactionInByBlockNumberSelectSql =
+          "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in WHERE block_number=?";
       addressTransactionInByBlockNumberSelectStatement =
           connection.prepareStatement(DatabaseUtils.replaceSchema(network, addressTransactionInByBlockNumberSelectSql));
+
+      String addressTransactionInByBlockAndTransactionSelectSql =
+          "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in WHERE block_number=? AND transaction_number=?";
+      addressTransactionInByBlockAndTransactionSelectStatement =
+          connection.prepareStatement(DatabaseUtils.replaceSchema(network, addressTransactionInByBlockAndTransactionSelectSql));
 
       String addressTransactionInInsertSql =
           "INSERT INTO " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in"
@@ -100,9 +116,15 @@ public class DatabaseBlockHelper {
               + " VALUES (?, ?, ?, ?, ?, ?, ?)";
       addressTransactionInInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, addressTransactionInInsertSql));
 
-      String addressTransactionOutByBlockNumberSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out WHERE block_number=?";
+      String addressTransactionOutByBlockNumberSelectSql =
+          "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out WHERE block_number=?";
       addressTransactionOutByBlockNumberSelectStatement =
           connection.prepareStatement(DatabaseUtils.replaceSchema(network, addressTransactionOutByBlockNumberSelectSql));
+
+      String addressTransactionOutByBlockAndTransactionSelectSql =
+          "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out WHERE block_number=? AND transaction_number=?";
+      addressTransactionOutByBlockAndTransactionSelectStatement =
+          connection.prepareStatement(DatabaseUtils.replaceSchema(network, addressTransactionOutByBlockAndTransactionSelectSql));
 
       String addressTransactionOutInsertSql =
           "INSERT INTO " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out"
@@ -145,6 +167,15 @@ public class DatabaseBlockHelper {
       String addressInsertSql = "INSERT INTO " + TOKEN_PUBLIC_SCHEMA + ".address (number, address) VALUES (?, ?)";
       addressInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, addressInsertSql));
 
+      // Masternode ...
+      String masternodeSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".masternode_whitelist";
+      masternodeSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, masternodeSelectSql));
+
+      String masternodeWhitelistByOwnerAddressSelectSql =
+          masternodeSelectSql
+              + " WHERE owner_address=?";
+      masternodeWhitelistByOwnerAddressSelectStatement =
+          connection.prepareStatement(DatabaseUtils.replaceSchema(network, masternodeWhitelistByOwnerAddressSelectSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -179,6 +210,9 @@ public class DatabaseBlockHelper {
       addressByNumberSelectStatement.close();
       addressByAddressSelectStatement.close();
       addressInsertStatement.close();
+
+      masternodeSelectStatement.close();
+      masternodeWhitelistByOwnerAddressSelectStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
     }
@@ -669,6 +703,160 @@ public class DatabaseBlockHelper {
       customTransactionAccountToAccountOutInsertStatement.execute();
     } catch (Exception e) {
       throw new DfxException("saveCustomTransactionAccountToAccountOut", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nonnull List<MasternodeWhitelistDTO> getMasternodeWhitelistDTOList() throws DfxException {
+    LOGGER.trace("getMasternodeWhitelistDTOList()");
+
+    try {
+      List<MasternodeWhitelistDTO> masternodeWhitelistDTOList = new ArrayList<>();
+
+      ResultSet resultSet = masternodeSelectStatement.executeQuery();
+
+      while (resultSet.next()) {
+        masternodeWhitelistDTOList.add(createMasternodeWhitelistDTO(resultSet));
+      }
+
+      resultSet.close();
+
+      return masternodeWhitelistDTOList;
+    } catch (DfxException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new DfxException("getMasternodeWhitelistDTOList", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nullable MasternodeWhitelistDTO getMasternodeWhitelistDTOByOwnerAddress(@Nonnull String ownerAddress) throws DfxException {
+    LOGGER.trace("getMasternodeWhitelistDTOByOwnerAddress()");
+
+    try {
+      MasternodeWhitelistDTO masternodeWhitelistDTO = null;
+
+      masternodeWhitelistByOwnerAddressSelectStatement.setString(1, ownerAddress);
+
+      ResultSet resultSet = masternodeWhitelistByOwnerAddressSelectStatement.executeQuery();
+
+      if (resultSet.next()) {
+        masternodeWhitelistDTO = createMasternodeWhitelistDTO(resultSet);
+      }
+
+      resultSet.close();
+
+      return masternodeWhitelistDTO;
+    } catch (DfxException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new DfxException("getMasternodeWhitelistDTOByOwnerAddress", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private MasternodeWhitelistDTO createMasternodeWhitelistDTO(@Nonnull ResultSet resultSet) throws DfxException {
+    LOGGER.trace("createMasternodeWhitelistDTO()");
+
+    try {
+      MasternodeWhitelistDTO masternodeWhitelistDTO =
+          new MasternodeWhitelistDTO(
+              resultSet.getInt("wallet_id"),
+              resultSet.getInt("idx"),
+              resultSet.getString("owner_address"));
+
+      masternodeWhitelistDTO.setTransactionId(resultSet.getString("txid"));
+      masternodeWhitelistDTO.setOperatorAddress(resultSet.getString("operator_address"));
+      masternodeWhitelistDTO.setRewardAddress(resultSet.getString("reward_address"));
+      masternodeWhitelistDTO.setCreationBlockNumber(resultSet.getInt("creation_block_number"));
+      masternodeWhitelistDTO.setResignBlockNumber(resultSet.getInt("resign_block_number"));
+      masternodeWhitelistDTO.setState(resultSet.getString("state"));
+
+      masternodeWhitelistDTO.keepInternalState();
+
+      return masternodeWhitelistDTO;
+    } catch (Exception e) {
+      throw new DfxException("createMasternodeWhitelistDTO", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nullable AddressTransactionInDTO getAddressTransactionInDTO(
+      int blockNumber,
+      int transactionNumber) throws DfxException {
+    LOGGER.trace("getAddressTransactionInDTO()");
+
+    try {
+      AddressTransactionInDTO addressTransactionInDTO = null;
+
+      addressTransactionInByBlockAndTransactionSelectStatement.setInt(1, blockNumber);
+      addressTransactionInByBlockAndTransactionSelectStatement.setInt(2, transactionNumber);
+
+      ResultSet resultSet = addressTransactionInByBlockAndTransactionSelectStatement.executeQuery();
+
+      if (resultSet.next()) {
+        addressTransactionInDTO =
+            new AddressTransactionInDTO(
+                resultSet.getInt("block_number"),
+                resultSet.getInt("transaction_number"),
+                resultSet.getInt("vin_number"),
+                resultSet.getInt("address_number"),
+                resultSet.getInt("in_block_number"),
+                resultSet.getInt("in_transaction_number"));
+        addressTransactionInDTO.setVin(resultSet.getBigDecimal("vin"));
+
+        addressTransactionInDTO.keepInternalState();
+      }
+
+      resultSet.close();
+
+      return addressTransactionInDTO;
+    } catch (Exception e) {
+      throw new DfxException("getAddressTransactionInDTO", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nullable AddressTransactionOutDTO getAddressTransactionOutDTO(
+      int blockNumber,
+      int transactionNumber) throws DfxException {
+    LOGGER.trace("getCustomTransactionAccountToAccountOutDTO()");
+
+    try {
+      AddressTransactionOutDTO addressTransactionOutDTO = null;
+
+      addressTransactionOutByBlockAndTransactionSelectStatement.setInt(1, blockNumber);
+      addressTransactionOutByBlockAndTransactionSelectStatement.setInt(2, transactionNumber);
+
+      ResultSet resultSet = addressTransactionOutByBlockAndTransactionSelectStatement.executeQuery();
+
+      if (resultSet.next()) {
+        addressTransactionOutDTO =
+            new AddressTransactionOutDTO(
+                resultSet.getInt("block_number"),
+                resultSet.getInt("transaction_number"),
+                resultSet.getInt("vout_number"),
+                resultSet.getInt("address_number"));
+        addressTransactionOutDTO.setVout(resultSet.getBigDecimal("vout"));
+
+        addressTransactionOutDTO.keepInternalState();
+      }
+
+      resultSet.close();
+
+      return addressTransactionOutDTO;
+    } catch (Exception e) {
+      throw new DfxException("getCustomTransactionAccountToAccountOutDTO", e);
     }
   }
 }

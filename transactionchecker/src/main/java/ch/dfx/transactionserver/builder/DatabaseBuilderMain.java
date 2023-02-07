@@ -1,7 +1,12 @@
 package ch.dfx.transactionserver.builder;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
+
 import java.sql.Connection;
 import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,10 +14,16 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.TokenEnum;
+import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 import ch.dfx.transactionserver.handler.DatabaseAddressHandler;
+import ch.dfx.transactionserver.ymbuilder.YmBalanceBuilder;
+import ch.dfx.transactionserver.ymbuilder.YmDepositBuilder;
+import ch.dfx.transactionserver.ymbuilder.YmStakingBuilder;
 
 /**
  * 
@@ -64,11 +75,67 @@ public class DatabaseBuilderMain {
       databaseBuilder.build(connection);
 
       // ...
+      updateStaking(network, connection);
+      updateYieldmachine(network, connection);
+
+      // ...
       databaseBlockHelper.closeStatements();
       databaseManager.closeConnection(connection);
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);
     }
+  }
+
+  /**
+   * 
+   */
+  private static void updateStaking(
+      @Nonnull NetworkEnum network,
+      @Nonnull Connection connection) throws DfxException {
+    // ...
+    DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    databaseBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
+
+    // ...
+    DepositBuilder depositBuilder = new DepositBuilder(network, databaseBalanceHelper);
+    depositBuilder.build(connection);
+
+    // ...
+    BalanceBuilder balanceBuilder = new BalanceBuilder(network, databaseBalanceHelper);
+    balanceBuilder.build(connection, TokenEnum.DFI);
+
+    // ...
+    StakingBuilder stakingBuilder = new StakingBuilder(network, databaseBalanceHelper);
+    stakingBuilder.build(connection, TokenEnum.DFI);
+
+    databaseBalanceHelper.closeStatements();
+  }
+
+  /**
+   * 
+   */
+  private static void updateYieldmachine(
+      @Nonnull NetworkEnum network,
+      @Nonnull Connection connection) throws DfxException {
+    // ...
+    DatabaseBalanceHelper databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    databaseBalanceHelper.openStatements(connection, TOKEN_YIELDMACHINE_SCHEMA);
+
+    // ...
+    YmDepositBuilder ymDepositBuilder = new YmDepositBuilder(network, databaseBalanceHelper);
+    ymDepositBuilder.build(connection);
+
+    // ...
+    YmBalanceBuilder ymBalanceBuilder = new YmBalanceBuilder(network, databaseBalanceHelper);
+    ymBalanceBuilder.build(connection, TokenEnum.DFI);
+    ymBalanceBuilder.build(connection, TokenEnum.DUSD);
+
+    // ...
+    YmStakingBuilder ymStakingBuilder = new YmStakingBuilder(network, databaseBalanceHelper);
+    ymStakingBuilder.build(connection, TokenEnum.DFI);
+    ymStakingBuilder.build(connection, TokenEnum.DUSD);
+
+    databaseBalanceHelper.closeStatements();
   }
 }

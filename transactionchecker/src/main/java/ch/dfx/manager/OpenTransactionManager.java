@@ -1,5 +1,8 @@
 package ch.dfx.manager;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
+
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -49,6 +52,7 @@ import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -61,7 +65,9 @@ public class OpenTransactionManager {
   private final H2DBManager databaseManager;
   private final DefiDataProvider dataProvider;
 
-  private final DatabaseBalanceHelper dataHelper;
+  private final DatabaseBlockHelper databaseBlockHelper;
+  private final DatabaseBalanceHelper databaseStakingBalanceHelper;
+  private final DatabaseBalanceHelper databaseYieldmachineBalanceHelper;
   private final DefiMessageHandler messageHandler;
   private final WithdrawalManager withdrawalManager;
 
@@ -82,7 +88,9 @@ public class OpenTransactionManager {
     this.databaseManager = databaseManager;
     this.dataProvider = dataProvider;
 
-    this.dataHelper = new DatabaseBalanceHelper(network);
+    this.databaseBlockHelper = new DatabaseBlockHelper(network);
+    this.databaseStakingBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseYieldmachineBalanceHelper = new DatabaseBalanceHelper(network);
     this.messageHandler = new DefiMessageHandler(dataProvider);
     this.withdrawalManager = new WithdrawalManager(network, databaseManager, dataProvider);
 
@@ -416,12 +424,14 @@ public class OpenTransactionManager {
     try {
       connection = databaseManager.openConnection();
 
-      dataHelper.openStatements(connection);
+      databaseBlockHelper.openStatements(connection);
+      databaseStakingBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
+      databaseYieldmachineBalanceHelper.openStatements(connection, TOKEN_YIELDMACHINE_SCHEMA);
 
       // ...
       Set<String> liquidityAddressSet = new HashSet<>();
-      List<StakingAddressDTO> stakingAddressDTOList = dataHelper.getStakingAddressDTOList(TokenEnum.DFI);
-      stakingAddressDTOList.addAll(dataHelper.getStakingAddressDTOList(TokenEnum.DUSD));
+      List<StakingAddressDTO> stakingAddressDTOList = databaseStakingBalanceHelper.getStakingAddressDTOList();
+      stakingAddressDTOList.addAll(databaseYieldmachineBalanceHelper.getStakingAddressDTOList());
 
       stakingAddressDTOList.forEach(dto -> liquidityAddressSet.add(dto.getLiquidityAddress()));
 
@@ -433,7 +443,7 @@ public class OpenTransactionManager {
           bitSet.set(i);
         } else {
           MasternodeWhitelistDTO masternodeWhitelistDTOByOwnerAddress =
-              dataHelper.getMasternodeWhitelistDTOByOwnerAddress(voutAddress);
+              databaseBlockHelper.getMasternodeWhitelistDTOByOwnerAddress(voutAddress);
 
           if (null != masternodeWhitelistDTOByOwnerAddress
               && voutAddress.equals(masternodeWhitelistDTOByOwnerAddress.getOwnerAddress())) {
@@ -444,7 +454,8 @@ public class OpenTransactionManager {
 
       isValid = bitSet.cardinality() == voutAddressList.size();
 
-      dataHelper.closeStatements();
+      databaseStakingBalanceHelper.closeStatements();
+      databaseYieldmachineBalanceHelper.closeStatements();
     } catch (Exception e) {
       LOGGER.error("checkMasternodeWhitelist", e);
       isValid = false;

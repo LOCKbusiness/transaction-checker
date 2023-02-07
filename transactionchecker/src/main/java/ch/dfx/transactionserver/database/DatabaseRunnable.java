@@ -1,5 +1,8 @@
 package ch.dfx.transactionserver.database;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
+
 import java.io.File;
 import java.sql.Connection;
 import java.util.Objects;
@@ -38,7 +41,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private final H2DBManager databaseManager;
 
   private final DatabaseBlockHelper databaseBlockHelper;
-  private final DatabaseBalanceHelper databaseBalanceHelper;
+  private final DatabaseBalanceHelper databaseStakingBalanceHelper;
+  private final DatabaseBalanceHelper databaseYieldmachineBalanceHelper;
   private final DatabaseAddressHandler databaseAddressHandler;
 
   // ...
@@ -74,7 +78,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     this.isServerOnly = isServerOnly;
 
     this.databaseBlockHelper = new DatabaseBlockHelper(network);
-    this.databaseBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseStakingBalanceHelper = new DatabaseBalanceHelper(network);
+    this.databaseYieldmachineBalanceHelper = new DatabaseBalanceHelper(network);
     this.databaseAddressHandler = new DatabaseAddressHandler(network);
   }
 
@@ -121,7 +126,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       connection = databaseManager.openConnection();
 
       databaseBlockHelper.openStatements(connection);
-      databaseBalanceHelper.openStatements(connection);
+      databaseStakingBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
+      databaseYieldmachineBalanceHelper.openStatements(connection, TOKEN_YIELDMACHINE_SCHEMA);
 
       // ...
       if (NetworkEnum.STAGNET != network) {
@@ -138,7 +144,8 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       // ...
       executeStakingWithdrawalReservedCleaner(connection);
 
-      databaseBalanceHelper.closeStatements();
+      databaseStakingBalanceHelper.closeStatements();
+      databaseYieldmachineBalanceHelper.closeStatements();
       databaseBlockHelper.closeStatements();
     } catch (Exception e) {
       databaseBuilderErrorCounter++;
@@ -194,11 +201,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeDeposit()");
 
     try {
-      DepositBuilder depositBuilder = new DepositBuilder(network, databaseBalanceHelper);
-      depositBuilder.build(connection, TokenEnum.DFI);
+      DepositBuilder depositBuilder = new DepositBuilder(network, databaseStakingBalanceHelper);
+      depositBuilder.build(connection);
 
-      YmDepositBuilder ymDepositBuilder = new YmDepositBuilder(network, databaseBalanceHelper);
-      ymDepositBuilder.build(connection, TokenEnum.DUSD);
+      YmDepositBuilder ymDepositBuilder = new YmDepositBuilder(network, databaseYieldmachineBalanceHelper);
+      ymDepositBuilder.build(connection);
 
       depositBuilderErrorCounter = 0;
     } catch (DfxException e) {
@@ -217,10 +224,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeBalance()");
 
     try {
-      BalanceBuilder balanceBuilder = new BalanceBuilder(network, databaseBalanceHelper);
+      BalanceBuilder balanceBuilder = new BalanceBuilder(network, databaseStakingBalanceHelper);
       balanceBuilder.build(connection, TokenEnum.DFI);
 
-      YmBalanceBuilder ymBalanceBuilder = new YmBalanceBuilder(network, databaseBalanceHelper);
+      YmBalanceBuilder ymBalanceBuilder = new YmBalanceBuilder(network, databaseYieldmachineBalanceHelper);
+      ymBalanceBuilder.build(connection, TokenEnum.DFI);
       ymBalanceBuilder.build(connection, TokenEnum.DUSD);
 
       balanceBuilderErrorCounter = 0;
@@ -240,10 +248,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeStaking()");
 
     try {
-      StakingBuilder stakingBuilder = new StakingBuilder(network, databaseBalanceHelper);
+      StakingBuilder stakingBuilder = new StakingBuilder(network, databaseStakingBalanceHelper);
       stakingBuilder.build(connection, TokenEnum.DFI);
 
-      YmStakingBuilder ymStakingBuilder = new YmStakingBuilder(network, databaseBalanceHelper);
+      YmStakingBuilder ymStakingBuilder = new YmStakingBuilder(network, databaseYieldmachineBalanceHelper);
+      ymStakingBuilder.build(connection, TokenEnum.DFI);
       ymStakingBuilder.build(connection, TokenEnum.DUSD);
 
       stakingBuilderErrorCounter = 0;
@@ -263,7 +272,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("executeMasternode()");
 
     try {
-      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(network, databaseBlockHelper, databaseBalanceHelper);
+      MasternodeBuilder masternodeBuilder = new MasternodeBuilder(network, databaseBlockHelper);
       masternodeBuilder.build(connection);
 
       masternodeBuilderErrorCounter = 0;
@@ -284,9 +293,13 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
 
     try {
       StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
-          new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseBalanceHelper);
-      stakingWithdrawalReservedCleaner.clean(connection, TokenEnum.DFI);
-      stakingWithdrawalReservedCleaner.clean(connection, TokenEnum.DUSD);
+          new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseStakingBalanceHelper);
+      stakingWithdrawalReservedCleaner.clean(connection, TOKEN_STAKING_SCHEMA, TokenEnum.DFI);
+
+      StakingWithdrawalReservedCleaner yieldmaschineWithdrawalReservedCleaner =
+          new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
+      yieldmaschineWithdrawalReservedCleaner.clean(connection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DFI);
+      yieldmaschineWithdrawalReservedCleaner.clean(connection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DUSD);
 
       stakingWithdrawalReservedCleanerErrorCounter = 0;
     } catch (DfxException e) {

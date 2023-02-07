@@ -27,7 +27,8 @@
       ]
     },
     "payload": {
-      "id": 102
+      "id": 102,
+      "assetType": "Coin"
     }
   }
 ]

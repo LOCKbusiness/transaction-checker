@@ -19,7 +19,6 @@ import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionRawTxDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
-import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
@@ -111,7 +110,10 @@ public class SignMessageFormatChecker {
 
       // ...
       BigDecimal transactionOutAmount;
-      if (TokenEnum.DFI == pendingWithdrawalDTO.getToken()) {
+
+      String assetType = openTransactionDTO.getPayload().getAssetType();
+
+      if ("Coin".equals(assetType)) {
         transactionOutAmount = getDFITransactionOutAmount(transactionData, signMessageAddress);
       } else {
         DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
@@ -227,13 +229,7 @@ public class SignMessageFormatChecker {
 
         if (2 == toValueSplit.length) {
           String amountAsString = toValueSplit[0];
-          String tokenAsString = toValueSplit[1];
-
-          TokenEnum token = TokenEnum.createWithNumber(Integer.parseInt(tokenAsString));
-
-          if (TokenEnum.DUSD == token) {
-            outAmount = outAmount.add(new BigDecimal(amountAsString));
-          }
+          outAmount = outAmount.add(new BigDecimal(amountAsString));
         }
       }
     }

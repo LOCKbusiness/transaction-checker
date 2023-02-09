@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -389,25 +390,58 @@ public class DatabaseCustomTransactionBuilder {
     }
 
     // ...
-    List<DefiTransactionVinData> transactionVinDataList = transactionData.getVin();
-    DefiTransactionVinData firstTransactionVinData = transactionVinDataList.get(0);
-    String firstVinTxid = firstTransactionVinData.getTxid();
-    Long vout = firstTransactionVinData.getVout();
+    BigDecimal totalVout = BigDecimal.ZERO;
 
-    DefiTransactionData firstVinTransactionData = dataProvider.getTransaction(firstVinTxid);
-    DefiTransactionVoutData firstVinTransactionVoutData = firstVinTransactionData.getVout().get(vout.intValue());
-    List<String> fromAddressList = firstVinTransactionVoutData.getScriptPubKey().getAddresses();
-    String fromAddress = fromAddressList.get(0);
-
-    AddressDTO fromAddressDTO = databaseAddressHandler.getAddressDTO(databaseBlockHelper, fromAddress);
+    for (DefiTransactionVoutData transactionVoutData : transactionData.getVout()) {
+      totalVout = totalVout.add(transactionVoutData.getValue());
+    }
 
     // ...
+    List<String> inputAddressList = new ArrayList<>();
+
+    BigDecimal totalVin = BigDecimal.ZERO;
+
+    for (DefiTransactionVinData transactionVinData : transactionData.getVin()) {
+      String vinTxid = transactionVinData.getTxid();
+      Long vinVout = transactionVinData.getVout();
+
+      DefiTransactionData vinTransactionData = dataProvider.getTransaction(vinTxid);
+      DefiTransactionVoutData vinTransactionVoutData = vinTransactionData.getVout().get(vinVout.intValue());
+      totalVin = totalVin.add(vinTransactionVoutData.getValue());
+
+      DefiTransactionScriptPubKeyData transactionScriptPubKeyData = vinTransactionVoutData.getScriptPubKey();
+
+      if (null != transactionScriptPubKeyData) {
+        List<String> addressList = transactionScriptPubKeyData.getAddresses();
+
+        if (null != addressList) {
+          inputAddressList.addAll(addressList);
+        }
+      }
+    }
+
+    // ...
+    int fromAddressNumber;
+
+    if (inputAddressList.isEmpty()) {
+      List<TransactionCustomAccountToAccountOutDTO> customAccountToAccountOutDTOList = transactionDTO.getCustomAccountToAccountOutDTOList();
+      fromAddressNumber = customAccountToAccountOutDTOList.get(0).getAddressNumber();
+    } else {
+      AddressDTO fromAddressDTO = databaseAddressHandler.getAddressDTO(databaseBlockHelper, inputAddressList.get(0));
+      fromAddressNumber = fromAddressDTO.getNumber();
+    }
+
+    // ...
+
+    BigDecimal fee = totalVin.subtract(totalVout);
+    fromAmount = fromAmount.add(fee);
+
     TransactionCustomAccountToAccountInDTO customAccountToAccountInDTO =
         new TransactionCustomAccountToAccountInDTO(
             transactionDTO.getBlockNumber(),
             transactionDTO.getNumber(),
             typeNumber,
-            fromAddressDTO.getNumber(),
+            fromAddressNumber,
             0);
 
     customAccountToAccountInDTO.setAmount(fromAmount);

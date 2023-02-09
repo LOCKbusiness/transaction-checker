@@ -262,6 +262,15 @@ public class DatabaseStakingBalanceCheckerMain {
 
       String line = null;
 
+      // Skip the first three lines ...
+      reader.readLine();
+      lineNumber++;
+      reader.readLine();
+      lineNumber++;
+      reader.readLine();
+      lineNumber++;
+
+      // ...
       while (null != (line = reader.readLine())) {
         lineNumber++;
 

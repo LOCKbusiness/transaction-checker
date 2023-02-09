@@ -1,4 +1,4 @@
-package ch.dfx.tools;
+package ch.dfx.tools.compare;
 
 import java.util.stream.Stream;
 
@@ -10,14 +10,18 @@ import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 
 /**
- * Copy table content from remote to local:
+ * Compare table content from remote and local:
  * 
- * - API_DUPLICATE_CHECK
+ * - MASTERNODE_WHITELIST
+ * - STAKING_ADDRESS
+ * - BALANCE
+ * - DEPOSIT
+ * - STAKING
  */
-public class DatabaseSyncMain {
-  private static final Logger LOGGER = LogManager.getLogger(DatabaseSyncMain.class);
+public class DatabaseCompareMain {
+  private static final Logger LOGGER = LogManager.getLogger(DatabaseCompareMain.class);
 
-  private static final String IDENTIFIER = "database-sync";
+  private static final String IDENTIFIER = "database-compare";
 
   /**
    * 
@@ -48,8 +52,8 @@ public class DatabaseSyncMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      DatabaseSync databaseSync = new DatabaseSync(network);
-      databaseSync.sync();
+      DatabaseCompare databaseCompare = new DatabaseCompare(network);
+      databaseCompare.compare();
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

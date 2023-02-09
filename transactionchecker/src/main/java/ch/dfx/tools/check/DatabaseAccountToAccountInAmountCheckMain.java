@@ -1,5 +1,6 @@
-package ch.dfx.tools;
+package ch.dfx.tools.check;
 
+import java.sql.Connection;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,20 +9,17 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.transactionserver.database.H2DBManager;
+import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
- * Compare table content from remote and local:
  * 
- * - MASTERNODE_WHITELIST
- * - STAKING_ADDRESS
- * - BALANCE
- * - DEPOSIT
- * - STAKING
  */
-public class DatabaseCompareMain {
-  private static final Logger LOGGER = LogManager.getLogger(DatabaseCompareMain.class);
+public class DatabaseAccountToAccountInAmountCheckMain {
+  private static final Logger LOGGER = LogManager.getLogger(DatabaseAccountToAccountInAmountCheckMain.class);
 
-  private static final String IDENTIFIER = "database-compare";
+  private static final String IDENTIFIER = "depositbuilder";
 
   /**
    * 
@@ -52,8 +50,21 @@ public class DatabaseCompareMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      DatabaseCompare databaseCompare = new DatabaseCompare(network);
-      databaseCompare.compare();
+      H2DBManager databaseManager = new H2DBManagerImpl();
+      Connection connection = databaseManager.openConnection();
+
+      // ...
+      DatabaseBlockHelper databaseBlockHelper = new DatabaseBlockHelper(network);
+      databaseBlockHelper.openStatements(connection);
+
+      // ...
+      DatabaseAccountToAccountInAmountCheck databaseAccountToAccountInAmountCheck =
+          new DatabaseAccountToAccountInAmountCheck(network, databaseBlockHelper);
+      databaseAccountToAccountInAmountCheck.check(connection);
+
+      // ...
+      databaseBlockHelper.closeStatements();
+      databaseManager.closeConnection(connection);
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

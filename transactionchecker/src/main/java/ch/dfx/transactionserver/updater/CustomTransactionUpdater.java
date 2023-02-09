@@ -3,12 +3,12 @@ package ch.dfx.transactionserver.updater;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -24,9 +24,9 @@ import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.builder.DatabaseCustomTransactionBuilder;
+import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.BlockDTO;
 import ch.dfx.transactionserver.data.BlockTransactionDTO;
-import ch.dfx.transactionserver.data.TransactionCustomAccountToAccountInDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -50,8 +50,6 @@ public class CustomTransactionUpdater {
   private PreparedStatement transactionUpdateStatement = null;
 
   private PreparedStatement missingCustomTransactionSelectStatement = null;
-
-  private PreparedStatement transactionCustomAccountToAccountInUpdateStatement = null;
 
   // ...
   private final NetworkEnum network;
@@ -176,15 +174,11 @@ public class CustomTransactionUpdater {
           TransactionDTO transactionDTO = createCustomTransaction(blockTransactionDTO);
 
           // ...
-          List<TransactionCustomAccountToAccountInDTO> customAccountToAccountInDTOList = transactionDTO.getCustomAccountToAccountInDTOList();
-          updateTransactionCustomAccountToAccountIn(customAccountToAccountInDTOList);
+          Map<String, AddressDTO> newAddressMap = databaseAddressHandler.getNewAddressMap();
+          databaseBlockHelper.saveAddress(newAddressMap);
+          databaseAddressHandler.reset();
 
-          // ...
-//          Map<String, AddressDTO> newAddressMap = databaseAddressHandler.getNewAddressMap();
-//          databaseBlockHelper.saveAddress(newAddressMap);
-//          databaseAddressHandler.reset();
-//
-//          databaseBlockHelper.saveCustomTransaction(transactionDTO);
+          databaseBlockHelper.saveCustomTransaction(transactionDTO);
         }
 
         connection.commit();
@@ -247,52 +241,27 @@ public class CustomTransactionUpdater {
 //              + " LIMIT ?";
 //      missingCustomTransactionSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, missingCustomTransactionSelectSql));
 
-//      String missingCustomTransactionSelectSql =
-//          "SELECT"
-//              + " b.number AS block_number,"
-//              + " b.hash AS block_hash,"
-//              + " t.number AS transaction_number,"
-//              + " t.txid AS transaction_id"
-//              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".block b"
-//              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".transaction t ON"
-//              + " b.number = t.block_number"
-//              + " LEFT OUTER JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out ON"
-//              + " t.block_number = ata_out.block_number"
-//              + " AND t.number = ata_out.transaction_number"
-//              + " WHERE"
-//              + " custom_type_code=?"
-//              + " AND ata_out.block_number IS NULL"
-//              + " GROUP BY"
-//              + " t.block_number,"
-//              + " t.txid,"
-//              + " b.hash"
-//              + " LIMIT ?";
-
       String missingCustomTransactionSelectSql =
           "SELECT"
               + " b.number AS block_number,"
               + " b.hash AS block_hash,"
               + " t.number AS transaction_number,"
               + " t.txid AS transaction_id"
-              + " FROM BLOCK b"
-              + " JOIN TRANSACTION t ON"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".block b"
+              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".transaction t ON"
               + " b.number = t.block_number"
-              + " JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".ACCOUNT_TO_ACCOUNT_OUT ata_out ON"
+              + " LEFT OUTER JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out ON"
               + " t.block_number = ata_out.block_number"
               + " AND t.number = ata_out.transaction_number"
               + " WHERE"
-              + " ata_out.type_number = 5"
-              + " AND ata_out.address_number = 2829489";
-
+              + " custom_type_code=?"
+              + " AND ata_out.block_number IS NULL"
+              + " GROUP BY"
+              + " t.block_number,"
+              + " t.txid,"
+              + " b.hash"
+              + " LIMIT ?";
       missingCustomTransactionSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, missingCustomTransactionSelectSql));
-
-      // ...
-      String transactionCustomAccountToAccountInUpdateSql =
-          "UPDATE " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_in"
-              + " SET amount=?"
-              + " WHERE block_number=? AND transaction_number=?";
-      transactionCustomAccountToAccountInUpdateStatement =
-          connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionCustomAccountToAccountInUpdateSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -450,10 +419,10 @@ public class CustomTransactionUpdater {
 
     List<BlockTransactionDTO> blockTransactionDTOList = new ArrayList<>();
 
-    BlockTransactionDTO blockTransactionDTO =
-        new BlockTransactionDTO(
-            2651943, "24eeb82730b40034ecdd1f9430947cd0d6c4dcb1722bb479ebe39168b07acebc",
-            14, "1507e123ffa1d927e052773b9be503fb0d4b9f32b045156cc9c352e66c4b3ee6");
+//    BlockTransactionDTO blockTransactionDTO =
+//        new BlockTransactionDTO(
+//            2651943, "24eeb82730b40034ecdd1f9430947cd0d6c4dcb1722bb479ebe39168b07acebc",
+//            14, "1507e123ffa1d927e052773b9be503fb0d4b9f32b045156cc9c352e66c4b3ee6");
 //    BlockTransactionDTO blockTransactionDTO =
 //        new BlockTransactionDTO(
 //            2659437, "f78b4b52ad47d0e4d9b1542e5840cb90332e945ba620387770c2f91c176645d2",
@@ -462,6 +431,11 @@ public class CustomTransactionUpdater {
 //        new BlockTransactionDTO(
 //            2659186, "0193a2ad11401ae29520782a3938d315541b84ddeeb697e7393355ec6248807d",
 //            7, "94c1a3193c1295c08eebc32f5c12893028ad59a26b3cabf52e795123d0096a7c");
+
+    BlockTransactionDTO blockTransactionDTO =
+        new BlockTransactionDTO(
+            2660032, "eb8823729e9526f04a31b48d939424966532d5c04b0b3969f0cd29fa4e3ac50d",
+            6, "bbf12649611e497896cf882fa1b1436c0acb9f1642bfb78398ef2f825e605c16");
 
     blockTransactionDTOList.add(blockTransactionDTO);
 
@@ -518,38 +492,5 @@ public class CustomTransactionUpdater {
     customTransactionBuilder.fillCustomTransactionInfo(transactionData, transactionDTO);
 
     return transactionDTO;
-  }
-
-  /**
-   * 
-   */
-  private void updateTransactionCustomAccountToAccountIn(@Nonnull List<TransactionCustomAccountToAccountInDTO> customAccountToAccountInDTOList)
-      throws DfxException {
-    LOGGER.trace("updateTransactionCustomAccountToAccountIn()");
-
-    for (TransactionCustomAccountToAccountInDTO transactionCustomAccountToAccountInDTO : customAccountToAccountInDTOList) {
-      updateTransactionCustomAccountToAccountIn(transactionCustomAccountToAccountInDTO);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void updateTransactionCustomAccountToAccountIn(@Nonnull TransactionCustomAccountToAccountInDTO transactionCustomAccountToAccountInDTO)
-      throws DfxException {
-    LOGGER.trace("updateTransactionCustomAccountToAccountIn()");
-
-    try {
-      int blockNumber = transactionCustomAccountToAccountInDTO.getBlockNumber();
-      int transactionNumber = transactionCustomAccountToAccountInDTO.getTransactionNumber();
-      BigDecimal amount = transactionCustomAccountToAccountInDTO.getAmount();
-
-      transactionCustomAccountToAccountInUpdateStatement.setBigDecimal(1, amount);
-      transactionCustomAccountToAccountInUpdateStatement.setInt(2, blockNumber);
-      transactionCustomAccountToAccountInUpdateStatement.setInt(3, transactionNumber);
-      transactionCustomAccountToAccountInUpdateStatement.execute();
-    } catch (Exception e) {
-      throw new DfxException("updateTransactionCustomAccountToAccountIn", e);
-    }
   }
 }

@@ -1,4 +1,4 @@
-package ch.dfx.tools;
+package ch.dfx.tools.sync;
 
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_SCHEMA;
 
@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
+import ch.dfx.tools.DatabaseTool;
 import ch.dfx.tools.data.DatabaseConnectionData;
 import ch.dfx.tools.data.DatabaseData;
 import ch.dfx.transactionserver.database.DatabaseUtils;

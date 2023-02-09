@@ -41,6 +41,7 @@ public class DatabaseBlockHelper {
 
   private PreparedStatement transactionByBlockNumberSelectStatement = null;
   private PreparedStatement transactionByIdSelectStatement = null;
+  private PreparedStatement transactionByBlockNumberAndNumberSelectStatement = null;
   private PreparedStatement transactionInsertStatement = null;
 
   private PreparedStatement addressTransactionInByBlockNumberSelectStatement = null;
@@ -92,6 +93,10 @@ public class DatabaseBlockHelper {
       // Transaction ...
       String transactionByBlockNumberSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction WHERE block_number=?";
       transactionByBlockNumberSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionByBlockNumberSelectSql));
+
+      String transactionByBlockNumberAndNumberSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction WHERE block_number=? AND number=?";
+      transactionByBlockNumberAndNumberSelectStatement =
+          connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionByBlockNumberAndNumberSelectSql));
 
       String transactionByIdSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction WHERE txid=?";
       transactionByIdSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionByIdSelectSql));
@@ -192,6 +197,7 @@ public class DatabaseBlockHelper {
       blockInsertStatement.close();
 
       transactionByBlockNumberSelectStatement.close();
+      transactionByBlockNumberAndNumberSelectStatement.close();
       transactionByIdSelectStatement.close();
       transactionInsertStatement.close();
 
@@ -462,6 +468,39 @@ public class DatabaseBlockHelper {
       return transactionDTO;
     } catch (Exception e) {
       throw new DfxException("getTransactionDTOById", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nullable TransactionDTO getTransactionDTOByBlockNumberAndNumber(int blockNumber, int transactionNumber) throws DfxException {
+    LOGGER.trace("getTransactionDTOByBlockNumberAndNumber()");
+
+    try {
+      TransactionDTO transactionDTO = null;
+
+      transactionByBlockNumberAndNumberSelectStatement.setInt(1, blockNumber);
+      transactionByBlockNumberAndNumberSelectStatement.setInt(2, transactionNumber);
+
+      ResultSet resultSet = transactionByBlockNumberAndNumberSelectStatement.executeQuery();
+
+      if (resultSet.next()) {
+        transactionDTO =
+            new TransactionDTO(
+                resultSet.getInt("block_number"),
+                resultSet.getInt("number"),
+                resultSet.getString("txid"));
+        transactionDTO.setCustomTypeCode(resultSet.getString("custom_type_code"));
+
+        transactionDTO.keepInternalState();
+      }
+
+      resultSet.close();
+
+      return transactionDTO;
+    } catch (Exception e) {
+      throw new DfxException("getTransactionDTOByBlockNumberAndNumber", e);
     }
   }
 

@@ -13,6 +13,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -138,7 +139,7 @@ public class DatabaseCompare extends DatabaseTool {
       @Nonnull Connection remoteConnection,
       @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
-    LOGGER.trace("doCompare()");
+    LOGGER.trace("doCompare(): token=" + token);
 
     // ...
     List<StakingAddressDTO> localStakingAddressDTOList = getLocalStakingAddressDTOList(localConnection, dbSchema, token);
@@ -420,11 +421,15 @@ public class DatabaseCompare extends DatabaseTool {
       while (resultSet.next()) {
         StakingAddressDTO stakingAddressDTO = new StakingAddressDTO(resultSet.getInt("token_number"));
 
-        stakingAddressDTO.setLiquidityAddressNumber(resultSet.getInt("liquidity_address_number"));
+        // stakingAddressDTO.setLiquidityAddressNumber(resultSet.getInt("liquidity_address_number"));
         stakingAddressDTO.setLiquidityAddress(resultSet.getString("liquidity_address"));
 
-        stakingAddressDTO.setRewardAddressNumber(resultSet.getInt("reward_address_number"));
+        // stakingAddressDTO.setRewardAddressNumber(resultSet.getInt("reward_address_number"));
         stakingAddressDTO.setRewardAddress(resultSet.getString("reward_address"));
+
+        if (resultSet.wasNull()) {
+          stakingAddressDTO.setRewardAddress("");
+        }
 
         stakingAddressDTO.setStartBlockNumber(resultSet.getInt("start_block_number"));
         stakingAddressDTO.setStartTransactionNumber(resultSet.getInt("start_transaction_number"));
@@ -437,7 +442,8 @@ public class DatabaseCompare extends DatabaseTool {
 
       // ...
       Comparator<StakingAddressDTO> comparator =
-          Comparator.comparing(StakingAddressDTO::getLiquidityAddress);
+          Comparator.comparing(StakingAddressDTO::getLiquidityAddress)
+              .thenComparing(StakingAddressDTO::getRewardAddress);
       stakingAddressDTOList.sort(comparator);
 
       return stakingAddressDTOList;

@@ -49,7 +49,7 @@ public class TransactionCheckerUtils {
   private static final Logger LOGGER = LogManager.getLogger(TransactionCheckerUtils.class);
 
   // ...
-  private static final int HTTP_CLIENT_TIMEOUT = 10 * 1000;
+  private static final int HTTP_CLIENT_TIMEOUT = 30 * 1000;
 
   public static final SimpleDateFormat LOGFILE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
 

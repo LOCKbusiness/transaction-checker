@@ -1,4 +1,4 @@
-package ch.dfx.transactionserver.updater;
+package ch.dfx.tools.updater;
 
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;

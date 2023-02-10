@@ -1,4 +1,4 @@
-package ch.dfx.tools.check;
+package ch.dfx.tools.updater;
 
 import java.sql.Connection;
 import java.util.stream.Stream;
@@ -16,8 +16,8 @@ import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 /**
  * 
  */
-public class DatabaseAccountToAccountInAmountCheckMain {
-  private static final Logger LOGGER = LogManager.getLogger(DatabaseAccountToAccountInAmountCheckMain.class);
+public class DatabaseAccountToAccountInAmountUpdaterMain {
+  private static final Logger LOGGER = LogManager.getLogger(DatabaseAccountToAccountInAmountUpdaterMain.class);
 
   private static final String IDENTIFIER = "depositbuilder";
 
@@ -58,8 +58,8 @@ public class DatabaseAccountToAccountInAmountCheckMain {
       databaseBlockHelper.openStatements(connection);
 
       // ...
-      DatabaseAccountToAccountInAmountCheck databaseAccountToAccountInAmountCheck =
-          new DatabaseAccountToAccountInAmountCheck(network, databaseBlockHelper);
+      DatabaseAccountToAccountInAmountUpdater databaseAccountToAccountInAmountCheck =
+          new DatabaseAccountToAccountInAmountUpdater(network, databaseBlockHelper);
       databaseAccountToAccountInAmountCheck.check(connection);
 
       // ...

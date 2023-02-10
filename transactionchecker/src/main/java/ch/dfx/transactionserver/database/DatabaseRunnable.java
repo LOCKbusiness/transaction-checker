@@ -317,12 +317,12 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
   private void checkErrorCounter() {
     LOGGER.trace("checkErrorCounter()");
 
-    if (2 < databaseBuilderErrorCounter
-        || 2 < depositBuilderErrorCounter
-        || 2 < balanceBuilderErrorCounter
-        || 2 < stakingBuilderErrorCounter
-        || 2 < masternodeBuilderErrorCounter
-        || 2 < stakingWithdrawalReservedCleanerErrorCounter) {
+    if (5 < databaseBuilderErrorCounter
+        || 5 < depositBuilderErrorCounter
+        || 5 < balanceBuilderErrorCounter
+        || 5 < stakingBuilderErrorCounter
+        || 5 < masternodeBuilderErrorCounter
+        || 5 < stakingWithdrawalReservedCleanerErrorCounter) {
       LOGGER.error("Too many errors, will exit now");
       SchedulerProvider.getInstance().exit(-1);
     }

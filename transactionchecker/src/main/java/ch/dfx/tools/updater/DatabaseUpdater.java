@@ -1,4 +1,4 @@
-package ch.dfx.transactionserver.updater;
+package ch.dfx.tools.updater;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -58,7 +58,7 @@ public class DatabaseUpdater {
 
       openStatements(connection);
 
-      doUpdateBlock(connection);
+      // doUpdateBlock(connection);
       // doUpdateTransaction(connection);
 
       closeStatements();

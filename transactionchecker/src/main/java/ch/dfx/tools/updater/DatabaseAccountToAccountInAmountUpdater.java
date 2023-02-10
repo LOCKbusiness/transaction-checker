@@ -1,4 +1,4 @@
-package ch.dfx.tools.check;
+package ch.dfx.tools.updater;
 
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
 
@@ -32,8 +32,8 @@ import ch.dfx.transactionserver.handler.DatabaseAddressHandler;
 /**
  * 
  */
-public class DatabaseAccountToAccountInAmountCheck {
-  private static final Logger LOGGER = LogManager.getLogger(DatabaseAccountToAccountInAmountCheck.class);
+public class DatabaseAccountToAccountInAmountUpdater {
+  private static final Logger LOGGER = LogManager.getLogger(DatabaseAccountToAccountInAmountUpdater.class);
 
   // ...
   private PreparedStatement accountToAccountOutSelectStatement = null;
@@ -54,7 +54,7 @@ public class DatabaseAccountToAccountInAmountCheck {
   /**
    * 
    */
-  public DatabaseAccountToAccountInAmountCheck(
+  public DatabaseAccountToAccountInAmountUpdater(
       @Nonnull NetworkEnum network,
       @Nonnull DatabaseBlockHelper databaseBlockHelper) {
     this.network = network;

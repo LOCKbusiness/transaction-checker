@@ -1,4 +1,4 @@
-package ch.dfx.transactionserver.updater;
+package ch.dfx.tools.updater;
 
 import java.util.stream.Stream;
 

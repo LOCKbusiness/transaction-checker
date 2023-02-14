@@ -98,10 +98,10 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       List<String> logInfoList = new ArrayList<>();
 
       createStakingBalanceReport(connection, logInfoList);
-//      createLiquidityMasternodeStakingBalanceReport(connection, logInfoList);
-//      createVaultReport(connection, logInfoList);
+      createLiquidityMasternodeStakingBalanceReport(connection, logInfoList);
+      createVaultReport(connection, logInfoList);
 
-//      createStatistikReport(connection);
+      createStatistikReport(connection);
 
       writeLogInfo(logInfoList);
 
@@ -130,12 +130,20 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       String stakingBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_STAKING_SHEET);
       String dfiYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_DFI_YIELDMACHINE_SHEET);
       String dusdYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_DUSD_YIELDMACHINE_SHEET);
+      String btcYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_BTC_YIELDMACHINE_SHEET);
+      String ethYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_ETH_YIELDMACHINE_SHEET);
+      String usdtYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_USDT_YIELDMACHINE_SHEET);
+      String usdcYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_USDC_YIELDMACHINE_SHEET);
 
       if (null != rootPath
           && null != balanceFileName
           && null != stakingBalanceSheet
           && null != dfiYieldmachineBalanceSheet
-          && null != dusdYieldmachineBalanceSheet) {
+          && null != dusdYieldmachineBalanceSheet
+          && null != btcYieldmachineBalanceSheet
+          && null != ethYieldmachineBalanceSheet
+          && null != usdtYieldmachineBalanceSheet
+          && null != usdcYieldmachineBalanceSheet) {
         BalanceReporting stakingBalanceReporting =
             new BalanceReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
         stakingBalanceReporting.report(connection, TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
@@ -144,6 +152,10 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
             new BalanceReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper, logInfoList);
         yieldmachineBalanceReporting.report(connection, TokenEnum.DFI, rootPath, balanceFileName, dfiYieldmachineBalanceSheet);
         yieldmachineBalanceReporting.report(connection, TokenEnum.DUSD, rootPath, balanceFileName, dusdYieldmachineBalanceSheet);
+        // yieldmachineBalanceReporting.report(connection, TokenEnum.BTC, rootPath, balanceFileName, btcYieldmachineBalanceSheet);
+        // yieldmachineBalanceReporting.report(connection, TokenEnum.ETH, rootPath, balanceFileName, ethYieldmachineBalanceSheet);
+        // yieldmachineBalanceReporting.report(connection, TokenEnum.USDT, rootPath, balanceFileName, usdtYieldmachineBalanceSheet);
+        // yieldmachineBalanceReporting.report(connection, TokenEnum.USDC, rootPath, balanceFileName, usdcYieldmachineBalanceSheet);
 
         logInfoList.add("");
       }

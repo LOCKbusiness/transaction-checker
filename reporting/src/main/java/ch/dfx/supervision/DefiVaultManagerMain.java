@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
 import ch.dfx.logging.MessageEventProvider;
@@ -71,7 +73,20 @@ public class DefiVaultManagerMain {
     MessageEventBus.getInstance().register(messageEventCollector);
 
     // ...
-    DefiVaultManager vaultManager = new DefiVaultManager(messageEventProvider);
-    vaultManager.checkRatio();
+    String vaultId1 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT1_ID, "");
+    String checkRatio1 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT1_CHECK_RATIO, "");
+    DefiVaultManager vaultManager1 = new DefiVaultManager(messageEventProvider, vaultId1, checkRatio1);
+
+    String vaultId2 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT2_ID, "");
+    String checkRatio2 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT2_CHECK_RATIO, "");
+    DefiVaultManager vaultManager2 = new DefiVaultManager(messageEventProvider, vaultId2, checkRatio2);
+
+    String vaultId3 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT3_ID, "");
+    String checkRatio3 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT3_CHECK_RATIO, "");
+    DefiVaultManager vaultManager3 = new DefiVaultManager(messageEventProvider, vaultId3, checkRatio3);
+
+    vaultManager1.checkRatio();
+    vaultManager2.checkRatio();
+    vaultManager3.checkRatio();
   }
 }

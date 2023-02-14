@@ -9,9 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.TransactionCheckerUtils;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.data.vault.DefiVaultData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.logging.MessageEventBus;
@@ -37,14 +35,22 @@ public class DefiVaultManager {
   private final MessageEventProvider messageEventProvider;
   private final DefiDataProvider dataProvider;
 
-  private StateEnum prevState = StateEnum.UNKNOWN;
-  private StateEnum currState = StateEnum.UNKNOWN;
+  private final String vaultId;
+  private final String checkRatio;
+
+  private StateEnum prevStateVault = StateEnum.UNKNOWN;
+  private StateEnum currStateVault = StateEnum.UNKNOWN;
 
   /**
    * 
    */
-  public DefiVaultManager(@Nonnull MessageEventProvider messageEventProvider) {
+  public DefiVaultManager(
+      @Nonnull MessageEventProvider messageEventProvider,
+      @Nonnull String vaultId,
+      @Nonnull String checkRatio) {
     this.messageEventProvider = messageEventProvider;
+    this.vaultId = vaultId;
+    this.checkRatio = checkRatio;
 
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
@@ -56,21 +62,16 @@ public class DefiVaultManager {
     LOGGER.trace("checkRatio()");
 
     try {
-      String vaultId = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT_ID, "");
-      String checkRatio = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT_CHECK_RATIO, "");
-      LOGGER.trace("VaultId: " + vaultId);
-      LOGGER.trace("CheckRatio: " + checkRatio);
-
       if (StringUtils.isNotEmpty(vaultId)
           && StringUtils.isNotEmpty(checkRatio)) {
         String message = doCheckRatio(vaultId, checkRatio);
 
-        if (prevState != currState) {
+        if (prevStateVault != currStateVault) {
           MessageEventBus.getInstance().postEvent(new MessageEvent(message));
           LOGGER.info(message);
           messageEventProvider.run();
 
-          prevState = currState;
+          prevStateVault = currStateVault;
         }
       }
     } catch (Exception e) {
@@ -98,13 +99,13 @@ public class DefiVaultManager {
     String message;
 
     if (-1 == informativeRatio.compareTo(lowRatio)) {
-      currState = StateEnum.LOW;
+      currStateVault = StateEnum.LOW;
       message = "[LOW] Vault Ratio: " + informativeRatio + "\nhttps://defiscan.live/vaults/" + vaultId;
     } else if (1 == informativeRatio.compareTo(highRatio)) {
-      currState = StateEnum.HIGH;
+      currStateVault = StateEnum.HIGH;
       message = "[HIGH] Vault Ratio: " + informativeRatio + "\nhttps://defiscan.live/vaults/" + vaultId;
     } else {
-      currState = StateEnum.OK;
+      currStateVault = StateEnum.OK;
       message = "[OK] Vault Ratio: " + informativeRatio + "\nhttps://defiscan.live/vaults/" + vaultId;
     }
 

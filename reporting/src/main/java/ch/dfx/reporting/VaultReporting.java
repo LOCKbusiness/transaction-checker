@@ -97,15 +97,17 @@ public class VaultReporting extends Reporting {
       BigDecimal totalStakingBalance = getTotalStakingBalance(connection, token);
 
       String liquidityAddress = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_LIQUIDITY_ADDRESS, "");
-      String vaultAddress = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT_ADDRESS, "");
+      String vault1Address = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT1_ADDRESS, "");
+      // String vault2Address = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT2_ADDRESS, "");
+      // String vault3Address = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT3_ADDRESS, "");
 
       // ...
       Map<String, BigDecimal> liquidityTokenToAmountMap = createTokenToAmountMap(liquidityAddress);
-      Map<String, BigDecimal> vaultTokenToAmountMap = createTokenToAmountMap(vaultAddress);
+      Map<String, BigDecimal> vaultTokenToAmountMap = createTokenToAmountMap(vault1Address);
 
       // ...
-      if (StringUtils.isNotEmpty(vaultAddress)) {
-        List<DefiListVaultData> listVaultDataList = dataProvider.listVaults(vaultAddress);
+      if (StringUtils.isNotEmpty(vault1Address)) {
+        List<DefiListVaultData> listVaultDataList = dataProvider.listVaults(vault1Address);
 
         if (!listVaultDataList.isEmpty()) {
           DefiListVaultData listVaultData = listVaultDataList.get(0);

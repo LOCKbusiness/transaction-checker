@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
+import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.provider.ConfigPropertyProvider;
 
 /**
  * 
@@ -46,8 +48,14 @@ public class TelegramNotifierMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      TelegramNotifier telegramNotifier = new TelegramNotifier();
-      telegramNotifier.sendMessage("Hello World");
+      String telegramToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_TOKEN);
+      String telegramChatId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_CHAT_ID);
+
+      if (null != telegramToken
+          && null != telegramChatId) {
+        TelegramNotifier telegramNotifier = new TelegramNotifier();
+        telegramNotifier.sendMessage(telegramToken, telegramChatId, "Hello World");
+      }
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

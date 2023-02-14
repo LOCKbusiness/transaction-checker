@@ -10,7 +10,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventProvider;
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
 /**
@@ -71,8 +71,7 @@ public class DefiManagerRunnable implements SchedulerProviderRunnable {
       vaultCheckErrorCounter++;
 
       String message = "[ERROR]: Vault Check Error - " + t.getMessage();
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
-      messageEventProvider.run();
+      sendTelegramMessage(message);
 
       LOGGER.error("run", t);
     } finally {
@@ -120,8 +119,15 @@ public class DefiManagerRunnable implements SchedulerProviderRunnable {
 
     if (2 < vaultCheckErrorCounter) {
       String message = "[ERROR]: " + vaultCheckErrorCounter + " Vault Check Errors";
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
-      messageEventProvider.run();
+      sendTelegramMessage(message);
     }
+  }
+
+  /**
+   * 
+   */
+  private void sendTelegramMessage(@Nonnull String message) {
+    MessageEventBus.getInstance().postEvent(new TelegramAutomaticInformationBotEvent(message));
+    messageEventProvider.run();
   }
 }

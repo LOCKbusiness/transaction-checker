@@ -3,6 +3,8 @@ package ch.dfx.defichain;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.impl.Log4jContextFactory;
@@ -17,7 +19,7 @@ import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
 import ch.dfx.logging.MessageEventProvider;
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 
 /**
@@ -70,9 +72,9 @@ public class DefichainWatchdogMain {
 
       // ...
       String startMessage = "[Defichain Watchdog] Process is running";
-      MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
       LOGGER.info(startMessage);
-      defichainWatchdogMain.messageEventProvider.run();
+
+      defichainWatchdogMain.sendTelegramMessage(startMessage);
 
       // ...
       while (true) {
@@ -132,9 +134,9 @@ public class DefichainWatchdogMain {
 
     // ...
     String shutdownMessage = "[Defichain Watchdog] Process shutdown";
-    MessageEventBus.getInstance().postEvent(new MessageEvent(shutdownMessage));
     LOGGER.info(shutdownMessage);
-    messageEventProvider.run();
+
+    sendTelegramMessage(shutdownMessage);
 
     // ...
     LogManager.shutdown();
@@ -163,14 +165,23 @@ public class DefichainWatchdogMain {
         LOGGER.debug("... Process exit code: " + exitCode);
 
         String stopMessage = "[Defichain] Unexpected stop, trying to restart now";
-        MessageEventBus.getInstance().postEvent(new MessageEvent(stopMessage));
         LOGGER.error(stopMessage);
+
+        sendTelegramMessage(stopMessage);
       }
     } catch (Throwable t) {
-      String message = "[Defichain] Unexpected exception stop";
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+      String errorMessage = "[Defichain] Unexpected exception stop";
+      sendTelegramMessage(errorMessage);
+
       LOGGER.error("Fatal Error", t);
-      messageEventProvider.run();
     }
+  }
+
+  /**
+   * 
+   */
+  private void sendTelegramMessage(@Nonnull String message) {
+    MessageEventBus.getInstance().postEvent(new TelegramAutomaticInformationBotEvent(message));
+    messageEventProvider.run();
   }
 }

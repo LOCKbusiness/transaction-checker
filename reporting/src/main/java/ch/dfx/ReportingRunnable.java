@@ -258,8 +258,14 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         logInfoBuilder.append(logInfo).append("\n");
       }
 
-      TelegramNotifier telegramNotifier = new TelegramNotifier();
-      telegramNotifier.sendMessage(logInfoBuilder.toString());
+      String telegramToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_TOKEN);
+      String telegramChatId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_CHAT_ID);
+
+      if (null != telegramToken
+          && null != telegramChatId) {
+        TelegramNotifier telegramNotifier = new TelegramNotifier();
+        telegramNotifier.sendMessage(telegramToken, telegramChatId, logInfoBuilder.toString());
+      }
     } catch (Exception e) {
       LOGGER.error("writeLogInfo", e);
     }

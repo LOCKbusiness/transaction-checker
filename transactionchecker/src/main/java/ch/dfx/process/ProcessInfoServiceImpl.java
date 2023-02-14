@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.logging.MessageEventBus;
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.process.data.ProcessInfoDTO;
 
 /**
@@ -63,23 +63,24 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
     // ...
     String memoryMessage = createMemoryMessage(heapMaxSize, heapUsedSize, heapCapacity);
     String diskMessage = createDiskMessage(diskTotalSpace, diskUsedSpace, diskCapacity);
-    MessageEventBus.getInstance().postEvent(new MessageEvent(memoryMessage + "\n" + diskMessage));
+
+    sendTelegramMessage(memoryMessage + "\n" + diskMessage);
 
     // ...
     if (heapCapacity >= MEMORY_WATERMARK_CRITICAL) {
-      MessageEventBus.getInstance().postEvent(new MessageEvent("[ERROR] Critical Memory Watermark reached"));
       LOGGER.error(memoryMessage);
+      sendTelegramMessage("[ERROR] Critical Memory Watermark reached");
     } else if (heapCapacity >= MEMORY_WATERMARK_HIGH) {
-      MessageEventBus.getInstance().postEvent(new MessageEvent("[WARN] High Memory Watermark reached"));
       LOGGER.warn(memoryMessage);
+      sendTelegramMessage("[WARN] High Memory Watermark reached");
     }
 
     if (diskCapacity >= DISK_WATERMARK_CRITICAL) {
-      MessageEventBus.getInstance().postEvent(new MessageEvent("[ERROR] Critical Disk Watermark reached"));
       LOGGER.error(diskMessage);
+      sendTelegramMessage("[ERROR] Critical Disk Watermark reached");
     } else if (diskCapacity >= DISK_WATERMARK_HIGH) {
-      MessageEventBus.getInstance().postEvent(new MessageEvent("[WARN] High Disk Watermark reached"));
       LOGGER.warn(diskMessage);
+      sendTelegramMessage("[WARN] High Disk Watermark reached");
     }
   }
 
@@ -107,5 +108,12 @@ public class ProcessInfoServiceImpl implements ProcessInfoService {
         .append("[Disk] ").append(diskCapacity).append("%")
         .append(" (").append((diskUsedSpace / GB)).append(" GB / ").append((diskTotalSpace / GB)).append(" GB)")
         .toString();
+  }
+
+  /**
+   * 
+   */
+  private void sendTelegramMessage(@Nonnull String message) {
+    MessageEventBus.getInstance().postEvent(new TelegramAutomaticInformationBotEvent(message));
   }
 }

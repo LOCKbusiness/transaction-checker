@@ -61,7 +61,14 @@ public class MessageEventProvider implements SchedulerProviderRunnable {
 
     for (MessageEvent messageEvent : messageEventList) {
       LOGGER.info("[MESSAGE] " + messageEvent);
-      telegramNotifier.sendMessage(messageEvent.getMessage());
+
+      String telegramToken = messageEvent.getTelegramToken();
+      String telegramChatId = messageEvent.getTelegramChatId();
+
+      if (null != telegramToken
+          && null != telegramChatId) {
+        telegramNotifier.sendMessage(telegramToken, telegramChatId, messageEvent.getMessage());
+      }
     }
   }
 }

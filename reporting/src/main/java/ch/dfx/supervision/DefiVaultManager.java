@@ -14,7 +14,7 @@ import ch.dfx.defichain.data.vault.DefiVaultData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventProvider;
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.events.TelegramAutomaticVaultInformationBotEvent;
 
 /**
  * 
@@ -67,7 +67,7 @@ public class DefiVaultManager {
         String message = doCheckRatio(vaultId, checkRatio);
 
         if (prevStateVault != currStateVault) {
-          MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+          MessageEventBus.getInstance().postEvent(new TelegramAutomaticVaultInformationBotEvent(message));
           LOGGER.info(message);
           messageEventProvider.run();
 

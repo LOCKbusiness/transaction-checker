@@ -24,7 +24,7 @@ import ch.dfx.defichain.handler.DefiStatusHandler;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
 import ch.dfx.logging.MessageEventProvider;
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.process.ProcessInfoService;
 import ch.dfx.process.ProcessInfoServiceImpl;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
@@ -88,9 +88,9 @@ public class TransactionServerWatchdogMain {
 
       // ...
       String startMessage = "[Transaction Check Server Watchdog] Process is running";
-      MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
       LOGGER.info(startMessage);
-      transactionServerWatchdogMain.messageEventProvider.run();
+
+      transactionServerWatchdogMain.sendTelegramMessage(startMessage);
 
       // ...
       while (true) {
@@ -272,9 +272,9 @@ public class TransactionServerWatchdogMain {
 
     // ...
     String shutdownMessage = "[Transaction Check Server Watchdog] Process shutdown";
-    MessageEventBus.getInstance().postEvent(new MessageEvent(shutdownMessage));
     LOGGER.info(shutdownMessage);
-    messageEventProvider.run();
+
+    sendTelegramMessage(shutdownMessage);
 
     // ...
     LogManager.shutdown();
@@ -295,9 +295,9 @@ public class TransactionServerWatchdogMain {
         isInSync = statusHandler.isInSync();
 
         String syncMessage = "[Transaction Check Server Watchdog] Defichain inSync? " + isInSync;
-
-        MessageEventBus.getInstance().postEvent(new MessageEvent(syncMessage));
         LOGGER.error(syncMessage);
+
+        sendTelegramMessage(syncMessage);
 
         if (!isInSync) {
           Thread.sleep(1 * 60 * 1000);
@@ -334,14 +334,15 @@ public class TransactionServerWatchdogMain {
         deleteTransactionServerProcessLockfile();
 
         String stopMessage = "[Transaction Check Server] Unexpected stop, trying to restart now";
-        MessageEventBus.getInstance().postEvent(new MessageEvent(stopMessage));
         LOGGER.error(stopMessage);
+
+        sendTelegramMessage(stopMessage);
       }
     } catch (Throwable t) {
-      String message = "[Transaction Check Server] Unexpected exception stop";
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+      String errorMessage = "[Transaction Check Server] Unexpected exception stop";
+      sendTelegramMessage(errorMessage);
+
       LOGGER.error("Fatal Error", t);
-      messageEventProvider.run();
     }
   }
 
@@ -404,5 +405,13 @@ public class TransactionServerWatchdogMain {
   private File getProcessLockfile() {
     String processLockFilename = TransactionCheckerUtils.getProcessLockFilename(IDENTIFIER, network);
     return new File(processLockFilename);
+  }
+
+  /**
+   * 
+   */
+  private void sendTelegramMessage(@Nonnull String message) {
+    MessageEventBus.getInstance().postEvent(new TelegramAutomaticInformationBotEvent(message));
+    messageEventProvider.run();
   }
 }

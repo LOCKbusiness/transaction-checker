@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.logging.MessageEventBus;
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.transactionserver.data.StakingWithdrawalReservedDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
@@ -159,9 +159,10 @@ public class StakingWithdrawalReservedCleaner {
               .append(" / transactionId=").append(transactionId)
               .append(" / vout=").append(vout.toPlainString())
               .toString();
-      MessageEventBus.getInstance().postEvent(new MessageEvent(message));
-
       LOGGER.error(message);
+
+      // ...
+      MessageEventBus.getInstance().postEvent(new TelegramAutomaticInformationBotEvent(message));
     }
   }
 

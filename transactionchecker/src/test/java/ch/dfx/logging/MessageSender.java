@@ -5,7 +5,7 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.transactionserver.scheduler.TimerProviderTask;
 
 /**
@@ -41,9 +41,9 @@ public class MessageSender extends TimerProviderTask {
         new StringBuilder()
             .append("[").append(id).append("] ").append(counter)
             .toString();
-
     LOGGER.debug(message);
-    MessageEventBus.getInstance().postEvent(new MessageEvent(message));
+
+    MessageEventBus.getInstance().postEvent(new TelegramAutomaticInformationBotEvent(message));
 
     isProcessing = false;
   }

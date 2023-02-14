@@ -24,7 +24,7 @@ import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
 import ch.dfx.logging.MessageEventProvider;
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.manager.ManagerRunnable;
 import ch.dfx.process.ProcessInfoProvider;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
@@ -208,9 +208,9 @@ public class TransactionServerMain {
 
       // ...
       String startMessage = "[Transaction Check Server] Process is running";
-      MessageEventBus.getInstance().postEvent(new MessageEvent(startMessage));
       LOGGER.info(startMessage);
-      messageEventProvider.run();
+
+      sendTelegramMessage(startMessage);
     }
   }
 
@@ -247,9 +247,9 @@ public class TransactionServerMain {
 
     // ...
     String shutdownMessage = "[Transaction Check Server] Process shutdown";
-    MessageEventBus.getInstance().postEvent(new MessageEvent(shutdownMessage));
     LOGGER.info(shutdownMessage);
-    messageEventProvider.run();
+
+    sendTelegramMessage(shutdownMessage);
 
     // ...
     LogManager.shutdown();
@@ -390,5 +390,13 @@ public class TransactionServerMain {
     } else {
       LOGGER.debug("Staging not allowed to stop the Transaction Server");
     }
+  }
+
+  /**
+   * 
+   */
+  private void sendTelegramMessage(@Nonnull String message) {
+    MessageEventBus.getInstance().postEvent(new TelegramAutomaticInformationBotEvent(message));
+    messageEventProvider.run();
   }
 }

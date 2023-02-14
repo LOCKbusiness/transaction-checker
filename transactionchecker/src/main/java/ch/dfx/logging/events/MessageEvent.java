@@ -3,13 +3,17 @@ package ch.dfx.logging.events;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 
  */
-public class MessageEvent {
+public abstract class MessageEvent {
+
+  private String telegramToken = null;
+  private String telegramChatId = null;
 
   private final String message;
 
@@ -18,6 +22,22 @@ public class MessageEvent {
    */
   public MessageEvent(@Nonnull String message) {
     this.message = message;
+  }
+
+  public @Nullable String getTelegramToken() {
+    return telegramToken;
+  }
+
+  public void setTelegramToken(@Nullable String telegramToken) {
+    this.telegramToken = telegramToken;
+  }
+
+  public @Nullable String getTelegramChatId() {
+    return telegramChatId;
+  }
+
+  public void setTelegramChatId(@Nullable String telegramChatId) {
+    this.telegramChatId = telegramChatId;
   }
 
   public String getMessage() {
@@ -46,6 +66,9 @@ public class MessageEvent {
     }
 
     MessageEvent otherMessageEvent = (MessageEvent) otherObject;
-    return Objects.equals(message, otherMessageEvent.message);
+
+    return Objects.equals(telegramToken, otherMessageEvent.telegramToken)
+        && Objects.equals(telegramChatId, otherMessageEvent.telegramChatId)
+        && Objects.equals(message, otherMessageEvent.message);
   }
 }

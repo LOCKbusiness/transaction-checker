@@ -16,9 +16,6 @@ import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.enumeration.PropertyEnum;
-import ch.dfx.common.provider.ConfigPropertyProvider;
-
 /**
  * 
  */
@@ -29,32 +26,38 @@ public class TelegramNotifier {
   private static final int HTTP_CLIENT_TIMEOUT = 10 * 1000;
 
   // ...
-  private final String telegramURL;
+  // private final String telegramURL;
 
   /**
    *
    */
   public TelegramNotifier() {
-    String telegramToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_TOKEN);
+//    String telegramToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_TOKEN);
 
-    if (!StringUtils.isEmpty(telegramToken)) {
-      telegramURL = "https://api.telegram.org/bot" + telegramToken + "/sendMessage";
-    } else {
-      telegramURL = null;
-    }
+//    if (!StringUtils.isEmpty(telegramToken)) {
+//      telegramURL = "https://api.telegram.org/bot" + telegramToken + "/sendMessage";
+//    } else {
+//      telegramURL = null;
+//    }
   }
 
   /**
    *
    */
-  public void sendMessage(@Nonnull String message) {
+  public void sendMessage(
+      @Nonnull String telegramToken,
+      @Nonnull String telegramChatId,
+      @Nonnull String message) {
     LOGGER.trace("sendMessage()");
 
     try {
-      String telegramChatId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_CHAT_ID);
+//      String telegramChatId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_CHAT_ID);
 
-      if (null != telegramURL
-          && !StringUtils.isEmpty(telegramChatId)) {
+      if (!StringUtils.isEmpty(telegramToken)
+          && !StringUtils.isEmpty(telegramChatId)
+          && !StringUtils.isEmpty(message)) {
+        String telegramURL = "https://api.telegram.org/bot" + telegramToken + "/sendMessage";
+
         InetAddress localHost = InetAddress.getLocalHost();
         String hostName = localHost.getHostName();
         String hostAddress = localHost.getHostAddress();

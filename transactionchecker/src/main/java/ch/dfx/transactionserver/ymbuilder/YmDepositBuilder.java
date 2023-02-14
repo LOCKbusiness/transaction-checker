@@ -410,7 +410,8 @@ public class YmDepositBuilder {
 
       // ...
       Comparator<DepositFinderDTO> comparator =
-          Comparator.comparing(DepositFinderDTO::getBlockNumber)
+          Comparator.comparing(DepositFinderDTO::getTokenNumber)
+              .thenComparing(DepositFinderDTO::getBlockNumber)
               .thenComparing(DepositFinderDTO::getTransactionNumber);
       depositFinderDTOList.sort(comparator);
 

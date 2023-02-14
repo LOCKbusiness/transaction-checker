@@ -169,7 +169,7 @@ public class DatabaseBalanceHelper {
 
       // Staking Withdrawal Reserved ...
       String stakingWithdrawalReservedSelectSql =
-          "SELECT * FROM " + dbSchema + ".staking_withdrawal_reserved WHERE token_number=?";
+          "SELECT * FROM " + dbSchema + ".staking_withdrawal_reserved";
       stakingWithdrawalReservedSelectStatement =
           connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingWithdrawalReservedSelectSql));
     } catch (Exception e) {
@@ -572,13 +572,11 @@ public class DatabaseBalanceHelper {
   /**
    * 
    */
-  public @Nonnull List<StakingWithdrawalReservedDTO> getStakingWithdrawalReservedDTOList(@Nonnull TokenEnum token) throws DfxException {
+  public @Nonnull List<StakingWithdrawalReservedDTO> getStakingWithdrawalReservedDTOList() throws DfxException {
     LOGGER.trace("getStakingWithdrawalReservedDTOList()");
 
     try {
       List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = new ArrayList<>();
-
-      stakingWithdrawalReservedSelectStatement.setInt(1, token.getNumber());
 
       ResultSet resultSet = stakingWithdrawalReservedSelectStatement.executeQuery();
 

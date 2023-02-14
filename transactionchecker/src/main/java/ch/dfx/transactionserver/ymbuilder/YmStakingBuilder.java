@@ -7,17 +7,22 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.DepositDTO;
+import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
@@ -29,9 +34,9 @@ public class YmStakingBuilder {
   private static final Logger LOGGER = LogManager.getLogger(YmStakingBuilder.class);
 
   // ...
-  private PreparedStatement stakingAmountSelectStatement = null;
+  private PreparedStatement stakingDepositSelectStatement = null;
+  private PreparedStatement stakingWithdrawalSelectStatement = null;
 
-  private PreparedStatement stakingSelectStatement = null;
   private PreparedStatement stakingInsertStatement = null;
   private PreparedStatement stakingUpdateStatement = null;
 
@@ -54,17 +59,25 @@ public class YmStakingBuilder {
   /**
    * 
    */
-  public void build(
-      @Nonnull Connection connection,
-      @Nonnull TokenEnum token) throws DfxException {
-    LOGGER.debug("build(): token=" + token);
+  public void build(@Nonnull Connection connection) throws DfxException {
+    LOGGER.debug("build()");
 
     long startTime = System.currentTimeMillis();
 
     try {
       openStatements(connection);
 
-      calcStakingBalance(connection, token);
+      // ...
+      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
+
+      for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
+        if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
+          int liquidityAddressNumber = stakingAddressDTO.getLiquidityAddressNumber();
+
+          List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOListByLiquidityAddressNumber(liquidityAddressNumber);
+          calcStakingBalance(liquidityAddressNumber, depositDTOList);
+        }
+      }
 
       closeStatements();
 
@@ -84,10 +97,13 @@ public class YmStakingBuilder {
     LOGGER.trace("openStatements()");
 
     try {
-      String stakingAmountSelectSql =
+      // ...
+      String stakingDepositSelectSql =
           "SELECT"
+              + " ata_out.token_number,"
               + " MAX(ata_out.block_number) AS block_number,"
-              + " SUM(ata_in.amount) AS sum"
+              + " ata_in.address_number,"
+              + " SUM(ata_in.amount) AS sum_amount"
               + " FROM " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out"
               + " JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_in ata_in ON"
               + " ata_out.block_number = ata_in.block_number"
@@ -95,20 +111,34 @@ public class YmStakingBuilder {
               + " AND ata_out.type_number= ata_in.type_number"
               + " AND ata_out.token_number = ata_in.token_number"
               + " WHERE"
-              + " ata_out.block_number>?"
-              + " AND ata_out.token_number=?"
-              + " AND ata_out.address_number=?"
-              + " AND ata_in.address_number=?";
-      stakingAmountSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingAmountSelectSql));
+              + " ata_out.address_number=?"
+              + " AND ata_in.address_number IN (SELECT deposit_address_number FROM " + TOKEN_YIELDMACHINE_SCHEMA + ".deposit)"
+              + " GROUP BY"
+              + " ata_out.token_number,"
+              + " ata_in.address_number";
+      stakingDepositSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingDepositSelectSql));
 
-      String stakingSelectSql =
-          "SELECT * FROM " + TOKEN_YIELDMACHINE_SCHEMA + ".staking"
-              + " WHERE token_number=?"
-              + " AND liquidity_address_number=?"
-              + " AND deposit_address_number=?"
-              + " AND customer_address_number=?";
-      stakingSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingSelectSql));
+      String stakingWithdrawalSelectSql =
+          "SELECT"
+              + " ata_out.token_number,"
+              + " MAX(ata_out.block_number) AS block_number,"
+              + " ata_out.address_number,"
+              + " SUM(ata_in.amount) AS sum_amount"
+              + " FROM " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out"
+              + " JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_in ata_in ON"
+              + " ata_out.block_number = ata_in.block_number"
+              + " AND ata_out.transaction_number = ata_in.transaction_number"
+              + " AND ata_out.type_number= ata_in.type_number"
+              + " AND ata_out.token_number = ata_in.token_number"
+              + " WHERE"
+              + " ata_out.address_number IN (SELECT customer_address_number FROM " + TOKEN_YIELDMACHINE_SCHEMA + ".deposit)"
+              + " AND ata_in.address_number=?"
+              + " GROUP BY"
+              + " ata_out.token_number,"
+              + " ata_out.address_number";
+      stakingWithdrawalSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingWithdrawalSelectSql));
 
+      // ...
       String stakingInsertSql =
           "INSERT INTO " + TOKEN_YIELDMACHINE_SCHEMA + ".staking"
               + " (token_number, liquidity_address_number, deposit_address_number, customer_address_number"
@@ -138,7 +168,9 @@ public class YmStakingBuilder {
     LOGGER.trace("closeStatements()");
 
     try {
-      stakingSelectStatement.close();
+      stakingDepositSelectStatement.close();
+      stakingWithdrawalSelectStatement.close();
+
       stakingInsertStatement.close();
       stakingUpdateStatement.close();
     } catch (Exception e) {
@@ -150,212 +182,182 @@ public class YmStakingBuilder {
    * 
    */
   private void calcStakingBalance(
-      @Nonnull Connection connection,
-      @Nonnull TokenEnum token) throws DfxException {
+      int liquidityAddressNumber,
+      @Nonnull List<DepositDTO> depositDTOList) throws DfxException {
     LOGGER.trace("calcStakingBalance()");
 
     // ...
-    List<DepositDTO> depositDTOList = databaseBalanceHelper.getDepositDTOList();
+    Map<String, StakingData> depositAddressToStakingDataMap = getDepositAddressToStakingDataMap(liquidityAddressNumber);
+    Map<String, StakingData> customerAddressToStakingDataMap = getCustomerAddressToStakingDataMap(liquidityAddressNumber);
 
-    for (DepositDTO depositDTO : depositDTOList) {
-      calcBalance(connection, depositDTO, token);
-    }
-  }
+    // ...
+    for (TokenEnum token : TokenEnum.values()) {
+      Map<Integer, StakingDTO> depositAddressToStakingDTOMap = getDepositAddressToStakingDTOMap(token, liquidityAddressNumber);
 
-  /**
-   * 
-   */
-  private void calcBalance(
-      @Nonnull Connection connection,
-      @Nonnull DepositDTO depositDTO,
-      @Nonnull TokenEnum token) throws DfxException {
-    LOGGER.trace("calcBalance()");
+      for (DepositDTO depositDTO : depositDTOList) {
+        int depositAddressNumber = depositDTO.getDepositAddressNumber();
 
-    try {
-      int tokenNumber = token.getNumber();
-      int liquidityAddressNumber = depositDTO.getLiquidityAddressNumber();
-      int depositAddressNumber = depositDTO.getDepositAddressNumber();
-      int customerAddressNumber = depositDTO.getCustomerAddressNumber();
+        String depositKey = createKey(token.getNumber(), depositAddressNumber);
+        StakingData depositStakingData = depositAddressToStakingDataMap.get(depositKey);
 
-      // ...
-      StakingDTO stakingDTO = getStakingDTO(tokenNumber, liquidityAddressNumber, depositAddressNumber, customerAddressNumber);
+        if (null != depositStakingData) {
+          int customerAddressNumber = depositDTO.getCustomerAddressNumber();
+          String customerKey = createKey(token.getNumber(), customerAddressNumber);
+          StakingData customerStakingData = customerAddressToStakingDataMap.get(customerKey);
 
-      // ...
-      int stakingLastInBlockNumber = stakingDTO.getLastInBlockNumber();
-      int stakingLastOutBlockNumber = stakingDTO.getLastOutBlockNumber();
+          StakingDTO stakingDTO = depositAddressToStakingDTOMap.get(depositAddressNumber);
 
-      // ...
-      int voutStartBlockNumber = (-1 == stakingLastOutBlockNumber ? stakingLastInBlockNumber - 1 : stakingLastOutBlockNumber);
-
-      // ...
-      StakingDTO vinStakingDTO = calcInAmount(stakingLastInBlockNumber, tokenNumber, liquidityAddressNumber, depositAddressNumber);
-      StakingDTO voutStakingDTO = calcOutAmount(voutStartBlockNumber, stakingLastOutBlockNumber, tokenNumber, liquidityAddressNumber, customerAddressNumber);
-
-      // ...
-      int maxStakingLastInBlockNumber = stakingLastInBlockNumber;
-      int maxStakingLastOutBlockNumber = stakingLastOutBlockNumber;
-
-      maxStakingLastInBlockNumber = Math.max(maxStakingLastInBlockNumber, vinStakingDTO.getLastInBlockNumber());
-      maxStakingLastOutBlockNumber = Math.max(maxStakingLastOutBlockNumber, voutStakingDTO.getLastOutBlockNumber());
-
-      // ...
-      stakingDTO.setLastInBlockNumber(maxStakingLastInBlockNumber);
-      stakingDTO.addVin(vinStakingDTO.getVin());
-
-      stakingDTO.setLastOutBlockNumber(maxStakingLastOutBlockNumber);
-      stakingDTO.addVout(voutStakingDTO.getVout());
-
-      // ...
-      if (-1 != maxStakingLastInBlockNumber) {
-        if (-1 == stakingLastInBlockNumber
-            && -1 == stakingLastOutBlockNumber) {
-          insertStaking(stakingDTO);
-        } else if (stakingDTO.isInternalStateChanged()) {
-          updateStaking(stakingDTO);
+          if (null == stakingDTO) {
+            insert(token, liquidityAddressNumber, depositAddressNumber, customerAddressNumber, depositStakingData, customerStakingData);
+          } else {
+            update(stakingDTO, depositStakingData, customerStakingData);
+          }
         }
       }
-    } catch (DfxException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new DfxException("calcBalance", e);
     }
   }
 
   /**
    * 
    */
-  private StakingDTO getStakingDTO(
-      int tokenNumber,
+  private Map<String, StakingData> getDepositAddressToStakingDataMap(int liquidityAddressNumber) throws DfxException {
+    LOGGER.trace("getDepositAddressToStakingDataMap()");
+
+    try {
+      Map<String, StakingData> depositAddressToStakingDataMap = new HashMap<>();
+
+      stakingDepositSelectStatement.setInt(1, liquidityAddressNumber);
+
+      ResultSet resultSet = stakingDepositSelectStatement.executeQuery();
+
+      while (resultSet.next()) {
+        StakingData stakingData = new StakingData();
+
+        stakingData.tokenNumber = resultSet.getInt("token_number");
+        stakingData.blockNumber = resultSet.getInt("block_number");
+        stakingData.addressNumber = resultSet.getInt("address_number");
+        stakingData.amount = resultSet.getBigDecimal("sum_amount");
+
+        String key = createKey(stakingData.tokenNumber, stakingData.addressNumber);
+        depositAddressToStakingDataMap.put(key, stakingData);
+      }
+
+      resultSet.close();
+
+      return depositAddressToStakingDataMap;
+    } catch (Exception e) {
+      throw new DfxException("getDepositAddressToStakingDataMap", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private Map<String, StakingData> getCustomerAddressToStakingDataMap(int liquidityAddressNumber) throws DfxException {
+    LOGGER.trace("getCustomerAddressToStakingDataMap()");
+
+    try {
+      Map<String, StakingData> customerAddressToStakingDataMap = new HashMap<>();
+
+      stakingWithdrawalSelectStatement.setInt(1, liquidityAddressNumber);
+
+      ResultSet resultSet = stakingWithdrawalSelectStatement.executeQuery();
+
+      while (resultSet.next()) {
+        StakingData stakingData = new StakingData();
+
+        stakingData.tokenNumber = resultSet.getInt("token_number");
+        stakingData.blockNumber = resultSet.getInt("block_number");
+        stakingData.addressNumber = resultSet.getInt("address_number");
+        stakingData.amount = resultSet.getBigDecimal("sum_amount");
+
+        String key = createKey(stakingData.tokenNumber, stakingData.addressNumber);
+        customerAddressToStakingDataMap.put(key, stakingData);
+      }
+
+      resultSet.close();
+
+      return customerAddressToStakingDataMap;
+    } catch (Exception e) {
+      throw new DfxException("getCustomerAddressToStakingDataMap", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private Map<Integer, StakingDTO> getDepositAddressToStakingDTOMap(
+      @Nonnull TokenEnum token,
+      int liquidityAddressNumber) throws DfxException {
+    List<StakingDTO> stakingDTOList = databaseBalanceHelper.getStakingDTOListByLiquidityAdressNumber(token, liquidityAddressNumber);
+
+    Map<Integer, StakingDTO> depositAddressToStakingDTOMap = new HashMap<>();
+    stakingDTOList.forEach(dto -> depositAddressToStakingDTOMap.put(dto.getDepositAddressNumber(), dto));
+
+    return depositAddressToStakingDTOMap;
+  }
+
+  /**
+   * 
+   */
+  private String createKey(int tokenNumber, int addressNumber) {
+    return new StringBuilder().append(tokenNumber).append("/").append(addressNumber).toString();
+  }
+
+  /**
+   * 
+   */
+  private void insert(
+      TokenEnum token,
       int liquidityAddressNumber,
       int depositAddressNumber,
-      int customerAddressNumber) throws DfxException {
-    LOGGER.trace("getStakingDTO()");
+      int customerAddressNumber,
+      @Nonnull StakingData depositStakingData,
+      @Nullable StakingData customerStakingData) throws DfxException {
+    LOGGER.trace("insert()");
 
-    try {
-      StakingDTO stakingDTO = new StakingDTO(tokenNumber, liquidityAddressNumber, depositAddressNumber, customerAddressNumber);
+    StakingDTO stakingDTO = new StakingDTO(token.getNumber(), liquidityAddressNumber, depositAddressNumber, customerAddressNumber);
+    stakingDTO.setLastInBlockNumber(depositStakingData.blockNumber);
+    stakingDTO.setVin(depositStakingData.amount);
 
-      stakingSelectStatement.setInt(1, tokenNumber);
-      stakingSelectStatement.setInt(2, liquidityAddressNumber);
-      stakingSelectStatement.setInt(3, depositAddressNumber);
-      stakingSelectStatement.setInt(4, customerAddressNumber);
+    if (null == customerStakingData) {
+      stakingDTO.setLastOutBlockNumber(-1);
+      stakingDTO.setVout(BigDecimal.ZERO);
+    } else {
+      stakingDTO.setLastOutBlockNumber(customerStakingData.blockNumber);
+      stakingDTO.setVout(customerStakingData.amount);
+    }
 
-      ResultSet resultSet = stakingSelectStatement.executeQuery();
+    doInsert(stakingDTO);
+  }
 
-      if (resultSet.next()) {
-        stakingDTO.setLastInBlockNumber(resultSet.getInt("last_in_block_number"));
-        stakingDTO.setLastOutBlockNumber(resultSet.getInt("last_out_block_number"));
+  /**
+   * 
+   */
+  private void update(
+      @Nonnull StakingDTO stakingDTO,
+      @Nonnull StakingData depositStakingData,
+      @Nullable StakingData customerStakingData) throws DfxException {
+    LOGGER.trace("update()");
 
-        // ...
-        BigDecimal vin = resultSet.getBigDecimal("vin");
+    stakingDTO.setLastInBlockNumber(depositStakingData.blockNumber);
+    stakingDTO.setVin(depositStakingData.amount);
 
-        if (0 == BigDecimal.ZERO.compareTo(vin)) {
-          vin = BigDecimal.ZERO;
-        }
+    if (null != customerStakingData) {
+      stakingDTO.setLastOutBlockNumber(customerStakingData.blockNumber);
+      stakingDTO.setVout(customerStakingData.amount);
+    }
 
-        stakingDTO.setVin(vin);
-
-        // ...
-        BigDecimal vout = resultSet.getBigDecimal("vout");
-
-        if (0 == BigDecimal.ZERO.compareTo(vout)) {
-          vout = BigDecimal.ZERO;
-        }
-
-        stakingDTO.setVout(vout);
-
-        stakingDTO.keepInternalState();
-      }
-
-      resultSet.close();
-
-      return stakingDTO;
-    } catch (Exception e) {
-      throw new DfxException("getStakingDTO", e);
+    if (stakingDTO.isInternalStateChanged()) {
+      doUpdate(stakingDTO);
     }
   }
 
   /**
    * 
    */
-  private StakingDTO calcInAmount(
-      int lastInBlockNumber,
-      int tokenNumber,
-      int liquidityAddressNumber,
-      int depositAddressNumber) throws DfxException {
-    LOGGER.trace("calcInAmount()");
-
-    try {
-      stakingAmountSelectStatement.setInt(1, lastInBlockNumber);
-      stakingAmountSelectStatement.setInt(2, tokenNumber);
-      stakingAmountSelectStatement.setInt(3, liquidityAddressNumber);
-      stakingAmountSelectStatement.setInt(4, depositAddressNumber);
-
-      StakingDTO stakingDTO = new StakingDTO(tokenNumber, liquidityAddressNumber, depositAddressNumber, -1);
-
-      ResultSet resultSet = stakingAmountSelectStatement.executeQuery();
-
-      if (resultSet.next()) {
-        int blockNumber = resultSet.getInt("block_number");
-
-        if (!resultSet.wasNull()) {
-          stakingDTO.setLastInBlockNumber(blockNumber);
-          stakingDTO.setVin(resultSet.getBigDecimal("sum"));
-        }
-      }
-
-      resultSet.close();
-
-      return stakingDTO;
-    } catch (Exception e) {
-      throw new DfxException("calcInAmount", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private StakingDTO calcOutAmount(
-      int outStartBlockNumber,
-      int lastOutBlockNumber,
-      int tokenNumber,
-      int liquidityAddressNumber,
-      int customerAddressNumber) throws DfxException {
-    LOGGER.trace("calcOutAmount()");
-
-    try {
-      stakingAmountSelectStatement.setInt(1, outStartBlockNumber);
-      stakingAmountSelectStatement.setInt(2, tokenNumber);
-      stakingAmountSelectStatement.setInt(3, customerAddressNumber);
-      stakingAmountSelectStatement.setInt(4, liquidityAddressNumber);
-
-      StakingDTO stakingDTO = new StakingDTO(tokenNumber, liquidityAddressNumber, -1, customerAddressNumber);
-
-      ResultSet resultSet = stakingAmountSelectStatement.executeQuery();
-
-      if (resultSet.next()) {
-        int blockNumber = resultSet.getInt("block_number");
-
-        if (!resultSet.wasNull()) {
-          stakingDTO.setLastOutBlockNumber(blockNumber);
-          stakingDTO.setVout(resultSet.getBigDecimal("sum"));
-        }
-      } else {
-        stakingDTO.setVout(BigDecimal.ZERO);
-      }
-
-      resultSet.close();
-
-      return stakingDTO;
-    } catch (Exception e) {
-      throw new DfxException("calcOutAmount", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void insertStaking(@Nonnull StakingDTO stakingDTO) throws DfxException {
-    LOGGER.trace("insertStaking()");
+  private void doInsert(@Nonnull StakingDTO stakingDTO) throws DfxException {
+    LOGGER.trace("doInsert()");
 
     try {
       int tokenNumber = stakingDTO.getTokenNumber();
@@ -368,9 +370,6 @@ public class YmStakingBuilder {
       LOGGER.debug(
           "[INSERT] Token / Liquidity / Deposit / Customer: "
               + tokenNumber + " / " + liquidityAddressNumber + " / " + depositAddressNumber + " / " + customerAddressNumber);
-      LOGGER.debug(
-          "[INSERT] Last In / Last Out Block: "
-              + lastInBlockNumber + " / " + lastOutBlockNumber);
 
       stakingInsertStatement.setInt(1, tokenNumber);
       stakingInsertStatement.setInt(2, liquidityAddressNumber);
@@ -380,17 +379,18 @@ public class YmStakingBuilder {
       stakingInsertStatement.setBigDecimal(6, stakingDTO.getVin());
       stakingInsertStatement.setInt(7, lastOutBlockNumber);
       stakingInsertStatement.setBigDecimal(8, stakingDTO.getVout());
+
       stakingInsertStatement.execute();
     } catch (Exception e) {
-      throw new DfxException("insertStaking", e);
+      throw new DfxException("doInsert", e);
     }
   }
 
   /**
    * 
    */
-  private void updateStaking(@Nonnull StakingDTO stakingDTO) throws DfxException {
-    LOGGER.trace("updateStaking()");
+  private void doUpdate(@Nonnull StakingDTO stakingDTO) throws DfxException {
+    LOGGER.trace("doUpdate()");
 
     try {
       int tokenNumber = stakingDTO.getTokenNumber();
@@ -403,9 +403,6 @@ public class YmStakingBuilder {
       LOGGER.debug(
           "[UPDATE] Token / Liquidity / Deposit / Customer: "
               + tokenNumber + " / " + liquidityAddressNumber + " / " + depositAddressNumber + " / " + customerAddressNumber);
-      LOGGER.debug(
-          "[UPDATE] Last In / Last Out Block: "
-              + lastInBlockNumber + " / " + lastOutBlockNumber);
 
       stakingUpdateStatement.setInt(1, lastInBlockNumber);
       stakingUpdateStatement.setBigDecimal(2, stakingDTO.getVin());
@@ -419,7 +416,25 @@ public class YmStakingBuilder {
 
       stakingUpdateStatement.execute();
     } catch (Exception e) {
-      throw new DfxException("updateStaking", e);
+      throw new DfxException("doUpdate", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private class StakingData {
+    private int tokenNumber = -1;
+    private int blockNumber = -1;
+    private int addressNumber = -1;
+    private BigDecimal amount = BigDecimal.ZERO;
+
+    /**
+     * 
+     */
+    @Override
+    public String toString() {
+      return TransactionCheckerUtils.toJson(this);
     }
   }
 }

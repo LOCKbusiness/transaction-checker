@@ -228,8 +228,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       balanceBuilder.build(connection, TokenEnum.DFI);
 
       YmBalanceBuilder ymBalanceBuilder = new YmBalanceBuilder(network, databaseYieldmachineBalanceHelper);
-      ymBalanceBuilder.build(connection, TokenEnum.DFI);
-      ymBalanceBuilder.build(connection, TokenEnum.DUSD);
+      ymBalanceBuilder.build(connection);
 
       balanceBuilderErrorCounter = 0;
     } catch (DfxException e) {
@@ -252,8 +251,7 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
       stakingBuilder.build(connection, TokenEnum.DFI);
 
       YmStakingBuilder ymStakingBuilder = new YmStakingBuilder(network, databaseYieldmachineBalanceHelper);
-      ymStakingBuilder.build(connection, TokenEnum.DFI);
-      ymStakingBuilder.build(connection, TokenEnum.DUSD);
+      ymStakingBuilder.build(connection);
 
       stakingBuilderErrorCounter = 0;
     } catch (DfxException e) {
@@ -294,12 +292,11 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
     try {
       StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
           new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseStakingBalanceHelper);
-      stakingWithdrawalReservedCleaner.clean(connection, TOKEN_STAKING_SCHEMA, TokenEnum.DFI);
+      stakingWithdrawalReservedCleaner.clean(connection, TOKEN_STAKING_SCHEMA);
 
       StakingWithdrawalReservedCleaner yieldmaschineWithdrawalReservedCleaner =
           new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
-      yieldmaschineWithdrawalReservedCleaner.clean(connection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DFI);
-      yieldmaschineWithdrawalReservedCleaner.clean(connection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DUSD);
+      yieldmaschineWithdrawalReservedCleaner.clean(connection, TOKEN_YIELDMACHINE_SCHEMA);
 
       stakingWithdrawalReservedCleanerErrorCounter = 0;
     } catch (DfxException e) {

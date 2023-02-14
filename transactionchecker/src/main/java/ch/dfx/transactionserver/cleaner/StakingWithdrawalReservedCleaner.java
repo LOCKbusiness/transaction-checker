@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.events.MessageEvent;
@@ -56,8 +55,7 @@ public class StakingWithdrawalReservedCleaner {
    */
   public void clean(
       @Nonnull Connection connection,
-      @Nonnull String dbSchema,
-      @Nonnull TokenEnum token) throws DfxException {
+      @Nonnull String dbSchema) throws DfxException {
     LOGGER.debug("clean()");
 
     long startTime = System.currentTimeMillis();
@@ -65,7 +63,7 @@ public class StakingWithdrawalReservedCleaner {
     try {
       openStatements(connection, dbSchema);
 
-      List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = databaseBalanceHelper.getStakingWithdrawalReservedDTOList(token);
+      List<StakingWithdrawalReservedDTO> stakingWithdrawalReservedDTOList = databaseBalanceHelper.getStakingWithdrawalReservedDTOList();
 
       for (StakingWithdrawalReservedDTO stakingWithdrawalReservedDTO : stakingWithdrawalReservedDTOList) {
         doCleanup(connection, stakingWithdrawalReservedDTO);

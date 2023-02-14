@@ -19,7 +19,6 @@ import org.junit.Test;
 
 import ch.dfx.TestUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.logging.MessageEventBus;
 import ch.dfx.logging.MessageEventCollector;
@@ -199,7 +198,7 @@ public class StakingWithdrawalReservedCleanerTest {
 
     StakingWithdrawalReservedCleaner stakingWithdrawalReservedCleaner =
         new StakingWithdrawalReservedCleaner(NetworkEnum.TESTNET, databaseBlockHelper, databaseBalanceHelper);
-    stakingWithdrawalReservedCleaner.clean(connection, TOKEN_STAKING_SCHEMA, TokenEnum.DFI);
+    stakingWithdrawalReservedCleaner.clean(connection, TOKEN_STAKING_SCHEMA);
 
     databaseBlockHelper.closeStatements();
     databaseBalanceHelper.closeStatements();

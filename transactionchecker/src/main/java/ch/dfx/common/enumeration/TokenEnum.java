@@ -7,12 +7,15 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.TokenProvider;
 
 /**
- * DFI: Staking
- * DUSD: Yield Machine
+ * 
  */
 public enum TokenEnum {
   DFI,
-  DUSD;
+  DUSD,
+  BTC,
+  ETH,
+  USDT,
+  USDC;
 
   /**
    * 

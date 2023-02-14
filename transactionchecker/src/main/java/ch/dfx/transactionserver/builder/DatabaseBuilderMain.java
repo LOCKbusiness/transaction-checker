@@ -128,13 +128,11 @@ public class DatabaseBuilderMain {
 
     // ...
     YmBalanceBuilder ymBalanceBuilder = new YmBalanceBuilder(network, databaseBalanceHelper);
-    ymBalanceBuilder.build(connection, TokenEnum.DFI);
-    ymBalanceBuilder.build(connection, TokenEnum.DUSD);
+    ymBalanceBuilder.build(connection);
 
     // ...
     YmStakingBuilder ymStakingBuilder = new YmStakingBuilder(network, databaseBalanceHelper);
-    ymStakingBuilder.build(connection, TokenEnum.DFI);
-    ymStakingBuilder.build(connection, TokenEnum.DUSD);
+    ymStakingBuilder.build(connection);
 
     databaseBalanceHelper.closeStatements();
   }

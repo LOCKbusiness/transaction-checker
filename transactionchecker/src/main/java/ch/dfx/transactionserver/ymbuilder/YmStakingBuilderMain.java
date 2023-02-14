@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
@@ -61,8 +60,7 @@ public class YmStakingBuilderMain {
 
       // ...
       YmStakingBuilder ymStakingBuilder = new YmStakingBuilder(network, databaseBalanceHelper);
-      ymStakingBuilder.build(connection, TokenEnum.DFI);
-      ymStakingBuilder.build(connection, TokenEnum.DUSD);
+      ymStakingBuilder.build(connection);
 
       // ...
       databaseBalanceHelper.closeStatements();

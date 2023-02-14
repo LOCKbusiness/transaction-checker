@@ -42,9 +42,18 @@ public class TokenProvider {
     if (NetworkEnum.TESTNET == network) {
       instance.tokenToNumberMap.put(TokenEnum.DFI, 0);
       instance.tokenToNumberMap.put(TokenEnum.DUSD, 11);
+
+      instance.tokenToNumberMap.put(TokenEnum.BTC, 1);
+      instance.tokenToNumberMap.put(TokenEnum.ETH, 2);
+      instance.tokenToNumberMap.put(TokenEnum.USDT, 5);
+      instance.tokenToNumberMap.put(TokenEnum.USDC, 22);
     } else {
       instance.tokenToNumberMap.put(TokenEnum.DFI, 0);
       instance.tokenToNumberMap.put(TokenEnum.DUSD, 15);
+      instance.tokenToNumberMap.put(TokenEnum.BTC, 2);
+      instance.tokenToNumberMap.put(TokenEnum.ETH, 1);
+      instance.tokenToNumberMap.put(TokenEnum.USDT, 3);
+      instance.tokenToNumberMap.put(TokenEnum.USDC, 13);
     }
 
     // ...

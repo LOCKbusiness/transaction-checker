@@ -7,6 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
@@ -39,6 +42,7 @@ public class TokenDataImporter {
   private final H2DBManager databaseManager;
 
   // ...
+  private PreparedStatement tokenSelectStatement = null;
   private PreparedStatement tokenInsertStatement = null;
 
   /**
@@ -65,6 +69,8 @@ public class TokenDataImporter {
 
       openStatements(connection);
 
+      Map<Integer, String> tokenMap = getAllTokens();
+
       Path path = getPath();
 
       DataImporterTokenDataMap dataImporterTokenDataMap =
@@ -75,9 +81,14 @@ public class TokenDataImporter {
 
         if (dataImporterTokenData.isDAT()
             || dataImporterTokenData.isLPS()) {
-          tokenInsertStatement.setInt(1, Integer.parseInt(dataImporterTokenDataMapEntry.getKey()));
-          tokenInsertStatement.setString(2, dataImporterTokenData.getSymbol());
-          tokenInsertStatement.execute();
+          int tokenNumber = Integer.parseInt(dataImporterTokenDataMapEntry.getKey());
+          String tokenName = dataImporterTokenData.getSymbol();
+
+          if (!tokenMap.containsKey(tokenNumber)) {
+            tokenInsertStatement.setInt(1, tokenNumber);
+            tokenInsertStatement.setString(2, tokenName);
+            tokenInsertStatement.execute();
+          }
         }
       }
 
@@ -119,6 +130,10 @@ public class TokenDataImporter {
     LOGGER.trace("openStatements()");
 
     try {
+      String tokenSelectSql =
+          "SELECT * FROM " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".token";
+      tokenSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, tokenSelectSql));
+
       String tokenInsertSql =
           "INSERT INTO " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".token (number, name) VALUES (?, ?)";
       tokenInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, tokenInsertSql));
@@ -134,9 +149,33 @@ public class TokenDataImporter {
     LOGGER.trace("closeStatements()");
 
     try {
+      tokenSelectStatement.close();
       tokenInsertStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private Map<Integer, String> getAllTokens() throws DfxException {
+    LOGGER.trace("getAllTokens()");
+
+    try {
+      Map<Integer, String> tokenMap = new HashMap<>();
+
+      ResultSet resultSet = tokenSelectStatement.executeQuery();
+
+      while (resultSet.next()) {
+        tokenMap.put(resultSet.getInt("number"), resultSet.getString("name"));
+      }
+
+      resultSet.close();
+
+      return tokenMap;
+    } catch (Exception e) {
+      throw new DfxException("getAllTokens", e);
     }
   }
 }

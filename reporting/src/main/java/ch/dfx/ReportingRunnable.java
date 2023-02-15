@@ -20,7 +20,9 @@ import ch.dfx.logging.notifier.TelegramNotifier;
 import ch.dfx.reporting.BalanceReporting;
 import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
 import ch.dfx.reporting.VaultReporting;
+import ch.dfx.statistik.StakingStatistikProvider;
 import ch.dfx.statistik.StatistikReporting;
+import ch.dfx.statistik.YieldmachineStatistikProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
@@ -232,13 +234,21 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != statistikFileName
           && null != statistikDfiDataSheet
           && null != statistikDusdDataSheet) {
-        StatistikReporting statistikStakingReporting =
-            new StatistikReporting(network, databaseBlockHelper, databaseStakingBalanceHelper);
-        statistikStakingReporting.report(connection, TokenEnum.DFI, rootPath, statistikFileName, statistikDfiDataSheet);
+        // ...
+        StakingStatistikProvider stakingStatistikProvider =
+            new StakingStatistikProvider(network, databaseBlockHelper, databaseStakingBalanceHelper);
 
-        StatistikReporting statistikYieldmachineReporting =
-            new StatistikReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
-        statistikYieldmachineReporting.report(connection, TokenEnum.DUSD, rootPath, statistikFileName, statistikDusdDataSheet);
+        StatistikReporting stakingStatistikReporting =
+            new StatistikReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, stakingStatistikProvider);
+        stakingStatistikReporting.report(connection, TokenEnum.DFI, rootPath, statistikFileName, statistikDfiDataSheet);
+
+        // ...
+        YieldmachineStatistikProvider yieldmachineStatistikProvider =
+            new ch.dfx.statistik.YieldmachineStatistikProvider(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
+
+        StatistikReporting yieldmachineStatistikReporting =
+            new StatistikReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper, yieldmachineStatistikProvider);
+        yieldmachineStatistikReporting.report(connection, TokenEnum.DUSD, rootPath, statistikFileName, statistikDusdDataSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createStatistikReport", e);

@@ -39,10 +39,11 @@ public class StatistikReporting extends Reporting {
   public StatistikReporting(
       @Nonnull NetworkEnum network,
       @Nonnull DatabaseBlockHelper databaseBlockHelper,
-      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper,
+      @Nonnull StatistikProvider statistikProvider) {
     super(network, databaseBlockHelper, databaseBalanceHelper);
 
-    this.statistikProvider = new StatistikProvider(network, databaseBlockHelper, databaseBalanceHelper);
+    this.statistikProvider = statistikProvider;
   }
 
 //  /**

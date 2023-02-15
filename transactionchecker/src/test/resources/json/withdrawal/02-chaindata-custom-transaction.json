@@ -1,0 +1,13 @@
+{
+  "txid": "0627d1b0763daa844af6bb0ce2a3e6b7b76ae7a0a85284421a27509bf48e070f",
+  "type": "AnyAccountsToAccounts",
+  "valid": true,
+  "results": {
+    "from": {
+      "df1qasdh79grpyd2wltpamznqp2xdhq6kmkevafxgq": "800.00000000@0"
+    },
+    "to": {
+      "df1qek5mfpxxdz922rd0zpvkue4qtxj6r0qhdt6v7s": "800.00000000@0"
+    }
+  }
+}

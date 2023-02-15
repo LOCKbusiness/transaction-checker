@@ -1,0 +1,38 @@
+[
+  {
+    "id": "0627d1b0763daa844af6bb0ce2a3e6b7b76ae7a0a85284421a27509bf48e070f",
+    "issuerSignature": "H1HyhEFqo6+Xt4syNUDiAJEaXGQyo8QDy24AwF1Vz4udHj9+Zlm2NPv/oCqJSfpEu598UUZspEzp5aPGNjdEciw\u003d",
+    "rawTx": {
+      "id": "0627d1b0763daa844af6bb0ce2a3e6b7b76ae7a0a85284421a27509bf48e070f",
+      "hex": "04000000000101bbd29fd0efc5387fe2a5c1d0462c0e1e4f381c65f651b291d086a942b49c7ea00100000000ffffffff020000000000000000526a4c4f446654786101160014ec1b7f1503091aa77d61eec53005466dc1ab6ed9010000000000205fa01200000001160014cda9b484c6688aa50daf10596e66a059a5a1bc17010000000000205fa01200000000ffeb000000000000160014ec1b7f1503091aa77d61eec53005466dc1ab6ed9000114ec1b7f1503091aa77d61eec53005466dc1ab6ed900000000",
+      "scriptHex": "0014ec1b7f1503091aa77d61eec53005466dc1ab6ed9",
+      "prevouts": [
+        {
+          "txid": "a07e9cb442a986d091b251f6651c384f1e0e2c46d0c1a5e27f38c5efd09fd2bb",
+          "vout": 1,
+          "value": "0.00060618",
+          "script": {
+            "stack": [
+              {
+                "type": "OP_0",
+                "code": 0
+              },
+              {
+                "type": "OP_PUSHDATA",
+                "hex": "ec1b7f1503091aa77d61eec53005466dc1ab6ed9"
+              }
+            ]
+          },
+          "tokenId": 0
+        }
+      ]
+    },
+    "payload": {
+      "id": 4297,
+      "assetType": "Token",
+      "type": "Withdrawal",
+      "ownerWallet": "cold-wallet-a",
+      "accountIndex": 999
+    }
+  }
+]

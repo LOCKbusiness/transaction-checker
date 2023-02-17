@@ -64,7 +64,7 @@ public class DefiVaultManager {
 
     try {
       if (StringUtils.isNotEmpty(vaultId)
-          && checkRatioList.isEmpty()) {
+          && !checkRatioList.isEmpty()) {
         String message = doCheckRatio(vaultId, checkRatioList);
 
         if (prevStateVault != currStateVault) {

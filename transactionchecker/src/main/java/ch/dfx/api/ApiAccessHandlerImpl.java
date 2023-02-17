@@ -37,10 +37,10 @@ import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 
 /**
  * 
@@ -103,8 +103,8 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
     try {
       if (isAccessTokenExpired()) {
-        String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
-        String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/auth/sign-in";
+        String serverId = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.SERVER_ID);
+        String url = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_API_URL) + "/auth/sign-in";
         LOGGER.debug("URL: " + url);
 
         HttpPost httpPost = new HttpPost(url);
@@ -209,8 +209,8 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("fillOpenTransactionDTOList()");
 
     try {
-      String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
-      String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/open";
+      String serverId = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.SERVER_ID);
+      String url = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_API_URL) + "/transaction/open";
       LOGGER.debug("URL: " + url);
 
       HttpGet httpGet = new HttpGet(url);
@@ -261,8 +261,8 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("fillPendingWithdrawalDTOList()");
 
     try {
-      String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
-      String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/withdrawal/pending";
+      String serverId = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.SERVER_ID);
+      String url = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_API_URL) + "/withdrawal/pending";
       LOGGER.debug("URL: " + url);
 
       HttpGet httpGet = new HttpGet(url);
@@ -313,8 +313,8 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("doSendOpenTransactionVerified()");
 
     try {
-      String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
-      String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/verified";
+      String serverId = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.SERVER_ID);
+      String url = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/verified";
       LOGGER.debug("URL: " + url);
 
       HttpPut httpPut = new HttpPut(url);
@@ -366,8 +366,8 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("doSendOpenTransactionInvalidated()");
 
     try {
-      String serverId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.SERVER_ID);
-      String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/invalidated";
+      String serverId = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.SERVER_ID);
+      String url = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_API_URL) + "/transaction/" + openTransactionId + "/invalidated";
       LOGGER.debug("URL: " + url);
 
       HttpPut httpPut = new HttpPut(url);
@@ -461,8 +461,8 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
   private SignInDTO createLoginData() {
     SignInDTO loginData = new SignInDTO();
 
-    loginData.setAddress(ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_ADDRESS));
-    loginData.setSignature(ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_SIGNATURE));
+    loginData.setAddress(ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_ADDRESS));
+    loginData.setSignature(ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_SIGNATURE));
 
     return loginData;
   }

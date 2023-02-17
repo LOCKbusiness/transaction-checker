@@ -20,7 +20,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.custom.DefiCustomData;

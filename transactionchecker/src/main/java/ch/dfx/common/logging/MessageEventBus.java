@@ -1,4 +1,4 @@
-package ch.dfx.logging;
+package ch.dfx.common.logging;
 
 import java.util.Objects;
 

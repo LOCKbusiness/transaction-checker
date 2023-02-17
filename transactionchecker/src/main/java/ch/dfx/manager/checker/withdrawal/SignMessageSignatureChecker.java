@@ -16,11 +16,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.api.data.join.TransactionWithdrawalDTO;
 import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
 import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
-import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.manager.ManagerUtils;

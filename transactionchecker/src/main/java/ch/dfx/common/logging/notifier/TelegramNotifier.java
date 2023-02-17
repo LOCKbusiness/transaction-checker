@@ -1,4 +1,4 @@
-package ch.dfx.logging.notifier;
+package ch.dfx.common.logging.notifier;
 
 import java.net.InetAddress;
 

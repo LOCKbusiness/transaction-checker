@@ -2,7 +2,7 @@ package ch.dfx.defichain.data.price;
 
 import java.math.BigDecimal;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.defichain.data.ResultDataA;
 
 /**

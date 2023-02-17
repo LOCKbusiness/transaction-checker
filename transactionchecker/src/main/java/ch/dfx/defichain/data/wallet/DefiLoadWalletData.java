@@ -1,6 +1,6 @@
 package ch.dfx.defichain.data.wallet;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

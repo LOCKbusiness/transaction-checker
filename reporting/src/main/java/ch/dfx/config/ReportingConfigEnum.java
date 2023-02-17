@@ -1,0 +1,93 @@
+package ch.dfx.config;
+
+import javax.annotation.Nonnull;
+
+import ch.dfx.common.config.ConfigEntry;
+
+/**
+ * 
+ */
+public enum ReportingConfigEnum implements ConfigEntry {
+  // Telegram ...
+  TELEGRAM_AUTOMATIC_INFORMATION_BOT_TOKEN("telegram.automaticInformationBot.token"),
+  TELEGRAM_AUTOMATIC_INFORMATION_BOT_CHAT_ID("telegram.automaticInformationBot.chatId"),
+
+  TELEGRAM_AUTOMATIC_VAULT_INFORMATION_TOKEN("telegram.automaticVaultInformationBot.token"),
+  TELEGRAM_AUTOMATIC_VAULT_INFORMATION_CHAT_ID("telegram.automaticVaultInformationBot.chatId"),
+
+  // Run Period für Scheduler ...
+  RUN_PERIOD_REPORT("scheduler.run_period_report"),
+  RUN_PERIOD_DEFIMANAGER("scheduler.run_period_defimanager"),
+
+  // Yield Machine
+  YM_LIQUIDITY_ADDRESS("yieldmachine.liquidity_address"),
+
+  YM_VAULT1_ADDRESS("yieldmachine.vault1.address"),
+  YM_VAULT1_ID("yieldmachine.vault1.id"),
+  YM_VAULT1_CHECK_RATIO("yieldmachine.vault1.check_ratio"),
+
+  YM_VAULT2_ADDRESS("yieldmachine.vault2.address"),
+  YM_VAULT2_ID("yieldmachine.vault2.id"),
+  YM_VAULT2_CHECK_RATIO("yieldmachine.vault2.check_ratio"),
+
+  YM_VAULT3_ADDRESS("yieldmachine.vault3.address"),
+  YM_VAULT3_ID("yieldmachine.vault3.id"),
+  YM_VAULT3_CHECK_RATIO("yieldmachine.vault3.check_ratio"),
+
+  // Reporting ...
+  GOOGLE_ROOT_PATH("google.root_path"),
+
+  GOOGLE_BALANCE_FILENAME("google.balance.filename"),
+  GOOGLE_BALANCE_STAKING_SHEET("google.balance.staking_sheet"),
+  GOOGLE_BALANCE_DFI_YIELDMACHINE_SHEET("google.balance.dfi_yieldmachine_sheet"),
+  GOOGLE_BALANCE_DUSD_YIELDMACHINE_SHEET("google.balance.dusd_yieldmachine_sheet"),
+  GOOGLE_BALANCE_BTC_YIELDMACHINE_SHEET("google.balance.btc_yieldmachine_sheet"),
+  GOOGLE_BALANCE_ETH_YIELDMACHINE_SHEET("google.balance.eth_yieldmachine_sheet"),
+  GOOGLE_BALANCE_USDT_YIELDMACHINE_SHEET("google.balance.usdt_yieldmachine_sheet"),
+  GOOGLE_BALANCE_USDC_YIELDMACHINE_SHEET("google.balance.usdc_yieldmachine_sheet"),
+
+  GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_FILENAME("google.liquidity_masternode_staking_check.filename"),
+  GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_SHEET("google.liquidity_masternode_staking_check.sheet"),
+
+  GOOGLE_VAULT_CHECK_FILENAME("google.vault_check.filename"),
+  GOOGLE_VAULT_CHECK_SHEET("google.vault_check.sheet"),
+
+  // Statistk Reporting ...
+  GOOGLE_STATISTIK_FILENAME("google.statistik.filename"),
+  GOOGLE_STATISTIK_DFI_DATA_SHEET("google.statistik.dfi_data_sheet"),
+  GOOGLE_STATISTIK_DUSD_DATA_SHEET("google.statistik.dusd_data_sheet"),
+
+  // H2 Database ...
+  H2_DB_DIR("database.[ENVIRONMENT].db_dir"),
+  H2_DB_NAME("database.[ENVIRONMENT].db_name"),
+
+  H2_SERVER_TCP_HOST("database.[ENVIRONMENT].server_tcp_host"),
+  H2_SERVER_TCP_PORT("database.[ENVIRONMENT].server_tcp_port"),
+
+  H2_USERNAME("database.[ENVIRONMENT].[HOST_ID].username"),
+  H2_PASSWORD("database.[ENVIRONMENT].[HOST_ID].password"),
+
+  // DefiChain ...
+  DFI_URL("defichain.[ENVIRONMENT].[HOST_ID].url"),
+
+  DFI_RPC_USERNAME("defichain.rpc_username"),
+  DFI_RPC_PASSWORD("defichain.rpc_password");
+
+  // ...
+  private final String absoluteName;
+
+  /**
+   * 
+   */
+  private ReportingConfigEnum(@Nonnull String absoluteName) {
+    this.absoluteName = absoluteName;
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public String getAbsolutName() {
+    return absoluteName;
+  }
+}

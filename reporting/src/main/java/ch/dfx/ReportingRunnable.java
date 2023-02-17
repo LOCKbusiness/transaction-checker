@@ -12,11 +12,11 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.enumeration.TokenEnum;
-import ch.dfx.common.provider.ConfigPropertyProvider;
-import ch.dfx.logging.notifier.TelegramNotifier;
+import ch.dfx.common.logging.notifier.TelegramNotifier;
+import ch.dfx.config.ReportingConfigEnum;
 import ch.dfx.reporting.BalanceReporting;
 import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
 import ch.dfx.reporting.VaultReporting;
@@ -127,15 +127,15 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("createStakingBalanceReport() ...");
 
     try {
-      String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
-      String balanceFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_FILENAME);
-      String stakingBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_STAKING_SHEET);
-      String dfiYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_DFI_YIELDMACHINE_SHEET);
-      String dusdYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_DUSD_YIELDMACHINE_SHEET);
-      String btcYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_BTC_YIELDMACHINE_SHEET);
-      String ethYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_ETH_YIELDMACHINE_SHEET);
-      String usdtYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_USDT_YIELDMACHINE_SHEET);
-      String usdcYieldmachineBalanceSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_BALANCE_USDC_YIELDMACHINE_SHEET);
+      String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
+      String balanceFileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_FILENAME);
+      String stakingBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_STAKING_SHEET);
+      String dfiYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_DFI_YIELDMACHINE_SHEET);
+      String dusdYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_DUSD_YIELDMACHINE_SHEET);
+      String btcYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_BTC_YIELDMACHINE_SHEET);
+      String ethYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_ETH_YIELDMACHINE_SHEET);
+      String usdtYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_USDT_YIELDMACHINE_SHEET);
+      String usdcYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_USDC_YIELDMACHINE_SHEET);
 
       if (null != rootPath
           && null != balanceFileName
@@ -175,9 +175,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("createLiquidityMasternodeStakingBalanceReport() ...");
 
     try {
-      String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
-      String checkFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_FILENAME);
-      String checkSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_SHEET);
+      String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
+      String checkFileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_FILENAME);
+      String checkSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_SHEET);
 
       if (null != rootPath
           && null != checkFileName
@@ -202,9 +202,9 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("createVaultReport() ...");
 
     try {
-      String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
-      String checkFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_VAULT_CHECK_FILENAME);
-      String checkSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_VAULT_CHECK_SHEET);
+      String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
+      String checkFileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_VAULT_CHECK_FILENAME);
+      String checkSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_VAULT_CHECK_SHEET);
 
       if (null != rootPath
           && null != checkFileName
@@ -225,10 +225,10 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
     LOGGER.trace("createStatistikReport() ...");
 
     try {
-      String rootPath = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_ROOT_PATH);
-      String statistikFileName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STATISTIK_FILENAME);
-      String statistikDfiDataSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STATISTIK_DFI_DATA_SHEET);
-      String statistikDusdDataSheet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.GOOGLE_STATISTIK_DUSD_DATA_SHEET);
+      String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
+      String statistikFileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_STATISTIK_FILENAME);
+      String statistikDfiDataSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_STATISTIK_DFI_DATA_SHEET);
+      String statistikDusdDataSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_STATISTIK_DUSD_DATA_SHEET);
 
       if (null != rootPath
           && null != statistikFileName
@@ -268,8 +268,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         logInfoBuilder.append(logInfo).append("\n");
       }
 
-      String telegramToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_TOKEN);
-      String telegramChatId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_CHAT_ID);
+      String telegramToken = ConfigProvider.getInstance().getValue(ReportingConfigEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_TOKEN);
+      String telegramChatId = ConfigProvider.getInstance().getValue(ReportingConfigEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_CHAT_ID);
 
       if (null != telegramToken
           && null != telegramChatId) {

@@ -1,4 +1,4 @@
-package ch.dfx.logging;
+package ch.dfx.common.logging;
 
 import java.util.List;
 
@@ -7,8 +7,8 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.logging.events.MessageEvent;
-import ch.dfx.logging.notifier.TelegramNotifier;
+import ch.dfx.common.logging.events.MessageEvent;
+import ch.dfx.common.logging.notifier.TelegramNotifier;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
 /**

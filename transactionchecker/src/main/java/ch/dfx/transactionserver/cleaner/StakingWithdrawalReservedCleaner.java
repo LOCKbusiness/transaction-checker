@@ -15,8 +15,8 @@ import org.apache.logging.log4j.Logger;
 
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.logging.MessageEventBus;
-import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
+import ch.dfx.common.logging.MessageEventBus;
+import ch.dfx.common.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.transactionserver.data.StakingWithdrawalReservedDTO;
 import ch.dfx.transactionserver.data.TransactionDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;

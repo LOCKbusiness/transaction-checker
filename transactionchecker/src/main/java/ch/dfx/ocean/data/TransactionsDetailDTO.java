@@ -2,7 +2,7 @@ package ch.dfx.ocean.data;
 
 import java.math.BigDecimal;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

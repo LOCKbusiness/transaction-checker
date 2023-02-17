@@ -5,7 +5,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -13,7 +12,7 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.errorhandling.DfxException;
 
 /**
@@ -74,24 +73,16 @@ public class EncryptionForSecretsMain {
       LOGGER.error("usage: --password=[PASSWORD]");
     } else {
       // ...
-      File testnetRootDirectory = Paths.get("", "config", "properties", "testnet").toFile();
-      File stagnetRootDirectory = Paths.get("", "config", "properties", "stagnet").toFile();
-      File mainnetRootDirectory = Paths.get("", "config", "properties", "mainnet").toFile();
+      File configRootDirectory = Paths.get("", "config", "global").toFile();
 
+      // ...
       List<File> fileList = new ArrayList<>();
 
-      fileList.add(new File(testnetRootDirectory, "config.secret.properties"));
-      fileList.add(new File(testnetRootDirectory, "macos/config.secret.properties"));
-      fileList.add(new File(testnetRootDirectory, "windows/config.secret.properties"));
+      fileList.add(new File(configRootDirectory, "config-testnet.json"));
+      fileList.add(new File(configRootDirectory, "config-stagnet.json"));
+      fileList.add(new File(configRootDirectory, "config-mainnet.json"));
 
-      fileList.add(new File(stagnetRootDirectory, "config.secret.properties"));
-      fileList.add(new File(stagnetRootDirectory, "macos/config.secret.properties"));
-      fileList.add(new File(stagnetRootDirectory, "windows/config.secret.properties"));
-
-      fileList.add(new File(mainnetRootDirectory, "config.secret.properties"));
-      fileList.add(new File(mainnetRootDirectory, "macos/config.secret.properties"));
-      fileList.add(new File(mainnetRootDirectory, "windows/config.secret.properties"));
-
+      // ...
       String password = optionalPasswordArgument.get().split("=")[1];
 
       for (File inputFile : fileList) {
@@ -128,12 +119,12 @@ public class EncryptionForSecretsMain {
 
     EncryptionForSecrets encryption = new EncryptionForSecrets();
 
-    Properties decryptedProperties = encryption.decrypt(encryptedFile, password);
+    String decryptedFileContent = encryption.decrypt(encryptedFile, password);
 
-    if (null == decryptedProperties) {
+    if (null == decryptedFileContent) {
       LOGGER.error("File '" + encryptedFile + "' cannot be decrypted ...");
     } else {
-      LOGGER.debug("Decrypted: " + decryptedProperties);
+      LOGGER.debug("Decrypted: " + decryptedFileContent);
     }
   }
 }

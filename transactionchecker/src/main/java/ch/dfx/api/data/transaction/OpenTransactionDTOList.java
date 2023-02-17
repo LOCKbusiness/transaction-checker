@@ -3,7 +3,7 @@ package ch.dfx.api.data.transaction;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

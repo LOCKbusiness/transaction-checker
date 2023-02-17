@@ -5,13 +5,13 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.ApiAccessHandlerImpl;
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.handler.DefiWalletHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -42,10 +42,10 @@ public class OpenTransactionManagerMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
-      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment, args);
 
       // ...
-      String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+      String wallet = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_WALLET_NAME);
 
       if (null != wallet) {
         DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();

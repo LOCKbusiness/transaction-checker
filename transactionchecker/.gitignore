@@ -32,3 +32,4 @@ config.json
 config.secret.properties
 config.secret.enc
 
+/config/global/config*

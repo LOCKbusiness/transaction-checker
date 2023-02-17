@@ -1,7 +1,6 @@
-package ch.dfx.common;
+package ch.dfx;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -10,7 +9,6 @@ import java.sql.Connection;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Properties;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,15 +30,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.common.provider.TokenProvider;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.defichain.provider.DefiDataProviderImpl;
-import ch.dfx.security.EncryptionForSecrets;
 
 /**
  * 
@@ -144,72 +141,12 @@ public class TransactionCheckerUtils {
    */
   public static void setupGlobalProvider(
       @Nonnull NetworkEnum network,
-      @Nonnull EnvironmentEnum environment) throws DfxException {
+      @Nonnull EnvironmentEnum environment,
+      @Nonnull String[] args) throws DfxException {
     LOGGER.trace("setupGlobalProvider()");
 
     setupTokenProvider(network);
-    setupConfigPropertyProvider(network, environment);
-  }
-
-  /**
-   * 
-   */
-  private static void setupConfigPropertyProvider(
-      @Nonnull NetworkEnum network,
-      @Nonnull EnvironmentEnum environment) throws DfxException {
-    LOGGER.trace("setupConfigPropertyProvider()");
-
-    // ...
-    File configDirectory = Paths.get("config", "properties", network.toString()).toFile();
-
-    File configFile = new File(configDirectory, "config.properties");
-    File configSecretEncFile = new File(configDirectory, "config.secret.enc");
-
-    // ...
-    File configEnvDirectory = new File(configDirectory, environment.toString());
-
-    File configEnvFile = new File(configEnvDirectory, "config.properties");
-    File configEnvSecretEncFile = new File(configEnvDirectory, "config.secret.enc");
-
-    // ...
-    Properties properties = new Properties();
-
-    // Environment specific properties ...
-    LOGGER.trace("configFileName: '" + configEnvFile.getAbsolutePath() + "'...");
-
-    try (FileInputStream inputStream = new FileInputStream(configEnvFile)) {
-      properties.load(inputStream);
-    } catch (Exception e) {
-      throw new DfxException("loading '" + configEnvFile.getAbsolutePath() + "' ...", e);
-    }
-
-    // Global Properties ...
-    LOGGER.trace("configFileName: '" + configFile.getAbsolutePath() + "'...");
-
-    try (FileInputStream inputStream = new FileInputStream(configFile)) {
-      properties.load(inputStream);
-    } catch (Exception e) {
-      throw new DfxException("loading '" + configFile.getAbsolutePath() + "' ...", e);
-    }
-
-    // Secret Properties ...
-    EncryptionForSecrets encryptionForSecrets = new EncryptionForSecrets();
-    String secretEncodingPassword = System.getenv("DFX_SEP");
-
-    if (null != secretEncodingPassword) {
-      LOGGER.trace("configFileName: '" + configEnvSecretEncFile.getAbsolutePath() + "'...");
-
-      Properties configEnvSecretProperties = encryptionForSecrets.decrypt(configEnvSecretEncFile, secretEncodingPassword);
-      properties.putAll(configEnvSecretProperties);
-
-      // Global Secret Properties ...
-      LOGGER.trace("configFileName: '" + configSecretEncFile.getAbsolutePath() + "'...");
-
-      Properties configSecretProperties = encryptionForSecrets.decrypt(configSecretEncFile, secretEncodingPassword);
-      properties.putAll(configSecretProperties);
-    }
-
-    ConfigPropertyProvider.setup(properties);
+    setupConfigProvider(network, environment, args);
   }
 
   /**
@@ -219,6 +156,18 @@ public class TransactionCheckerUtils {
     LOGGER.trace("setupTokenProvider()");
 
     TokenProvider.setup(network);
+  }
+
+  /**
+   * 
+   */
+  private static void setupConfigProvider(
+      @Nonnull NetworkEnum network,
+      @Nonnull EnvironmentEnum environment,
+      @Nonnull String[] args) throws DfxException {
+    LOGGER.trace("setupConfigProvider()");
+
+    ConfigProvider.setup(network, environment, args);
   }
 
   /**
@@ -241,8 +190,8 @@ public class TransactionCheckerUtils {
   public static DefiDataProvider createDefiDataProvider() {
     LOGGER.trace("createDefiDataProvider()");
 
-    String username = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_RPC_USERNAME);
-    String password = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_RPC_PASSWORD);
+    String username = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_RPC_USERNAME);
+    String password = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_RPC_PASSWORD);
 
     UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
 

@@ -2,7 +2,7 @@ package ch.dfx.transactionserver.importer.data;
 
 import java.util.LinkedHashMap;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

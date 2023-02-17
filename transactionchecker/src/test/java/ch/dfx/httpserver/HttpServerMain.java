@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.httpserver.handler.APISignInHandler;
@@ -55,7 +55,7 @@ public class HttpServerMain {
       ((DefaultShutdownCallbackRegistry) factory.getShutdownCallbackRegistry()).stop();
 
       // ...
-      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment, args);
 
       // ...
       Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));

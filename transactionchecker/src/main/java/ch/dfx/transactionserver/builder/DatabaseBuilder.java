@@ -17,11 +17,11 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.TransactionCheckerUtils;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.data.block.DefiBlockData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
@@ -100,8 +100,8 @@ public class DatabaseBuilder {
       nextBlockNumber = DatabaseUtils.getNextBlockNumber(network, connection);
 
       // ...
-      int syncLoop = Integer.parseInt(ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SYNC_LOOP));
-      int syncCommit = Integer.parseInt(ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SYNC_COMMIT));
+      int syncLoop = Integer.parseInt(ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_SYNC_LOOP));
+      int syncCommit = Integer.parseInt(ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_SYNC_COMMIT));
       LOGGER.debug("Sync Loop:   " + syncLoop);
       LOGGER.debug("Sync Commit: " + syncCommit);
 

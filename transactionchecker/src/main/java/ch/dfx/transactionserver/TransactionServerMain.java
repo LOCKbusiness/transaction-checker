@@ -13,18 +13,18 @@ import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 import org.h2.tools.Server;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.TransactionCheckerUtils;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.common.logging.MessageEventBus;
+import ch.dfx.common.logging.MessageEventCollector;
+import ch.dfx.common.logging.MessageEventProvider;
+import ch.dfx.common.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.defichain.handler.DefiWalletHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
-import ch.dfx.logging.MessageEventBus;
-import ch.dfx.logging.MessageEventCollector;
-import ch.dfx.logging.MessageEventProvider;
-import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.manager.ManagerRunnable;
 import ch.dfx.process.ProcessInfoProvider;
 import ch.dfx.transactionserver.builder.DatabaseBuilder;
@@ -78,7 +78,7 @@ public class TransactionServerMain {
       TransactionCheckerUtils.initLog4j("log4j2-transactionserver.xml");
 
       // ...
-      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));
@@ -181,9 +181,9 @@ public class TransactionServerMain {
       }
 
       // ...
-      int runPeriodDatabase = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DATABASE, 30);
-      int runPeriodAPI = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_API, 60);
-      int runPeriodWatchdog = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_WATCHDOG, 600);
+      int runPeriodDatabase = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RUN_PERIOD_DATABASE, 30);
+      int runPeriodAPI = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RUN_PERIOD_API, 60);
+      int runPeriodWatchdog = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RUN_PERIOD_WATCHDOG, 600);
 
       LOGGER.debug("run period database: " + runPeriodDatabase);
       LOGGER.debug("run period api:      " + runPeriodAPI);
@@ -222,7 +222,7 @@ public class TransactionServerMain {
 
     MessageEventBus.getInstance().register(messageEventCollector);
 
-    int runPeriodMessageEvent = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
+    int runPeriodMessageEvent = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
 
     if (60 <= runPeriodMessageEvent) {
       SchedulerProvider.getInstance().add(messageEventProvider, 30, runPeriodMessageEvent, TimeUnit.SECONDS);
@@ -262,7 +262,7 @@ public class TransactionServerMain {
     LOGGER.debug("loadWallet()");
 
     if (NetworkEnum.STAGNET != network) {
-      String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+      String wallet = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_WALLET_NAME);
 
       if (null != wallet) {
         DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
@@ -283,7 +283,7 @@ public class TransactionServerMain {
 
     try {
       if (NetworkEnum.STAGNET != network) {
-        String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
+        String wallet = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_WALLET_NAME);
 
         if (null != wallet) {
           DefiDataProvider dataProvider = TransactionCheckerUtils.createDefiDataProvider();
@@ -354,8 +354,8 @@ public class TransactionServerMain {
 
     try {
       if (NetworkEnum.STAGNET != network) {
-        String tcpPort = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SERVER_TCP_PORT);
-        String databaseDirectory = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_DIR);
+        String tcpPort = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_SERVER_TCP_PORT);
+        String databaseDirectory = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_DB_DIR);
         LOGGER.debug("TCP PORT: " + tcpPort);
         LOGGER.debug("DATABASE DIRECTORY: " + databaseDirectory);
 

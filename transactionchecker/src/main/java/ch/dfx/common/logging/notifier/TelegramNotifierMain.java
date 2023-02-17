@@ -1,21 +1,23 @@
-package ch.dfx.logging.notifier;
+package ch.dfx.common.logging.notifier;
 
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.TransactionCheckerUtils;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 
 /**
  * 
  */
-public class EmailNotifierMain {
-  private static final Logger LOGGER = LogManager.getLogger(EmailNotifierMain.class);
+public class TelegramNotifierMain {
+  private static final Logger LOGGER = LogManager.getLogger(TelegramNotifierMain.class);
 
-  private static final String IDENTIFIER = "emailnotifier";
+  private static final String IDENTIFIER = "telegramnotifier";
 
   /**
    * 
@@ -38,7 +40,7 @@ public class EmailNotifierMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
-      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));
@@ -46,8 +48,14 @@ public class EmailNotifierMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      EmailNotifier emailNotifier = new EmailNotifier();
-      emailNotifier.sendMessage("This is a test e-mail from the Transaction Check Server");
+      String telegramToken = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_TOKEN);
+      String telegramChatId = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_CHAT_ID);
+
+      if (null != telegramToken
+          && null != telegramChatId) {
+        TelegramNotifier telegramNotifier = new TelegramNotifier();
+        telegramNotifier.sendMessage(telegramToken, telegramChatId, "Hello World");
+      }
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

@@ -2,7 +2,7 @@ package ch.dfx.api.data.withdrawal;
 
 import java.util.ArrayList;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

@@ -5,9 +5,9 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.provider.DefiDataProvider;
 
 /**
@@ -31,9 +31,9 @@ public class DefiMessageHandler {
   public String signMessage(@Nonnull String message) throws DfxException {
     LOGGER.trace("signMessage()");
 
-    String wallet = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_NAME);
-    String password = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_PASSWORD);
-    String signAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_WALLET_SIGN_ADDRESS);
+    String wallet = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_WALLET_NAME);
+    String password = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_WALLET_PASSWORD);
+    String signAddress = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_WALLET_SIGN_ADDRESS);
 
     if (null == wallet) {
       throw new DfxException("wallet is null");

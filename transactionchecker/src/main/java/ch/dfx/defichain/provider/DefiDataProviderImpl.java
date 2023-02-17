@@ -27,9 +27,9 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.data.ResultDataA;
 import ch.dfx.defichain.data.ResultErrorData;
 import ch.dfx.defichain.data.account.DefiAccountResultData;
@@ -598,7 +598,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   private void setHttpURI(@Nullable String wallet) {
     // ...
-    String url = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_URL);
+    String url = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_URL);
 
     if (null != wallet) {
       url += "/wallet/" + wallet;

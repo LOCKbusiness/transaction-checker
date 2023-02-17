@@ -13,8 +13,8 @@ import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.enumeration.PropertyEnum;
-import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 
 /**
  * 
@@ -26,7 +26,7 @@ public class APISignInHandler implements HttpRequestHandler {
   public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
     LOGGER.debug("handle() ...");
 
-    String testToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.LOCK_API_TEST_TOKEN);
+    String testToken = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_API_TEST_TOKEN);
 
     // ...
     StringEntity entity = new StringEntity(

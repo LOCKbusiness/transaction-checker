@@ -2,7 +2,7 @@ package ch.dfx.defichain.data.custom;
 
 import java.util.Map;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

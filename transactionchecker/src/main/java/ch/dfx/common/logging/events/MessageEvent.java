@@ -1,11 +1,11 @@
-package ch.dfx.logging.events;
+package ch.dfx.common.logging.events;
 
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

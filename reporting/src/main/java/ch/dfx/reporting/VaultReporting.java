@@ -21,12 +21,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.config.ReportingConfigEnum;
 import ch.dfx.defichain.data.pool.DefiPoolPairData;
 import ch.dfx.defichain.data.price.DefiFixedIntervalPriceData;
 import ch.dfx.defichain.data.vault.DefiListVaultData;
@@ -96,10 +96,10 @@ public class VaultReporting extends Reporting {
     try {
       BigDecimal totalStakingBalance = getTotalStakingBalance(connection, token);
 
-      String liquidityAddress = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_LIQUIDITY_ADDRESS, "");
-      String vault1Address = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT1_ADDRESS, "");
-      // String vault2Address = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT2_ADDRESS, "");
-      // String vault3Address = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT3_ADDRESS, "");
+      String liquidityAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_LIQUIDITY_ADDRESS, "");
+      String vault1Address = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT1_ADDRESS, "");
+      // String vault2Address = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT2_ADDRESS, "");
+      // String vault3Address = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT3_ADDRESS, "");
 
       // ...
       Map<String, BigDecimal> liquidityTokenToAmountMap = createTokenToAmountMap(liquidityAddress);

@@ -2,7 +2,7 @@ package ch.dfx.api.data.withdrawal;
 
 import java.math.BigDecimal;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.TokenEnum;
 
 /**

@@ -5,7 +5,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.transactionserver.database.H2DBManager;
@@ -40,7 +40,7 @@ public class CustomTransactionUpdaterMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
-      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));

@@ -4,6 +4,7 @@
 # Log directory and Log files
 /logs/
 *.log
+*.lock
 
 # Backup files
 *~
@@ -18,6 +19,9 @@
 /data/
 
 # Secrets
+databaseConnectionData.json
+config.json
 config.secret.properties
 config.secret.enc
 
+/config/global/config*

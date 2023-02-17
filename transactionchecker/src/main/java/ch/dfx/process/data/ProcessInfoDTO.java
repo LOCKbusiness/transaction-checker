@@ -2,7 +2,7 @@ package ch.dfx.process.data;
 
 import java.io.Serializable;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

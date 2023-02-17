@@ -11,9 +11,9 @@ import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.RunScript;
 import org.h2.tools.Script;
 
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 
 /**
  * JDBC URL: "jdbc:h2:C:/Data/Database/h2/[DATABASE_NAME]"
@@ -37,8 +37,8 @@ public class H2DBManagerImpl implements H2DBManager {
   private String getDirectoryUrl() {
     LOGGER.trace("getDirectoryUrl()");
 
-    String h2Dir = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_DIR);
-    String h2DBName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_NAME);
+    String h2Dir = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_DB_DIR);
+    String h2DBName = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_DB_NAME);
 
     return jdbcUrlPrefix + h2Dir + "/" + h2DBName;
   }
@@ -49,9 +49,9 @@ public class H2DBManagerImpl implements H2DBManager {
   private String getTcpUrl() {
     LOGGER.trace("getTcpUrl()");
 
-    String tcpHost = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SERVER_TCP_HOST);
-    String tcpPort = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_SERVER_TCP_PORT);
-    String h2DBName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_NAME);
+    String tcpHost = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_SERVER_TCP_HOST);
+    String tcpPort = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_SERVER_TCP_PORT);
+    String h2DBName = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_DB_NAME);
 
     return jdbcUrlPrefix + tcpHost + ":" + tcpPort + "/" + h2DBName;
   }
@@ -67,8 +67,8 @@ public class H2DBManagerImpl implements H2DBManager {
       String jdbcUrl = getTcpUrl();
       LOGGER.trace("JDBC URL: " + jdbcUrl);
 
-      String jdbcUsername = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_USERNAME);
-      String jdbcPassword = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_PASSWORD);
+      String jdbcUsername = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_USERNAME);
+      String jdbcPassword = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_PASSWORD);
 
       Connection connection = DriverManager.getConnection(jdbcUrl, jdbcUsername, jdbcPassword);
       connection.setAutoCommit(false);
@@ -106,11 +106,11 @@ public class H2DBManagerImpl implements H2DBManager {
       String jdbcUrl = getDirectoryUrl();
       LOGGER.debug("JDBC URL: " + jdbcUrl);
 
-      String h2Dir = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_DIR);
-      String h2DBName = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_DB_NAME);
+      String h2Dir = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_DB_DIR);
+      String h2DBName = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_DB_NAME);
 
-      String jdbcUsername = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_USERNAME);
-      String jdbcPassword = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.H2_PASSWORD);
+      String jdbcUsername = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_USERNAME);
+      String jdbcPassword = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.H2_PASSWORD);
 
       // ...
       File dbFile = new File(h2Dir, h2DBName + ".mv.db");

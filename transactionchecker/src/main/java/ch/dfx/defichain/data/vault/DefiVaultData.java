@@ -3,7 +3,7 @@ package ch.dfx.defichain.data.vault;
 import java.math.BigDecimal;
 import java.util.List;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

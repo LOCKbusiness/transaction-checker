@@ -14,17 +14,17 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.TransactionCheckerUtils;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.common.logging.MessageEventBus;
+import ch.dfx.common.logging.MessageEventCollector;
+import ch.dfx.common.logging.MessageEventProvider;
+import ch.dfx.common.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.defichain.handler.DefiStatusHandler;
-import ch.dfx.logging.MessageEventBus;
-import ch.dfx.logging.MessageEventCollector;
-import ch.dfx.logging.MessageEventProvider;
-import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.process.ProcessInfoService;
 import ch.dfx.process.ProcessInfoServiceImpl;
 import ch.dfx.transactionserver.scheduler.SchedulerProvider;
@@ -72,7 +72,7 @@ public class TransactionServerWatchdogMain {
       ((DefaultShutdownCallbackRegistry) factory.getShutdownCallbackRegistry()).stop();
 
       // ...
-      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));
@@ -148,7 +148,7 @@ public class TransactionServerWatchdogMain {
 
     MessageEventBus.getInstance().register(messageEventCollector);
 
-    int runPeriodMessageEvent = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
+    int runPeriodMessageEvent = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RUN_PERIOD_MESSAGE_EVENT, 60);
 
     if (60 <= runPeriodMessageEvent) {
       SchedulerProvider.getInstance().add(messageEventProvider, 60, runPeriodMessageEvent, TimeUnit.SECONDS);
@@ -221,7 +221,7 @@ public class TransactionServerWatchdogMain {
     LOGGER.debug("startRMI");
 
     try {
-      int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
+      int rmiPort = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RMI_PORT, -1);
 
       registry = LocateRegistry.createRegistry(rmiPort);
 
@@ -315,7 +315,7 @@ public class TransactionServerWatchdogMain {
     LOGGER.debug("runProcess");
 
     try {
-      String watchdogExecutable = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.WATCHDOG_EXECUTABLE);
+      String watchdogExecutable = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.WATCHDOG_EXECUTABLE);
 
       if (null != watchdogExecutable) {
         LOGGER.debug("Start process: " + watchdogExecutable);

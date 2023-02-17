@@ -1,6 +1,7 @@
 package ch.dfx.supervision;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 
@@ -8,12 +9,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.errorhandling.DfxException;
+import ch.dfx.common.logging.MessageEventBus;
+import ch.dfx.common.logging.MessageEventProvider;
 import ch.dfx.defichain.data.vault.DefiVaultData;
 import ch.dfx.defichain.provider.DefiDataProvider;
-import ch.dfx.logging.MessageEventBus;
-import ch.dfx.logging.MessageEventProvider;
 import ch.dfx.logging.events.TelegramAutomaticVaultInformationBotEvent;
 
 /**
@@ -36,7 +37,7 @@ public class DefiVaultManager {
   private final DefiDataProvider dataProvider;
 
   private final String vaultId;
-  private final String checkRatio;
+  private final List<String> checkRatioList;
 
   private StateEnum prevStateVault = StateEnum.UNKNOWN;
   private StateEnum currStateVault = StateEnum.UNKNOWN;
@@ -47,10 +48,10 @@ public class DefiVaultManager {
   public DefiVaultManager(
       @Nonnull MessageEventProvider messageEventProvider,
       @Nonnull String vaultId,
-      @Nonnull String checkRatio) {
+      @Nonnull List<String> checkRatioList) {
     this.messageEventProvider = messageEventProvider;
     this.vaultId = vaultId;
-    this.checkRatio = checkRatio;
+    this.checkRatioList = checkRatioList;
 
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
@@ -63,8 +64,8 @@ public class DefiVaultManager {
 
     try {
       if (StringUtils.isNotEmpty(vaultId)
-          && StringUtils.isNotEmpty(checkRatio)) {
-        String message = doCheckRatio(vaultId, checkRatio);
+          && checkRatioList.isEmpty()) {
+        String message = doCheckRatio(vaultId, checkRatioList);
 
         if (prevStateVault != currStateVault) {
           MessageEventBus.getInstance().postEvent(new TelegramAutomaticVaultInformationBotEvent(message));
@@ -84,13 +85,15 @@ public class DefiVaultManager {
    */
   private String doCheckRatio(
       @Nonnull String vaultId,
-      @Nonnull String checkRatio) throws DfxException {
+      @Nonnull List<String> checkRatioList) throws DfxException {
     LOGGER.debug("doCheckRatio()");
 
-    String[] checkRatioSplitArray = checkRatio.split("\\,");
+    if (2 != checkRatioList.size()) {
+      throw new DfxException("unknown check ratio value: " + checkRatioList);
+    }
 
-    BigDecimal lowRatio = new BigDecimal(checkRatioSplitArray[0]);
-    BigDecimal highRatio = 2 == checkRatioSplitArray.length ? new BigDecimal(checkRatioSplitArray[1]) : lowRatio;
+    BigDecimal lowRatio = new BigDecimal(checkRatioList.get(0));
+    BigDecimal highRatio = new BigDecimal(checkRatioList.get(1));
 
     DefiVaultData vaultData = dataProvider.getVault(vaultId);
 

@@ -6,7 +6,10 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileReader;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -17,7 +20,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,13 +32,12 @@ import org.h2.tools.RunScript;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.common.provider.TokenProvider;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
@@ -70,7 +71,6 @@ public class TestUtils {
 
   // ...
   private static final int PORT = 8080;
-  private static final String API_URL = "http://localhost:8080/v1";
 
   private static HttpServer httpServer = null;
 
@@ -95,16 +95,7 @@ public class TestUtils {
       // ...
       TokenProvider.setup(network);
 
-      // ...
-      Properties properties = new Properties();
-      properties.put(PropertyEnum.LOCK_ADDRESS.name().toLowerCase(), "");
-      properties.put(PropertyEnum.LOCK_SIGNATURE.name().toLowerCase(), "");
-      properties.put(
-          PropertyEnum.LOCK_API_TEST_TOKEN.name().toLowerCase(),
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3YWxsZXRJZCI6NSwidXNlcklkIjozLCJhZGRyZXNzIjoidGYxcTJ0azN1bjJwZGVkZmQ1aHpjc21meGp5bTMyZGVsZ3Z0ZzlxaHp6IiwiYmxvY2tjaGFpbiI6IkRlRmlDaGFpbiIsInJvbGUiOiJUcmFuc2FjdGlvbkNoZWNrZXIiLCJpYXQiOjE2NjU4MjAxNzksImV4cCI6MTY2NTk5Mjk3OX0.lfyMpb49XtWV91dcsilj3gFWo7cvYZ6iVA4k2YDTXOE");
-      properties.put(PropertyEnum.LOCK_API_URL.name().toLowerCase(), API_URL);
-
-      ConfigPropertyProvider.setup(properties);
+      setupConfigProvider(network, environment);
 
       // ...
       LOGGER.debug("globalSetup()");
@@ -124,6 +115,35 @@ public class TestUtils {
       }
     } catch (Exception e) {
       LOGGER.error("globalSetup", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private static void setupConfigProvider(
+      @Nonnull NetworkEnum network,
+      @Nonnull EnvironmentEnum environment) throws DfxException {
+    LOGGER.debug("setupConfigProvider()");
+
+    ConfigProvider.setup(network, environment, new String[] {});
+
+    // ...
+    File configFile = Path.of("config", "global", "config-junittest.json").toFile();
+
+    try (FileReader reader = new FileReader(configFile)) {
+      Field hostIdField = ConfigProvider.class.getDeclaredField("hostId");
+      hostIdField.setAccessible(true);
+      hostIdField.set(ConfigProvider.getInstance(), "");
+
+      // ...
+      JsonObject configObject = new Gson().fromJson(reader, JsonObject.class);
+
+      Method setupConfigMapMethod = ConfigProvider.class.getDeclaredMethod("setupConfigMap", JsonObject.class, String.class);
+      setupConfigMapMethod.setAccessible(true);
+      setupConfigMapMethod.invoke(ConfigProvider.getInstance(), configObject, null);
+    } catch (Exception e) {
+      throw new DfxException("setupConfigProvider", e);
     }
   }
 

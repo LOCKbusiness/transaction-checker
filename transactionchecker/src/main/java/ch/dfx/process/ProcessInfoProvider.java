@@ -10,9 +10,9 @@ import java.rmi.registry.Registry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.process.data.ProcessInfoDTO;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
@@ -109,8 +109,8 @@ public class ProcessInfoProvider implements SchedulerProviderRunnable {
     LOGGER.debug("startRMI()");
 
     try {
-      String rmiHost = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.RMI_HOST);
-      int rmiPort = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RMI_PORT, -1);
+      String rmiHost = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RMI_HOST);
+      int rmiPort = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RMI_PORT, -1);
 
       registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
 

@@ -2,7 +2,7 @@ package ch.dfx.excel.data;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

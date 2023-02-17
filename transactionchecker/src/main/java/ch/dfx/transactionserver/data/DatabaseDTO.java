@@ -2,7 +2,7 @@ package ch.dfx.transactionserver.data;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

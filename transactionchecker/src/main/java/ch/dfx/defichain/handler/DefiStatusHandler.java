@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.defichain.data.network.PeerInfoData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 

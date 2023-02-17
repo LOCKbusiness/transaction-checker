@@ -1,8 +1,8 @@
 package ch.dfx.api.data.join;
 
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
-import ch.dfx.common.TransactionCheckerUtils;
 
 /**
  * 

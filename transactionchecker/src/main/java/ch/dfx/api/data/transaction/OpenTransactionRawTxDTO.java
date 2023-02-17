@@ -1,6 +1,6 @@
 package ch.dfx.api.data.transaction;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

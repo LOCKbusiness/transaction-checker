@@ -8,14 +8,13 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
-import ch.dfx.common.provider.ConfigPropertyProvider;
-import ch.dfx.logging.MessageEventBus;
-import ch.dfx.logging.MessageEventCollector;
-import ch.dfx.logging.MessageEventProvider;
+import ch.dfx.common.logging.MessageEventBus;
+import ch.dfx.common.logging.MessageEventCollector;
+import ch.dfx.common.logging.MessageEventProvider;
+import ch.dfx.config.ReportingConfigEnum;
 import ch.dfx.supervision.DefiManagerRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
@@ -56,17 +55,15 @@ public class ReportingMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
-      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));
       LOGGER.debug("Network: " + network);
       LOGGER.debug("Environment: " + environment);
 
-      // ...
       ReportingMain reporting = new ReportingMain(network);
       reporting.execute();
-
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);
@@ -95,8 +92,8 @@ public class ReportingMain {
     MessageEventBus.getInstance().register(messageEventCollector);
 
     // ...
-    int runPeriodReport = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_REPORT, 600);
-    int runPeriodDefiManager = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RUN_PERIOD_DEFIMANAGER, 60);
+    int runPeriodReport = ConfigProvider.getInstance().getValue(ReportingConfigEnum.RUN_PERIOD_REPORT, 600);
+    int runPeriodDefiManager = ConfigProvider.getInstance().getValue(ReportingConfigEnum.RUN_PERIOD_DEFIMANAGER, 60);
 
     LOGGER.debug("run period report: " + runPeriodReport);
     LOGGER.debug("run period defi manager: " + runPeriodDefiManager);

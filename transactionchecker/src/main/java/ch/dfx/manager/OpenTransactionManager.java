@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.join.TransactionWithdrawalDTO;
 import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
@@ -34,7 +35,6 @@ import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTOList;
 import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
-import ch.dfx.common.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;

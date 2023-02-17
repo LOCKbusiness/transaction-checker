@@ -9,9 +9,9 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 import ch.dfx.defichain.provider.DefiDataProvider;
 
 /**
@@ -78,7 +78,7 @@ public class SignatureChecker extends TransactionChecker {
     String openTransactionIssuerSignature = openTransactionDTO.getIssuerSignature();
     String openTransactionHex = openTransactionDTO.getRawTx().getHex();
 
-    String verifyAddress = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.DFI_VERIFY_ADDRESS);
+    String verifyAddress = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.DFI_VERIFY_ADDRESS);
 
     if (null == verifyAddress) {
       throw new DfxException("verifyAddress is null");

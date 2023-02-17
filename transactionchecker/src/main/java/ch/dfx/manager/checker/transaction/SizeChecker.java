@@ -8,8 +8,8 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
-import ch.dfx.common.enumeration.PropertyEnum;
-import ch.dfx.common.provider.ConfigPropertyProvider;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.defichain.provider.DefiDataProvider;
 
 /**
@@ -53,7 +53,7 @@ public class SizeChecker extends TransactionChecker {
     boolean isValid;
 
     try {
-      int rawTransactionMaxSize = ConfigPropertyProvider.getInstance().getIntValueOrDefault(PropertyEnum.RAW_TRANSACTION_MAX_SIZE, 250000);
+      int rawTransactionMaxSize = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.RAW_TRANSACTION_MAX_SIZE, 250000);
 
       String hex = openTransactionDTO.getRawTx().getHex();
 

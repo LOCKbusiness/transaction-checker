@@ -2,7 +2,7 @@ package ch.dfx.transactionserver.importer.data;
 
 import java.util.ArrayList;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

@@ -1,4 +1,4 @@
-package ch.dfx.logging.notifier;
+package ch.dfx.common.logging.notifier;
 
 import java.util.Properties;
 
@@ -17,9 +17,9 @@ import javax.mail.internet.MimeMultipart;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 
 /**
  * 
@@ -49,8 +49,8 @@ public class EmailNotifier {
     LOGGER.trace("sendMessage()");
 
     try {
-      String emailUser = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.EMAIL_USER);
-      String emailPassword = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.EMAIL_PASSWORD);
+      String emailUser = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.EMAIL_USER);
+      String emailPassword = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.EMAIL_PASSWORD);
 
       Session session = Session.getInstance(emailProperties, new Authenticator() {
         @Override
@@ -60,8 +60,8 @@ public class EmailNotifier {
       });
 
       // ...
-      String emailFrom = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.EMAIL_FROM);
-      String emailTo = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.EMAIL_TO);
+      String emailFrom = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.EMAIL_FROM);
+      String emailTo = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.EMAIL_TO);
 
       // ...
       Message message = new MimeMessage(session);

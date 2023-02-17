@@ -4,10 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.AlgorithmParameters;
 import java.util.Objects;
-import java.util.Properties;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -122,7 +122,7 @@ public class EncryptionForSecrets {
   /**
    * 
    */
-  public @Nullable Properties decrypt(
+  public @Nullable String decrypt(
       @Nonnull File encryptedFile,
       @Nonnull String password) throws DfxException {
     LOGGER.trace("decrypt()");
@@ -130,7 +130,7 @@ public class EncryptionForSecrets {
     Objects.requireNonNull(password, "null 'password' not allowed ...");
 
     try {
-      Properties properties = new Properties();
+      String result = null;
 
       SecretKeySpec secretKey = createSecretKey(password);
 
@@ -156,10 +156,12 @@ public class EncryptionForSecrets {
         cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(ivBuffer));
 
         // Read Content ...
-        properties.load(new CipherInputStream(fileIn, cipher));
+        CipherInputStream cipherInputStream = new CipherInputStream(fileIn, cipher);
+        result = new String(cipherInputStream.readAllBytes(), StandardCharsets.UTF_8);
+        cipherInputStream.close();
       }
 
-      return properties;
+      return result;
     } catch (Exception e) {
       throw new DfxException("decrypt", e);
     }

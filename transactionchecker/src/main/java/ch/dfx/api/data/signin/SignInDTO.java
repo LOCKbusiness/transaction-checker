@@ -1,6 +1,6 @@
 package ch.dfx.api.data.signin;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

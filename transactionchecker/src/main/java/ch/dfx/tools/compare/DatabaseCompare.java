@@ -23,13 +23,11 @@ import ch.dfx.tools.DatabaseTool;
 import ch.dfx.tools.data.DatabaseConnectionData;
 import ch.dfx.tools.data.DatabaseData;
 import ch.dfx.transactionserver.data.BalanceDTO;
-import ch.dfx.transactionserver.data.BlockDTO;
 import ch.dfx.transactionserver.data.DatabaseDTO;
 import ch.dfx.transactionserver.data.DepositDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
-import ch.dfx.transactionserver.data.TransactionDTO;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 
 /**
@@ -105,34 +103,6 @@ public class DatabaseCompare extends DatabaseTool {
     List<MasternodeWhitelistDTO> localMasternodeWhitelistDTOList = getLocalMasternodeWhitelistDTOList(localConnection);
     List<MasternodeWhitelistDTO> remoteMasternodeWhitelistDTOList = getRemoteMasternodeWhitelistDTOList(remoteConnection);
     compareMasternodeWhitelist(localMasternodeWhitelistDTOList, remoteMasternodeWhitelistDTOList);
-
-//    int blockLimit = 100;
-//    int blockOffset = 0;
-//
-//    for (int i = 0; i < 1; i++) {
-//      LOGGER.debug("Block: " + blockOffset);
-//
-//      List<BlockDTO> localBlockDTOList = getBlockDTOList(localConnection, blockLimit, blockOffset);
-//      List<BlockDTO> remoteBlockDTOList = getBlockDTOList(remoteConnection, blockLimit, blockOffset);
-//      compareBlock(localBlockDTOList, remoteBlockDTOList);
-//
-//      blockOffset = blockOffset + blockLimit;
-//    }
-//
-//    // ...
-//    int transactionLimit = 100;
-//    int transactionOffset = 0;
-//
-//    for (int i = 0; i < 1; i++) {
-//      LOGGER.debug("Transaction: " + transactionOffset);
-//
-//      List<TransactionDTO> localTransactionDTOList = getTransactionDTOList(localConnection, transactionLimit, transactionOffset);
-//      List<TransactionDTO> remoteTransactionDTOList = getTransactionDTOList(remoteConnection, transactionLimit, transactionOffset);
-//
-//      compareTransaction(localTransactionDTOList, remoteTransactionDTOList);
-//
-//      transactionOffset = transactionOffset + transactionLimit;
-//    }
   }
 
   /**
@@ -143,7 +113,7 @@ public class DatabaseCompare extends DatabaseTool {
       @Nonnull Connection remoteConnection,
       @Nonnull String dbSchema,
       @Nonnull TokenEnum token) throws DfxException {
-    LOGGER.trace("doCompare(): token=" + token);
+    LOGGER.debug("doCompare(): token=" + token);
 
     // ...
     List<StakingAddressDTO> localStakingAddressDTOList = getLocalStakingAddressDTOList(localConnection, dbSchema, token);
@@ -251,114 +221,6 @@ public class DatabaseCompare extends DatabaseTool {
     } else {
       LOGGER.error("[MasternodeWhitelistDTO]: local(" + localSize + ") not equals remote(" + remoteSize + ")");
       findDiff(localMasternodeWhitelistDTOList, remoteMasternodeWhitelistDTOList);
-    }
-  }
-
-  /**
-   * 
-   */
-  private List<BlockDTO> getBlockDTOList(@Nonnull Connection connection, int limit, int offset) throws DfxException {
-    LOGGER.trace("getBlockDTOList()");
-
-    String blockSelectSql = "SELECT * FROM public.block ORDER BY number LIMIT " + limit + " OFFSET " + offset;
-
-    try {
-      List<BlockDTO> blockDTOList = new ArrayList<>();
-
-      Statement statement = connection.createStatement();
-      ResultSet resultSet = statement.executeQuery(blockSelectSql);
-
-      while (resultSet.next()) {
-        BlockDTO blockDTO =
-            new BlockDTO(
-                resultSet.getInt("number"),
-                resultSet.getString("hash"),
-                resultSet.getLong("timestamp"));
-
-        blockDTOList.add(blockDTO);
-      }
-
-      resultSet.close();
-      statement.close();
-
-      return blockDTOList;
-    } catch (Exception e) {
-      throw new DfxException("getBlockDTOList", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void compareBlock(
-      @Nonnull List<BlockDTO> localBlockDTOList,
-      @Nonnull List<BlockDTO> remoteBlockDTOList) throws DfxException {
-    LOGGER.trace("compareBlock()");
-
-    int localSize = localBlockDTOList.size();
-    int remoteSize = remoteBlockDTOList.size();
-
-    LOGGER.debug("[BlockDTO]: local(" + localSize + ") compare to remote(" + remoteSize + ")");
-
-    if (localBlockDTOList.toString().equals(remoteBlockDTOList.toString())) {
-      LOGGER.debug("[BlockDTO]: local(" + localSize + ") equals remote(" + remoteSize + ")");
-    } else {
-      LOGGER.error("[BlockDTO]: local(" + localSize + ") not equals remote(" + remoteSize + ")");
-      findDiff(localBlockDTOList, remoteBlockDTOList);
-    }
-  }
-
-  /**
-   * 
-   */
-  private List<TransactionDTO> getTransactionDTOList(@Nonnull Connection connection, int limit, int offset) throws DfxException {
-    LOGGER.trace("getTransactionDTOList()");
-
-    String blockSelectSql = "SELECT * FROM public.transaction ORDER BY block_number, number LIMIT " + limit + " OFFSET " + offset;
-
-    try {
-      List<TransactionDTO> transactionDTOList = new ArrayList<>();
-
-      Statement statement = connection.createStatement();
-      ResultSet resultSet = statement.executeQuery(blockSelectSql);
-
-      while (resultSet.next()) {
-        TransactionDTO transactionDTO =
-            new TransactionDTO(
-                resultSet.getInt("block_number"),
-                resultSet.getInt("number"),
-                resultSet.getString("txid"));
-
-        transactionDTOList.add(transactionDTO);
-      }
-
-      resultSet.close();
-      statement.close();
-
-      return transactionDTOList;
-    } catch (Exception e) {
-      throw new DfxException("getTransactionDTOList", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private void compareTransaction(
-      @Nonnull List<TransactionDTO> localTransactionDTOList,
-      @Nonnull List<TransactionDTO> remoteTransactionDTOList) throws DfxException {
-    LOGGER.trace("compareTransaction()");
-
-    int localSize = localTransactionDTOList.size();
-    int remoteSize = remoteTransactionDTOList.size();
-
-    LOGGER.debug("[TransactionDTO]: local(" + localSize + ") compare to remote(" + remoteSize + ")");
-
-    if (localTransactionDTOList.toString().equals(remoteTransactionDTOList.toString())) {
-      LOGGER.debug("[TransactionDTO]: local(" + localSize + ") equals remote(" + remoteSize + ")");
-    } else {
-      LOGGER.error("[TransactionDTO]: local(" + localSize + ") not equals remote(" + remoteSize + ")");
-      findDiff(localTransactionDTOList, remoteTransactionDTOList);
     }
   }
 
@@ -842,6 +704,26 @@ public class DatabaseCompare extends DatabaseTool {
       }
     } else {
       LOGGER.error("Size is different, time to do a manually compare!");
+
+      List<String> localStringList = new ArrayList<>();
+      List<String> remoteStringList = new ArrayList<>();
+
+      localDatabaseDTOList.forEach(dto -> localStringList.add(dto.toString()));
+      remoteDatabaseDTOList.forEach(dto -> remoteStringList.add(dto.toString()));
+
+      List<String> localDifferenceList = new ArrayList<>(localStringList);
+      localDifferenceList.removeAll(remoteStringList);
+
+      List<String> remoteDifferenceList = new ArrayList<>(remoteStringList);
+      remoteDifferenceList.removeAll(localStringList);
+
+      for (String localDifference : localDifferenceList) {
+        LOGGER.error("Local: " + localDifference);
+      }
+
+      for (String remoteDifference : remoteDifferenceList) {
+        LOGGER.error("Remote: " + remoteDifference);
+      }
     }
   }
 

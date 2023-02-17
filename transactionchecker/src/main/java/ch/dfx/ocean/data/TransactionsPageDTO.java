@@ -1,6 +1,6 @@
 package ch.dfx.ocean.data;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 
 /**
  * 

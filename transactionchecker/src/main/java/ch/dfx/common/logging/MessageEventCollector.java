@@ -1,4 +1,4 @@
-package ch.dfx.logging;
+package ch.dfx.common.logging;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.google.common.eventbus.Subscribe;
 
-import ch.dfx.logging.events.MessageEvent;
+import ch.dfx.common.logging.events.MessageEvent;
 
 /**
  * 

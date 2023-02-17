@@ -1,23 +1,21 @@
-package ch.dfx.logging.notifier;
+package ch.dfx.common.logging.notifier;
 
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.TransactionCheckerUtils;
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
-import ch.dfx.common.enumeration.PropertyEnum;
-import ch.dfx.common.provider.ConfigPropertyProvider;
 
 /**
  * 
  */
-public class TelegramNotifierMain {
-  private static final Logger LOGGER = LogManager.getLogger(TelegramNotifierMain.class);
+public class EmailNotifierMain {
+  private static final Logger LOGGER = LogManager.getLogger(EmailNotifierMain.class);
 
-  private static final String IDENTIFIER = "telegramnotifier";
+  private static final String IDENTIFIER = "emailnotifier";
 
   /**
    * 
@@ -40,7 +38,7 @@ public class TelegramNotifierMain {
       TransactionCheckerUtils.initLog4j("log4j2.xml");
 
       // ...
-      TransactionCheckerUtils.setupGlobalProvider(network, environment);
+      TransactionCheckerUtils.setupGlobalProvider(network, environment, args);
 
       // ...
       LOGGER.debug("=".repeat(80));
@@ -48,14 +46,8 @@ public class TelegramNotifierMain {
       LOGGER.debug("Environment: " + environment);
 
       // ...
-      String telegramToken = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_TOKEN);
-      String telegramChatId = ConfigPropertyProvider.getInstance().getProperty(PropertyEnum.TELEGRAM_AUTOMATIC_INFORMATION_BOT_CHAT_ID);
-
-      if (null != telegramToken
-          && null != telegramChatId) {
-        TelegramNotifier telegramNotifier = new TelegramNotifier();
-        telegramNotifier.sendMessage(telegramToken, telegramChatId, "Hello World");
-      }
+      EmailNotifier emailNotifier = new EmailNotifier();
+      emailNotifier.sendMessage("This is a test e-mail from the Transaction Check Server");
     } catch (Exception e) {
       LOGGER.error("Fatal Error", e);
       System.exit(-1);

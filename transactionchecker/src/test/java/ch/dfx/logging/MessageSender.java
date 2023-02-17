@@ -5,7 +5,8 @@ import javax.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
+import ch.dfx.common.logging.MessageEventBus;
+import ch.dfx.common.logging.events.TelegramAutomaticInformationBotEvent;
 import ch.dfx.transactionserver.scheduler.TimerProviderTask;
 
 /**

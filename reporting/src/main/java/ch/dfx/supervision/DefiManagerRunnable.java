@@ -1,16 +1,18 @@
 package ch.dfx.supervision;
 
+import java.util.List;
+
 import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.enumeration.PropertyEnum;
+import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.common.provider.ConfigPropertyProvider;
-import ch.dfx.logging.MessageEventBus;
-import ch.dfx.logging.MessageEventProvider;
-import ch.dfx.logging.events.TelegramAutomaticInformationBotEvent;
+import ch.dfx.common.logging.MessageEventBus;
+import ch.dfx.common.logging.MessageEventProvider;
+import ch.dfx.common.logging.events.TelegramAutomaticInformationBotEvent;
+import ch.dfx.config.ReportingConfigEnum;
 import ch.dfx.transactionserver.scheduler.SchedulerProviderRunnable;
 
 /**
@@ -37,17 +39,17 @@ public class DefiManagerRunnable implements SchedulerProviderRunnable {
   public DefiManagerRunnable(@Nonnull MessageEventProvider messageEventProvider) {
     this.messageEventProvider = messageEventProvider;
 
-    String vaultId1 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT1_ID, "");
-    String checkRatio1 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT1_CHECK_RATIO, "");
-    this.vaultManager1 = new DefiVaultManager(messageEventProvider, vaultId1, checkRatio1);
+    String vaultId1 = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT1_ID, "");
+    List<String> checkRatio1List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT1_CHECK_RATIO);
+    this.vaultManager1 = new DefiVaultManager(messageEventProvider, vaultId1, checkRatio1List);
 
-    String vaultId2 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT2_ID, "");
-    String checkRatio2 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT2_CHECK_RATIO, "");
-    this.vaultManager2 = new DefiVaultManager(messageEventProvider, vaultId2, checkRatio2);
+    String vaultId2 = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT2_ID, "");
+    List<String> checkRatio2List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT2_CHECK_RATIO);
+    this.vaultManager2 = new DefiVaultManager(messageEventProvider, vaultId2, checkRatio2List);
 
-    String vaultId3 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT3_ID, "");
-    String checkRatio3 = ConfigPropertyProvider.getInstance().getPropertyOrDefault(PropertyEnum.DFI_YM_VAULT3_CHECK_RATIO, "");
-    this.vaultManager3 = new DefiVaultManager(messageEventProvider, vaultId3, checkRatio3);
+    String vaultId3 = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT3_ID, "");
+    List<String> checkRatio3List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT3_CHECK_RATIO);
+    this.vaultManager3 = new DefiVaultManager(messageEventProvider, vaultId3, checkRatio3List);
   }
 
   @Override

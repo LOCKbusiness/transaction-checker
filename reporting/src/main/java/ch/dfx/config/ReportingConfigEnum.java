@@ -35,7 +35,7 @@ public enum ReportingConfigEnum implements ConfigEntry {
   YM_VAULT3_CHECK_RATIO("yieldmachine.vault3.check_ratio"),
 
   // Reporting ...
-  GOOGLE_ROOT_PATH("google.root_path"),
+  GOOGLE_ROOT_PATH("google.[ENVIRONMENT].[HOST_ID].root_path"),
 
   GOOGLE_BALANCE_FILENAME("google.balance.filename"),
   GOOGLE_BALANCE_STAKING_SHEET("google.balance.staking_sheet"),

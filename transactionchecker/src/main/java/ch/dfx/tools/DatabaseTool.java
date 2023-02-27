@@ -37,7 +37,7 @@ public abstract class DatabaseTool {
    * 
    */
   public DatabaseConnectionData getDatabaseConnectionData() throws DfxException {
-    File jsonFile = new File("config/json", "databaseConnectionData.json");
+    File jsonFile = new File("config/global", "databaseConnectionData.json");
 
     try (Reader reader = new FileReader(jsonFile)) {
       return gson.fromJson(reader, DatabaseConnectionData.class);

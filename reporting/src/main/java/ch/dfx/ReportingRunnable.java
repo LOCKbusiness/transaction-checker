@@ -147,17 +147,19 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != usdtYieldmachineBalanceSheet
           && null != usdcYieldmachineBalanceSheet) {
         BalanceReporting stakingBalanceReporting =
-            new BalanceReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
+            new BalanceReporting(network, databaseBlockHelper, databaseStakingBalanceHelper,
+                logInfoList, BalanceReporting.BalanceReportingTypeEnum.STAKING);
         stakingBalanceReporting.report(connection, TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
 
         BalanceReporting yieldmachineBalanceReporting =
-            new BalanceReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper, logInfoList);
+            new BalanceReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper,
+                logInfoList, BalanceReporting.BalanceReportingTypeEnum.YIELD_MACHINE);
         yieldmachineBalanceReporting.report(connection, TokenEnum.DFI, rootPath, balanceFileName, dfiYieldmachineBalanceSheet);
         yieldmachineBalanceReporting.report(connection, TokenEnum.DUSD, rootPath, balanceFileName, dusdYieldmachineBalanceSheet);
-        // yieldmachineBalanceReporting.report(connection, TokenEnum.BTC, rootPath, balanceFileName, btcYieldmachineBalanceSheet);
-        // yieldmachineBalanceReporting.report(connection, TokenEnum.ETH, rootPath, balanceFileName, ethYieldmachineBalanceSheet);
-        // yieldmachineBalanceReporting.report(connection, TokenEnum.USDT, rootPath, balanceFileName, usdtYieldmachineBalanceSheet);
-        // yieldmachineBalanceReporting.report(connection, TokenEnum.USDC, rootPath, balanceFileName, usdcYieldmachineBalanceSheet);
+        yieldmachineBalanceReporting.report(connection, TokenEnum.BTC, rootPath, balanceFileName, btcYieldmachineBalanceSheet);
+        yieldmachineBalanceReporting.report(connection, TokenEnum.ETH, rootPath, balanceFileName, ethYieldmachineBalanceSheet);
+        yieldmachineBalanceReporting.report(connection, TokenEnum.USDT, rootPath, balanceFileName, usdtYieldmachineBalanceSheet);
+        yieldmachineBalanceReporting.report(connection, TokenEnum.USDC, rootPath, balanceFileName, usdcYieldmachineBalanceSheet);
 
         logInfoList.add("");
       }
@@ -212,6 +214,11 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         VaultReporting vaultReporting =
             new VaultReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
         vaultReporting.report(connection, TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
+
+        // TODO !!! ...
+//        VaultReportingNew vaultReporting =
+//            new VaultReportingNew(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
+//        vaultReporting.report(connection, TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createVaultReport", e);

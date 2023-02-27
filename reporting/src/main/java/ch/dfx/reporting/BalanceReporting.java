@@ -32,7 +32,14 @@ public class BalanceReporting extends Reporting {
   private static final Logger LOGGER = LogManager.getLogger(BalanceReporting.class);
 
   // ...
+  public enum BalanceReportingTypeEnum {
+    STAKING,
+    YIELD_MACHINE
+  }
+
+  // ...
   private final List<String> logInfoList;
+  private final BalanceReportingTypeEnum balanceReportingType;
 
   private BigDecimal totalBalance = null;
 
@@ -43,10 +50,12 @@ public class BalanceReporting extends Reporting {
       @Nonnull NetworkEnum network,
       @Nonnull DatabaseBlockHelper databaseBlockHelper,
       @Nonnull DatabaseBalanceHelper databaseBalanceHelper,
-      @Nonnull List<String> logInfoList) {
+      @Nonnull List<String> logInfoList,
+      @Nonnull BalanceReportingTypeEnum balanceReportingType) {
     super(network, databaseBlockHelper, databaseBalanceHelper);
 
     this.logInfoList = logInfoList;
+    this.balanceReportingType = balanceReportingType;
   }
 
   /**
@@ -130,7 +139,11 @@ public class BalanceReporting extends Reporting {
     LOGGER.debug("Number of Deposit Addresses: " + depositDTOList.size());
 
     // ...
-    logInfoList.add("Deposit Addresses: " + depositDTOList.size() + " (" + token + ")");
+    if (BalanceReportingTypeEnum.STAKING == balanceReportingType && TokenEnum.DFI == token) {
+      logInfoList.add("Staking Addresses:      " + depositDTOList.size() + " (" + token + ")");
+    } else if (BalanceReportingTypeEnum.YIELD_MACHINE == balanceReportingType && TokenEnum.DUSD == token) {
+      logInfoList.add("Yieldmachine Addresses: " + depositDTOList.size() + " (" + token + ")");
+    }
 
     // ...
     depositDTOList.sort(new Comparator<DepositDTO>() {

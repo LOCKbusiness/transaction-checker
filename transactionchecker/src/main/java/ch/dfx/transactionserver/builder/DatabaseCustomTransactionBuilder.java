@@ -48,6 +48,7 @@ public class DatabaseCustomTransactionBuilder {
   private static final String CUSTOM_TYPE_ANY_ACCOUNTS_TO_ACCOUNTS = "a";
   private static final String CUSTOM_TYPE_ACCOUNT_TO_ACCOUNT = "B";
   private static final String CUSTOM_TYPE_UTXOS_TO_ACCOUNT = "U";
+  private static final String CUSTOM_TYPE_ACCOUNT_TO_UTXOS = "b";
 
   private final Map<String, CustomTransactionMethod> customTransactionMethodMap;
 
@@ -102,6 +103,9 @@ public class DatabaseCustomTransactionBuilder {
     customTransactionMethodMap.put(
         CUSTOM_TYPE_UTXOS_TO_ACCOUNT,
         (typeNumber, transactionData, transactionDTO) -> fillCustomUtxosToAccountInfo(typeNumber, transactionData, transactionDTO));
+    customTransactionMethodMap.put(
+        CUSTOM_TYPE_ACCOUNT_TO_UTXOS,
+        (typeNumber, transactionData, transactionDTO) -> fillCustomAccountToUtxosInfo(typeNumber, transactionData, transactionDTO));
   }
 
   /**
@@ -447,5 +451,75 @@ public class DatabaseCustomTransactionBuilder {
     customAccountToAccountInDTO.setAmount(fromAmount);
 
     transactionDTO.addCustomAccountToAccountInDTO(customAccountToAccountInDTO);
+  }
+
+  /**
+   * 
+   */
+  private void fillCustomAccountToUtxosInfo(
+      @Nonnull Integer typeNumber,
+      @Nonnull DefiTransactionData transactionData,
+      @Nonnull TransactionDTO transactionDTO) throws DfxException {
+    LOGGER.trace("fillCustomAccountToUtxosInfo()");
+
+    String hex = transactionData.getHex();
+    DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+
+    Map<String, Object> resultMap = customData.getResults();
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> toMap = (Map<String, Object>) resultMap.get("to");
+    Map<Integer, BigDecimal> outTokenToAmountMap = new LinkedHashMap<>();
+
+    for (Entry<String, Object> toMapEntry : toMap.entrySet()) {
+      String toAddress = toMapEntry.getKey();
+      AddressDTO toAddressDTO = databaseAddressHandler.getAddressDTO(databaseBlockHelper, toAddress);
+
+      String toValue = (String) toMapEntry.getValue();
+
+      String[] toTokenSplit = toValue.split("\\,");
+
+      for (String toToken : toTokenSplit) {
+        String[] toValueSplit = toToken.split("\\@");
+
+        if (2 == toValueSplit.length) {
+          BigDecimal toAmount = new BigDecimal(toValueSplit[0]);
+          Integer toTokenNumber = Integer.valueOf(toValueSplit[1]);
+
+          // ...
+          TransactionCustomAccountToAccountOutDTO customAccountToAccountOutDTO =
+              new TransactionCustomAccountToAccountOutDTO(
+                  transactionDTO.getBlockNumber(),
+                  transactionDTO.getNumber(),
+                  typeNumber,
+                  toAddressDTO.getNumber(),
+                  toTokenNumber);
+
+          customAccountToAccountOutDTO.setAmount(toAmount);
+
+          transactionDTO.addCustomAccountToAccountOutDTO(customAccountToAccountOutDTO);
+
+          outTokenToAmountMap.merge(toTokenNumber, toAmount, (currVal, newVal) -> currVal.add(newVal));
+        }
+      }
+    }
+
+    // ...
+    String fromAddress = (String) resultMap.get("from");
+    AddressDTO fromAddressDTO = databaseAddressHandler.getAddressDTO(databaseBlockHelper, fromAddress);
+
+    for (Entry<Integer, BigDecimal> outTokenToAmountMapEntry : outTokenToAmountMap.entrySet()) {
+      TransactionCustomAccountToAccountInDTO customAccountToAccountInDTO =
+          new TransactionCustomAccountToAccountInDTO(
+              transactionDTO.getBlockNumber(),
+              transactionDTO.getNumber(),
+              typeNumber,
+              fromAddressDTO.getNumber(),
+              outTokenToAmountMapEntry.getKey());
+
+      customAccountToAccountInDTO.setAmount(outTokenToAmountMapEntry.getValue());
+
+      transactionDTO.addCustomAccountToAccountInDTO(customAccountToAccountInDTO);
+    }
   }
 }

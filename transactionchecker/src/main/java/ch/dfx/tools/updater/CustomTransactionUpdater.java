@@ -44,6 +44,7 @@ public class CustomTransactionUpdater {
   private static final String CUSTOM_TYPE_ANY_ACCOUNTS_TO_ACCOUNTS = "a";
   private static final String CUSTOM_TYPE_ACCOUNT_TO_ACCOUNT = "B";
   private static final String CUSTOM_TYPE_UTXOS_TO_ACCOUNT = "U";
+  private static final String CUSTOM_TYPE_ACCOUNT_TO_UTXOS = "b";
 
   // ...
   private PreparedStatement transactionSelectStatement = null;
@@ -100,7 +101,7 @@ public class CustomTransactionUpdater {
       // ...
       int limit = 10000;
 
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < 10; i++) {
         List<TransactionDTO> transactionDTOList = getTransactionDTOList(limit);
 
         for (TransactionDTO transactionDTO : transactionDTOList) {
@@ -137,7 +138,8 @@ public class CustomTransactionUpdater {
 
     // updateCustomTransaction(CUSTOM_TYPE_ANY_ACCOUNTS_TO_ACCOUNTS);
     // updateCustomTransaction(CUSTOM_TYPE_ACCOUNT_TO_ACCOUNT);
-    updateCustomTransaction(CUSTOM_TYPE_UTXOS_TO_ACCOUNT);
+    // updateCustomTransaction(CUSTOM_TYPE_UTXOS_TO_ACCOUNT);
+    // updateCustomTransaction(CUSTOM_TYPE_ACCOUNT_TO_UTXOS);
   }
 
   /**
@@ -219,28 +221,6 @@ public class CustomTransactionUpdater {
       transactionUpdateStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, transactionUpdateSql));
 
       // Custom Transaction ...
-//      String missingCustomTransactionSelectSql =
-//          "SELECT"
-//              + " b.number AS block_number,"
-//              + " b.hash AS block_hash,"
-//              + " t.number AS transaction_number,"
-//              + " t.txid AS transaction_id"
-//              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction t"
-//              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".block b ON"
-//              + " b.number = t.block_number"
-//              + " LEFT OUTER JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out ON"
-//              + " ata_out.block_number = t.block_number"
-//              + " AND ata_out.transaction_number = t.number"
-//              + " WHERE"
-//              + " t.custom_type_code=?"
-//              + " AND ata_out.block_number IS NULL"
-//              + " GROUP BY"
-//              + " t.block_number,"
-//              + " t.txid,"
-//              + " b.hash"
-//              + " LIMIT ?";
-//      missingCustomTransactionSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, missingCustomTransactionSelectSql));
-
       String missingCustomTransactionSelectSql =
           "SELECT"
               + " b.number AS block_number,"
@@ -451,8 +431,8 @@ public class CustomTransactionUpdater {
     try {
       List<BlockTransactionDTO> blockTransactionDTOList = new ArrayList<>();
 
-//      missingCustomTransactionSelectStatement.setString(1, customTypeCode);
-//      missingCustomTransactionSelectStatement.setInt(2, limit);
+      missingCustomTransactionSelectStatement.setString(1, customTypeCode);
+      missingCustomTransactionSelectStatement.setInt(2, limit);
 
       ResultSet resultSet = missingCustomTransactionSelectStatement.executeQuery();
 

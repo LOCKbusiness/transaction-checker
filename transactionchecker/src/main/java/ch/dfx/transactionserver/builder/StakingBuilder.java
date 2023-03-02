@@ -1,8 +1,10 @@
 package ch.dfx.transactionserver.builder;
 
+import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUSTOM_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,12 +12,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
@@ -33,6 +37,7 @@ public class StakingBuilder {
 
   // ...
   private PreparedStatement stakingVinSelectStatement = null;
+  private PreparedStatement customStakingVinSelectStatement = null;
   private PreparedStatement stakingVoutSelectStatement = null;
 
   private PreparedStatement stakingSelectStatement = null;
@@ -97,12 +102,16 @@ public class StakingBuilder {
               + " at_in.in_block_number,"
               + " at_in.address_number,"
               + " at_in.vin"
-              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out at_out"
+              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction t"
+              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out at_out ON"
+              + " t.block_number = at_out.block_number"
+              + " AND t.number = at_out.transaction_number"
               + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in at_in ON"
               + " at_out.block_number = at_in.block_number"
               + " AND at_out.transaction_number = at_in.transaction_number"
               + " WHERE"
-              + " at_out.address_number=?"
+              + " t.custom_type_code='0'"
+              + " AND at_out.address_number=?"
               + " AND at_in.address_number IN"
               + " (SELECT deposit_address_number FROM " + TOKEN_STAKING_SCHEMA + ".deposit"
               + " WHERE token_number=? AND liquidity_address_number=?)"
@@ -113,14 +122,67 @@ public class StakingBuilder {
               + " at_in.address_number,"
               + " at_in.vin"
               + ")"
-              + "SELECT"
+              + " SELECT"
               + " MAX(in_block_number) AS in_block_number,"
               + " address_number,"
               + " SUM(vin) AS vin"
               + " FROM X"
               + " GROUP BY"
               + " address_number";
+
+//      String stakingVinSelectSql =
+//          "WITH X AS ("
+//              + "SELECT"
+//              + " at_in.in_block_number,"
+//              + " at_in.address_number,"
+//              + " at_in.vin"
+//              + " FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out at_out"
+//              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in at_in ON"
+//              + " at_out.block_number = at_in.block_number"
+//              + " AND at_out.transaction_number = at_in.transaction_number"
+//              + " WHERE"
+//              + " at_out.address_number=?"
+//              + " AND at_in.address_number IN"
+//              + " (SELECT deposit_address_number FROM " + TOKEN_STAKING_SCHEMA + ".deposit"
+//              + " WHERE token_number=? AND liquidity_address_number=?)"
+//              + " GROUP BY"
+//              + " at_out.block_number,"
+//              + " at_in.in_block_number,"
+//              + " at_in.in_transaction_number,"
+//              + " at_in.address_number,"
+//              + " at_in.vin"
+//              + ")"
+//              + "SELECT"
+//              + " MAX(in_block_number) AS in_block_number,"
+//              + " address_number,"
+//              + " SUM(vin) AS vin"
+//              + " FROM X"
+//              + " GROUP BY"
+//              + " address_number";
+
       stakingVinSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, stakingVinSelectSql));
+
+      // ...
+      String customStakingVinSelectSql =
+          "SELECT"
+              + " ata_out.token_number,"
+              + " MAX(ata_out.block_number) AS block_number,"
+              + " ata_in.address_number,"
+              + " SUM(ata_in.amount) AS sum_amount"
+              + " FROM " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_out ata_out"
+              + " JOIN " + TOKEN_NETWORK_CUSTOM_SCHEMA + ".account_to_account_in ata_in ON"
+              + " ata_out.block_number = ata_in.block_number"
+              + " AND ata_out.transaction_number = ata_in.transaction_number"
+              + " AND ata_out.type_number= ata_in.type_number"
+              + " AND ata_out.token_number = ata_in.token_number"
+              + " WHERE"
+              + " ata_out.token_number=0"
+              + " AND ata_out.address_number=?"
+              + " AND ata_in.address_number IN (SELECT deposit_address_number FROM " + TOKEN_STAKING_SCHEMA + ".deposit)"
+              + " GROUP BY"
+              + " ata_out.token_number,"
+              + " ata_in.address_number";
+      customStakingVinSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, customStakingVinSelectSql));
 
       // ...
       String stakingVoutSelectSql =
@@ -144,7 +206,7 @@ public class StakingBuilder {
               + " at_out.address_number,"
               + " at_out.vout"
               + ")"
-              + "SELECT"
+              + " SELECT"
               + " MAX(block_number) AS block_number,"
               + " address_number,"
               + " SUM(vout) AS vout"
@@ -192,6 +254,7 @@ public class StakingBuilder {
 
     try {
       stakingVinSelectStatement.close();
+      customStakingVinSelectStatement.close();
       stakingVoutSelectStatement.close();
 
       stakingSelectStatement.close();
@@ -240,16 +303,11 @@ public class StakingBuilder {
       storedStakingDTOList.forEach(dto -> storedDepositToStakingDTOMap.put(dto.getDepositAddressNumber(), dto));
 
       // ...
-
-      List<StakingDTO> vinStakingDTOList = calcVin(token, liquidityAddressNumber);
-      List<StakingDTO> voutStakingDTOList = calcVout(token, liquidityAddressNumber);
+      Map<Integer, StakingDTO> depositToStakingDTOMap = calcVin(token, liquidityAddressNumber);
+      Map<Integer, StakingDTO> customerToStakingDTOMap = calcVout(token, liquidityAddressNumber);
 
       // ...
-      Map<Integer, StakingDTO> depositToStakingDTOMap = new HashMap<>();
-      vinStakingDTOList.forEach(dto -> depositToStakingDTOMap.put(dto.getDepositAddressNumber(), dto));
-
-      Map<Integer, StakingDTO> customerToStakingDTOMap = new HashMap<>();
-      voutStakingDTOList.forEach(dto -> customerToStakingDTOMap.put(dto.getCustomerAddressNumber(), dto));
+      mergeDepositCustomTransaction(liquidityAddressNumber, depositToStakingDTOMap);
 
       // ...
       List<DepositDTO> depositDTOList =
@@ -306,13 +364,13 @@ public class StakingBuilder {
   /**
    * 
    */
-  private List<StakingDTO> calcVin(
+  private Map<Integer, StakingDTO> calcVin(
       @Nonnull TokenEnum token,
       int liquidityAddressNumber) throws DfxException {
     LOGGER.trace("calcVin()");
 
     try {
-      List<StakingDTO> stakingDTOList = new ArrayList<>();
+      Map<Integer, StakingDTO> depositToStakingDTOMap = new HashMap<>();
 
       stakingVinSelectStatement.setInt(1, liquidityAddressNumber);
       stakingVinSelectStatement.setInt(2, token.getNumber());
@@ -327,12 +385,12 @@ public class StakingBuilder {
         stakingDTO.setLastInBlockNumber(resultSet.getInt("in_block_number"));
         stakingDTO.setVin(resultSet.getBigDecimal("vin"));
 
-        stakingDTOList.add(stakingDTO);
+        depositToStakingDTOMap.put(stakingDTO.getDepositAddressNumber(), stakingDTO);
       }
 
       resultSet.close();
 
-      return stakingDTOList;
+      return depositToStakingDTOMap;
     } catch (Exception e) {
       throw new DfxException("calcVin", e);
     }
@@ -341,13 +399,13 @@ public class StakingBuilder {
   /**
    * 
    */
-  private List<StakingDTO> calcVout(
+  private Map<Integer, StakingDTO> calcVout(
       @Nonnull TokenEnum token,
       int liquidityAddressNumber) throws DfxException {
     LOGGER.trace("calcVout()");
 
     try {
-      List<StakingDTO> stakingDTOList = new ArrayList<>();
+      Map<Integer, StakingDTO> customerToStakingDTOMap = new HashMap<>();
 
       stakingVoutSelectStatement.setInt(1, liquidityAddressNumber);
       stakingVoutSelectStatement.setInt(2, token.getNumber());
@@ -362,14 +420,75 @@ public class StakingBuilder {
         stakingDTO.setLastOutBlockNumber(resultSet.getInt("block_number"));
         stakingDTO.setVout(resultSet.getBigDecimal("vout"));
 
-        stakingDTOList.add(stakingDTO);
+        customerToStakingDTOMap.put(stakingDTO.getCustomerAddressNumber(), stakingDTO);
       }
 
       resultSet.close();
 
-      return stakingDTOList;
+      return customerToStakingDTOMap;
     } catch (Exception e) {
       throw new DfxException("calcVout", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void mergeDepositCustomTransaction(
+      int liquidityAddressNumber,
+      @Nonnull Map<Integer, StakingDTO> depositToStakingDTOMap) throws DfxException {
+    Map<Integer, CustomStakingData> depositAddressToCustomStakingDataMap = getDepositAddressToCustomStakingDataMap(liquidityAddressNumber);
+
+    for (Entry<Integer, CustomStakingData> depositAddressToCustomStakingDataMapEntry : depositAddressToCustomStakingDataMap.entrySet()) {
+      Integer depositAddressNumber = depositAddressToCustomStakingDataMapEntry.getKey();
+      CustomStakingData customStakingData = depositAddressToCustomStakingDataMapEntry.getValue();
+
+      StakingDTO stakingDTO = depositToStakingDTOMap.get(depositAddressNumber);
+
+      if (null == stakingDTO) {
+        stakingDTO =
+            new StakingDTO(customStakingData.tokenNumber, liquidityAddressNumber, depositAddressNumber, -1);
+
+        stakingDTO.setLastInBlockNumber(customStakingData.blockNumber);
+        stakingDTO.setVin(customStakingData.amount);
+
+        depositToStakingDTOMap.put(depositAddressNumber, stakingDTO);
+      } else {
+        stakingDTO.setLastInBlockNumber(Math.max(stakingDTO.getLastInBlockNumber(), customStakingData.blockNumber));
+        stakingDTO.addVin(customStakingData.amount);
+      }
+    }
+  }
+
+  /**
+   * 
+   */
+  private Map<Integer, CustomStakingData> getDepositAddressToCustomStakingDataMap(int liquidityAddressNumber) throws DfxException {
+    LOGGER.trace("getDepositAddressToCustomStakingDataMap()");
+
+    try {
+      Map<Integer, CustomStakingData> depositAddressToStakingDataMap = new HashMap<>();
+
+      customStakingVinSelectStatement.setInt(1, liquidityAddressNumber);
+
+      ResultSet resultSet = customStakingVinSelectStatement.executeQuery();
+
+      while (resultSet.next()) {
+        CustomStakingData customStakingData = new CustomStakingData();
+
+        customStakingData.tokenNumber = resultSet.getInt("token_number");
+        customStakingData.blockNumber = resultSet.getInt("block_number");
+        customStakingData.addressNumber = resultSet.getInt("address_number");
+        customStakingData.amount = resultSet.getBigDecimal("sum_amount");
+
+        depositAddressToStakingDataMap.put(customStakingData.addressNumber, customStakingData);
+      }
+
+      resultSet.close();
+
+      return depositAddressToStakingDataMap;
+    } catch (Exception e) {
+      throw new DfxException("getDepositAddressToCustomStakingDataMap", e);
     }
   }
 
@@ -390,9 +509,6 @@ public class StakingBuilder {
       LOGGER.debug(
           "[INSERT] Token / Liquidity / Deposit / Customer: "
               + tokenNumber + " / " + liquidityAddressNumber + " / " + depositAddressNumber + " / " + customerAddressNumber);
-      LOGGER.debug(
-          "[INSERT] Last In / Last Out Block: "
-              + lastInBlockNumber + " / " + lastOutBlockNumber);
 
       stakingInsertStatement.setInt(1, tokenNumber);
       stakingInsertStatement.setInt(2, liquidityAddressNumber);
@@ -425,9 +541,6 @@ public class StakingBuilder {
       LOGGER.debug(
           "[UPDATE] Token / Liquidity / Deposit / Customer: "
               + tokenNumber + " / " + liquidityAddressNumber + " / " + depositAddressNumber + " / " + customerAddressNumber);
-      LOGGER.debug(
-          "[UPDATE] Last In / Last Out Block: "
-              + lastInBlockNumber + " / " + lastOutBlockNumber);
 
       stakingUpdateStatement.setInt(1, lastInBlockNumber);
       stakingUpdateStatement.setBigDecimal(2, stakingDTO.getVin());
@@ -442,6 +555,24 @@ public class StakingBuilder {
       stakingUpdateStatement.execute();
     } catch (Exception e) {
       throw new DfxException("updateStaking", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private class CustomStakingData {
+    private int tokenNumber = -1;
+    private int blockNumber = -1;
+    private int addressNumber = -1;
+    private BigDecimal amount = BigDecimal.ZERO;
+
+    /**
+     * 
+     */
+    @Override
+    public String toString() {
+      return TransactionCheckerUtils.toJson(this);
     }
   }
 }

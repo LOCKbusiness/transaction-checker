@@ -41,7 +41,8 @@ public class BalanceReporting extends Reporting {
   private final List<String> logInfoList;
   private final BalanceReportingTypeEnum balanceReportingType;
 
-  private BigDecimal totalBalance = null;
+  // ...
+  private BigDecimal totalBalance = BigDecimal.ZERO;
 
   /**
    * 
@@ -61,8 +62,16 @@ public class BalanceReporting extends Reporting {
   /**
    * 
    */
+  public BigDecimal getTotalBalance() {
+    return totalBalance;
+  }
+
+  /**
+   * 
+   */
   public void report(
       @Nonnull Connection connection,
+      @Nonnull Date reportingDate,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -77,11 +86,7 @@ public class BalanceReporting extends Reporting {
     long startTime = System.currentTimeMillis();
 
     try {
-      totalBalance = BigDecimal.ZERO;
-
-      List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
-
-      RowDataList rowDataList = createRowDataList(token, stakingAddressDTOList);
+      RowDataList rowDataList = createRowDataList(token);
 
       CellDataList cellDataList = new CellDataList();
       cellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(totalBalance));
@@ -90,7 +95,7 @@ public class BalanceReporting extends Reporting {
       openExcel(rootPath, fileName, sheet);
 
       CellDataList cleanCellDataList = new CellDataList();
-      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(new Date()));
+      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
       cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(BigDecimal.ZERO));
 
       cleanExcel(2);
@@ -106,14 +111,18 @@ public class BalanceReporting extends Reporting {
   /**
    * 
    */
-  private RowDataList createRowDataList(
-      @Nonnull TokenEnum token,
-      @Nonnull List<StakingAddressDTO> stakingAddressDTOList) throws DfxException {
+  public RowDataList createRowDataList(@Nonnull TokenEnum token) throws DfxException {
     LOGGER.trace("createRowDataList()");
 
+    // ...
+    totalBalance = BigDecimal.ZERO;
+
+    // ...
     RowDataList rowDataList = new RowDataList(2);
 
     // ...
+    List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
+
     for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
       if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
         LOGGER.debug("Liquidity Address: " + stakingAddressDTO.getLiquidityAddress());

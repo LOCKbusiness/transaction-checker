@@ -92,7 +92,7 @@ public class StatistikReporting extends Reporting {
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet) throws DfxException {
-    LOGGER.debug("report()");
+    LOGGER.debug("report(): token=" + token);
 
     Objects.requireNonNull(token, "null 'token' not allowed");
     Objects.requireNonNull(rootPath, "null 'rootPath' not allowed");

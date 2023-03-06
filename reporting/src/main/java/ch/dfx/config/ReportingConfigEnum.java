@@ -57,6 +57,20 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_STATISTIK_DFI_DATA_SHEET("google.statistik.dfi_data_sheet"),
   GOOGLE_STATISTIK_DUSD_DATA_SHEET("google.statistik.dusd_data_sheet"),
 
+  // Transparency Report ...
+  GOOGLE_TRANSPARENCY_REPORT_STAKING_FILENAME("google.transparency_report.staking.filename"),
+  GOOGLE_TRANSPARENCY_REPORT_STAKING_TOTAL_SHEET("google.transparency_report.staking.total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_STAKING_CUSTOMER_SHEET("google.transparency_report.staking.customer_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_STAKING_MASTERNODE_SHEET("google.transparency_report.staking.masternode_sheet"),
+
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_FILENAME("google.transparency_report.yieldmachine.filename"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_CUSTOMER_SHEET("google.transparency_report.yieldmachine.customer_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DFI_TOTAL_SHEET("google.transparency_report.yieldmachine.dfi_total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_BTC_TOTAL_SHEET("google.transparency_report.yieldmachine.btc_total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_ETH_TOTAL_SHEET("google.transparency_report.yieldmachine.eth_total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDT_TOTAL_SHEET("google.transparency_report.yieldmachine.usdt_total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDC_TOTAL_SHEET("google.transparency_report.yieldmachine.usdc_total_sheet"),
+
   // H2 Database ...
   H2_DB_DIR("database.[ENVIRONMENT].db_dir"),
   H2_DB_NAME("database.[ENVIRONMENT].db_name"),

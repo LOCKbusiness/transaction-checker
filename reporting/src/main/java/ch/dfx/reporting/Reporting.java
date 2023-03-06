@@ -47,6 +47,21 @@ public abstract class Reporting {
    */
   protected void openExcel(
       @Nonnull String reportingRootPath,
+      @Nonnull String reportingFileName) throws DfxException {
+    LOGGER.trace("openExcel()");
+
+    // ...
+    excelFile = new File(reportingRootPath, reportingFileName);
+
+    excelWriter = new ExcelWriter();
+    excelWriter.openWorkbook(excelFile);
+  }
+
+  /**
+   * 
+   */
+  protected void openExcel(
+      @Nonnull String reportingRootPath,
       @Nonnull String reportingFileName,
       @Nonnull String reportingSheetName) throws DfxException {
     LOGGER.trace("openExcel()");
@@ -56,6 +71,17 @@ public abstract class Reporting {
 
     excelWriter = new ExcelWriter();
     excelWriter.openWorkbook(excelFile, reportingSheetName);
+  }
+
+  /**
+   * 
+   */
+  protected void setSheet(@Nonnull String reportingSheetName) {
+    LOGGER.trace("setSheet()");
+
+    if (null != excelWriter) {
+      excelWriter.setSheet(reportingSheetName);
+    }
   }
 
   /**

@@ -56,6 +56,22 @@ public class ExcelWriter {
   /**
    * 
    */
+  public void openWorkbook(@Nonnull File excelFile) throws DfxException {
+    LOGGER.trace("openWorkbook()");
+
+    try (FileInputStream inputStream = new FileInputStream(excelFile)) {
+      workbook = WorkbookFactory.create(inputStream);
+      sheet = workbook.getSheetAt(0);
+
+      initializeStyles();
+    } catch (Exception e) {
+      throw new DfxException("openWorkbook", e);
+    }
+  }
+
+  /**
+   * 
+   */
   public void openWorkbook(
       @Nonnull File excelFile,
       @Nonnull String sheetName) throws DfxException {
@@ -68,6 +84,17 @@ public class ExcelWriter {
       initializeStyles();
     } catch (Exception e) {
       throw new DfxException("openWorkbook", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public void setSheet(@Nonnull String sheetName) {
+    LOGGER.trace("setSheet()");
+
+    if (null != workbook) {
+      sheet = workbook.getSheet(sheetName);
     }
   }
 

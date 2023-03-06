@@ -396,9 +396,14 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
       // ...
       String transactionFeeSelectSql =
           "WITH LIQ_OUT AS ("
-              + " SELECT block_number, transaction_number FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out"
-              + " WHERE address_number=" + liquidityAddressNumber
-              + " GROUP BY block_number, transaction_number"
+              + " SELECT t.block_number, t.number AS transaction_number FROM " + TOKEN_PUBLIC_SCHEMA + ".transaction t"
+              + " JOIN " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_out at_out ON"
+              + " t.block_number = at_out.block_number"
+              + " AND t.number = at_out.transaction_number"
+              + " WHERE"
+              + " t.custom_type_code='0'"
+              + " AND address_number=" + liquidityAddressNumber
+              + " GROUP BY t.block_number, t.number"
               + " ), AT_IN AS ("
               + " SELECT sum(at_in.vin) AS sum_vin FROM " + TOKEN_PUBLIC_SCHEMA + ".address_transaction_in at_in"
               + " JOIN LIQ_OUT liq_out ON"

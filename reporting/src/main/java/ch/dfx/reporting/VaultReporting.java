@@ -10,7 +10,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,6 +17,7 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -102,8 +102,8 @@ public class VaultReporting extends Reporting {
       // String vault3Address = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT3_ADDRESS, "");
 
       // ...
-      Map<String, BigDecimal> liquidityTokenToAmountMap = createTokenToAmountMap(liquidityAddress);
-      Map<String, BigDecimal> vaultTokenToAmountMap = createTokenToAmountMap(vault1Address);
+      Map<String, BigDecimal> liquidityTokenToAmountMap = getTokenToAmountMap(liquidityAddress);
+      Map<String, BigDecimal> vaultTokenToAmountMap = getTokenToAmountMap(vault1Address);
 
       // ...
       if (StringUtils.isNotEmpty(vault1Address)) {
@@ -162,24 +162,10 @@ public class VaultReporting extends Reporting {
   /**
    * 
    */
-  private Map<String, BigDecimal> createTokenToAmountMap(@Nonnull String address) throws DfxException {
+  private Map<String, BigDecimal> getTokenToAmountMap(@Nonnull String address) throws DfxException {
     List<String> accountList = dataProvider.getAccount(address);
 
-    return createTokenToAmountMap(accountList);
-  }
-
-  /**
-   * 
-   */
-  private Map<String, BigDecimal> createTokenToAmountMap(@Nonnull List<String> accountList) throws DfxException {
-    Map<String, BigDecimal> tokenToAmountMap = new HashMap<>();
-
-    for (String accountEntry : accountList) {
-      String[] accountEntrySplitArray = accountEntry.split("\\@");
-      tokenToAmountMap.put(accountEntrySplitArray[1], new BigDecimal(accountEntrySplitArray[0]));
-    }
-
-    return tokenToAmountMap;
+    return TransactionCheckerUtils.getTokenToAmountMap(accountList);
   }
 
   /**
@@ -201,10 +187,10 @@ public class VaultReporting extends Reporting {
 
     // ...
     DefiPoolPairData poolPairData = dataProvider.getPoolPair("SPY-DUSD");
+    Pair<BigDecimal, BigDecimal> poolTokenAmountPair = TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, ourSpyDusdAmount);
 
-    BigDecimal poolAmountSpy = poolPairData.getReserveA();
-    BigDecimal poolamountDusd = poolPairData.getReserveB();
-    BigDecimal poolTotalLiquidity = poolPairData.getTotalLiquidity();
+    BigDecimal ourSpyPoolAmount = poolTokenAmountPair.getLeft();
+    BigDecimal ourDusdPoolAmount = poolTokenAmountPair.getRight();
 
     // ...
     DefiFixedIntervalPriceData spyFixedIntervalPriceData = dataProvider.getFixedIntervalPrice("SPY/USD");
@@ -217,16 +203,12 @@ public class VaultReporting extends Reporting {
     DefiVaultData vaultData = dataProvider.getVault(listVaultData.getVaultId());
 
     List<String> collateralAmounts = vaultData.getCollateralAmounts();
-    Map<String, BigDecimal> collateralTokenToAmountMap = createTokenToAmountMap(collateralAmounts);
+    Map<String, BigDecimal> collateralTokenToAmountMap = TransactionCheckerUtils.getTokenToAmountMap(collateralAmounts);
     BigDecimal collateralDusdAmount = collateralTokenToAmountMap.getOrDefault("DUSD", BigDecimal.ZERO);
 
     List<String> loanAmounts = vaultData.getLoanAmounts();
-    Map<String, BigDecimal> loanTokenToAmountMap = createTokenToAmountMap(loanAmounts);
+    Map<String, BigDecimal> loanTokenToAmountMap = TransactionCheckerUtils.getTokenToAmountMap(loanAmounts);
     BigDecimal loanSpyAmount = loanTokenToAmountMap.getOrDefault("SPY", BigDecimal.ZERO);
-
-    // ...
-    BigDecimal ourSpyPoolAmount = poolAmountSpy.divide(poolTotalLiquidity, MATH_CONTEXT).multiply(ourSpyDusdAmount);
-    BigDecimal ourDusdPoolAmount = poolamountDusd.divide(poolTotalLiquidity, MATH_CONTEXT).multiply(ourSpyDusdAmount);
 
     // ...
     BigDecimal ourSpyValue = ourSpyAmount.multiply(spyActivePrice);

@@ -89,19 +89,19 @@ public class DefiManagerRunnable implements SchedulerProviderRunnable {
   private void doRun() {
     LOGGER.trace("doRun()");
 
-    executeVaultCheckRatio();
+    executeVaultCheckCollateralizationRatio();
   }
 
   /**
    * 
    */
-  private void executeVaultCheckRatio() {
-    LOGGER.trace("executeVaultCheckRatio()");
+  private void executeVaultCheckCollateralizationRatio() {
+    LOGGER.trace("executeVaultCheckCollateralizationRatio()");
 
     try {
-      vaultManager1.checkRatio();
-      vaultManager2.checkRatio();
-      vaultManager3.checkRatio();
+      vaultManager1.checkCollateralizationRatio();
+      vaultManager2.checkCollateralizationRatio();
+      vaultManager3.checkCollateralizationRatio();
 
       vaultCheckErrorCounter = 0;
     } catch (DfxException e) {

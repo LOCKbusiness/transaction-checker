@@ -21,6 +21,11 @@ public class DefiPoolPairData extends ResultDataA {
 
   private BigDecimal totalLiquidity = null;
 
+  private BigDecimal commission = null;
+
+  private BigDecimal dexFeeInPctTokenA = null;
+  private BigDecimal dexFeeOutPctTokenA = null;
+
   /**
    * 
    */
@@ -81,6 +86,30 @@ public class DefiPoolPairData extends ResultDataA {
 
   public void setTotalLiquidity(BigDecimal totalLiquidity) {
     this.totalLiquidity = totalLiquidity;
+  }
+
+  public BigDecimal getCommission() {
+    return commission;
+  }
+
+  public void setCommission(BigDecimal commission) {
+    this.commission = commission;
+  }
+
+  public BigDecimal getDexFeeInPctTokenA() {
+    return dexFeeInPctTokenA;
+  }
+
+  public void setDexFeeInPctTokenA(BigDecimal dexFeeInPctTokenA) {
+    this.dexFeeInPctTokenA = dexFeeInPctTokenA;
+  }
+
+  public BigDecimal getDexFeeOutPctTokenA() {
+    return dexFeeOutPctTokenA;
+  }
+
+  public void setDexFeeOutPctTokenA(BigDecimal dexFeeOutPctTokenA) {
+    this.dexFeeOutPctTokenA = dexFeeOutPctTokenA;
   }
 
   @Override

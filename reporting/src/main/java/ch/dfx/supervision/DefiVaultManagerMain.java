@@ -86,8 +86,10 @@ public class DefiVaultManagerMain {
     List<String> checkRatio3List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT3_CHECK_RATIO);
     DefiVaultManager vaultManager3 = new DefiVaultManager(messageEventProvider, vaultId3, checkRatio3List);
 
-    vaultManager1.checkRatio();
-    vaultManager2.checkRatio();
-    vaultManager3.checkRatio();
+    vaultManager1.checkCollateralizationRatio();
+    vaultManager2.checkCollateralizationRatio();
+    vaultManager3.checkCollateralizationRatio();
+
+//    vaultManager2.checkDFIRatio();
   }
 }

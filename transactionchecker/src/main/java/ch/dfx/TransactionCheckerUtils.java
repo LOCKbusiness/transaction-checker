@@ -3,17 +3,22 @@ package ch.dfx;
 import java.io.File;
 import java.io.FileReader;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -30,12 +35,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 
-import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.config.ConfigProvider;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.common.provider.TokenProvider;
+import ch.dfx.defichain.data.pool.DefiPoolPairData;
 import ch.dfx.defichain.provider.DefiDataProvider;
 import ch.dfx.defichain.provider.DefiDataProviderImpl;
 
@@ -52,6 +58,8 @@ public class TransactionCheckerUtils {
 
   public static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("0.00000000");
   public static final DecimalFormat GERMAN_DECIMAL_FORMAT = new DecimalFormat("#,##0.00000000");
+
+  private static final MathContext MATH_CONTEXT = MathContext.DECIMAL64;
 
   // ...
   private static final Gson GSON =
@@ -215,6 +223,37 @@ public class TransactionCheckerUtils {
 
     // ...
     return new DefiDataProviderImpl(httpClient, httpPost);
+  }
+
+  /**
+   * 
+   */
+  public static Map<String, BigDecimal> getTokenToAmountMap(@Nonnull List<String> amountWithTokenList) {
+    Map<String, BigDecimal> tokenToAmountMap = new HashMap<>();
+
+    for (String amountWithTokenEntry : amountWithTokenList) {
+      String[] amountWithTokenSplitArray = amountWithTokenEntry.split("\\@");
+      tokenToAmountMap.put(amountWithTokenSplitArray[1], new BigDecimal(amountWithTokenSplitArray[0]));
+    }
+
+    return tokenToAmountMap;
+  }
+
+  /**
+   * 
+   */
+  public static Pair<BigDecimal, BigDecimal> getPoolTokenAmountPair(
+      @Nonnull DefiPoolPairData poolPairData,
+      @Nonnull BigDecimal ourPoolAmount) {
+
+    BigDecimal poolTokenAReserve = poolPairData.getReserveA();
+    BigDecimal poolTokenBReserve = poolPairData.getReserveB();
+    BigDecimal poolTotalLiquidity = poolPairData.getTotalLiquidity();
+
+    BigDecimal ourPoolTokenAAmount = poolTokenAReserve.divide(poolTotalLiquidity, MATH_CONTEXT).multiply(ourPoolAmount);
+    BigDecimal ourPoolTokenBAmount = poolTokenBReserve.divide(poolTotalLiquidity, MATH_CONTEXT).multiply(ourPoolAmount);
+
+    return Pair.of(ourPoolTokenAAmount, ourPoolTokenBAmount);
   }
 
   /**

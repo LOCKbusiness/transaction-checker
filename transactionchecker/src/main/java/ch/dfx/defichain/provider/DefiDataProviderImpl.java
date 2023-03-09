@@ -1,6 +1,7 @@
 package ch.dfx.defichain.provider;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -27,8 +29,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.config.ConfigProvider;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.ResultDataA;
 import ch.dfx.defichain.data.ResultErrorData;
@@ -433,6 +435,21 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     List<Object> paramList = Arrays.asList(fixedIntervalPriceId);
 
     return getData("getfixedintervalprice", paramList, DefiFixedIntervalPriceResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public Map<String, BigDecimal> getActivePriceMap(@Nonnull Set<String> tokenSet) throws DfxException {
+    Map<String, BigDecimal> activePriceMap = new HashMap<>();
+
+    for (String token : tokenSet) {
+      DefiFixedIntervalPriceData fixedIntervalPriceData = getFixedIntervalPrice(token + "/USD");
+      activePriceMap.put(token, fixedIntervalPriceData.getActivePrice());
+    }
+
+    return activePriceMap;
   }
 
   /**

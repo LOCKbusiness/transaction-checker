@@ -24,7 +24,7 @@ import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
 import ch.dfx.reporting.VaultReporting;
 import ch.dfx.reporting.transparency.StakingTransparencyReporting;
 import ch.dfx.reporting.transparency.YieldmachineTransparencyReporting1;
-import ch.dfx.reporting.transparency.YieldmachineTransparencyReporting2;
+import ch.dfx.reporting.transparency.YieldmachineTransparencyReporting3;
 import ch.dfx.statistik.StakingStatistikProvider;
 import ch.dfx.statistik.StatistikReporting;
 import ch.dfx.statistik.YieldmachineStatistikProvider;
@@ -108,8 +108,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       createLiquidityMasternodeStakingBalanceReport(connection, logInfoList);
       createVaultReport(connection, logInfoList);
 
-      createStakingTransparencyReport(connection, logInfoList);
-      createYieldmachineTransparencyReport(connection, logInfoList);
+      createStakingTransparencyReport(connection);
+//      createYieldmachineTransparencyReport(connection);
 
       createStatistikReport(connection);
 
@@ -270,9 +270,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  private void createStakingTransparencyReport(
-      @Nonnull Connection connection,
-      @Nonnull List<String> logInfoList) {
+  private void createStakingTransparencyReport(@Nonnull Connection connection) {
     LOGGER.trace("createStakingTransparencyReport() ...");
 
     try {
@@ -288,7 +286,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != customerSheet
           && null != masternodeSheet) {
         StakingTransparencyReporting transparencyReporting =
-            new StakingTransparencyReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
+            new StakingTransparencyReporting(network, databaseBlockHelper, databaseStakingBalanceHelper);
         transparencyReporting.report(connection, TokenEnum.DFI, rootPath, fileName, totalSheet, customerSheet, masternodeSheet);
       }
     } catch (Exception e) {
@@ -299,9 +297,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
   /**
    * 
    */
-  private void createYieldmachineTransparencyReport(
-      @Nonnull Connection connection,
-      @Nonnull List<String> logInfoList) {
+  private void createYieldmachineTransparencyReport(@Nonnull Connection connection) {
     LOGGER.trace("createYieldmachineTransparencyReport() ...");
 
     try {
@@ -335,6 +331,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 //      String usdcCustomerSheet = "Kundenliste (USDC)";// ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDC_CUSTOMER_SHEET);
 //      createYieldmachineTransparencyReport(transparencyReporting, TokenEnum.USDC, rootPath, fileName, usdcTotalSheet, usdcCustomerSheet);
 
+      String transactionSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TRANSACTION_SHEET);
       String customerSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_CUSTOMER_SHEET);
 
       if (null != rootPath
@@ -344,13 +341,16 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != ethTotalSheet
           && null != usdtTotalSheet
           && null != usdcTotalSheet
+          && null != transactionSheet
           && null != customerSheet) {
-        YieldmachineTransparencyReporting2 transparencyReporting =
-            new YieldmachineTransparencyReporting2(network, databaseBlockHelper, databaseYieldmachineBalanceHelper, logInfoList);
+//        YieldmachineTransparencyReporting2 transparencyReporting =
+//            new YieldmachineTransparencyReporting2(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
+        YieldmachineTransparencyReporting3 transparencyReporting =
+            new YieldmachineTransparencyReporting3(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
 
         transparencyReporting.report(
             rootPath, fileName,
-            dfiTotalSheet, btcTotalSheet, ethTotalSheet, usdtTotalSheet, usdcTotalSheet, customerSheet);
+            dfiTotalSheet, btcTotalSheet, ethTotalSheet, usdtTotalSheet, usdcTotalSheet, transactionSheet, customerSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createYieldmachineBTCTransparencyReport", e);

@@ -15,12 +15,13 @@ public enum ReportingConfigEnum implements ConfigEntry {
   TELEGRAM_AUTOMATIC_VAULT_INFORMATION_TOKEN("telegram.automaticVaultInformationBot.token"),
   TELEGRAM_AUTOMATIC_VAULT_INFORMATION_CHAT_ID("telegram.automaticVaultInformationBot.chatId"),
 
-  // Run Period für Scheduler ...
+  // Run Period fï¿½r Scheduler ...
   RUN_PERIOD_REPORT("scheduler.run_period_report"),
   RUN_PERIOD_DEFIMANAGER("scheduler.run_period_defimanager"),
 
   // Yield Machine
   YM_LIQUIDITY_ADDRESS("yieldmachine.liquidity_address"),
+  YM_REWARD_ADDRESS("yieldmachine.reward_address"),
 
   YM_VAULT1_ADDRESS("yieldmachine.vault1.address"),
   YM_VAULT1_ID("yieldmachine.vault1.id"),
@@ -33,6 +34,12 @@ public enum ReportingConfigEnum implements ConfigEntry {
   YM_VAULT3_ADDRESS("yieldmachine.vault3.address"),
   YM_VAULT3_ID("yieldmachine.vault3.id"),
   YM_VAULT3_CHECK_RATIO("yieldmachine.vault3.check_ratio"),
+
+  YM_DUSD_LM_ADDRESS("yieldmachine.liquidity_mining.dusd_address"),
+  YM_BTC_LM_ADDRESS("yieldmachine.liquidity_mining.btc_address"),
+  YM_ETH_LM_ADDRESS("yieldmachine.liquidity_mining.eth_address"),
+  YM_USDT_LM_ADDRESS("yieldmachine.liquidity_mining.usdt_address"),
+  YM_USDC_LM_ADDRESS("yieldmachine.liquidity_mining.usdc_address"),
 
   // Reporting ...
   GOOGLE_ROOT_PATH("google.[ENVIRONMENT].[HOST_ID].root_path"),
@@ -64,8 +71,10 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_TRANSPARENCY_REPORT_STAKING_MASTERNODE_SHEET("google.transparency_report.staking.masternode_sheet"),
 
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_FILENAME("google.transparency_report.yieldmachine.filename"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TRANSACTION_SHEET("google.transparency_report.yieldmachine.transaction_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_CUSTOMER_SHEET("google.transparency_report.yieldmachine.customer_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DFI_TOTAL_SHEET("google.transparency_report.yieldmachine.dfi_total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DUSD_TOTAL_SHEET("google.transparency_report.yieldmachine.dusd_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_BTC_TOTAL_SHEET("google.transparency_report.yieldmachine.btc_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_ETH_TOTAL_SHEET("google.transparency_report.yieldmachine.eth_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDT_TOTAL_SHEET("google.transparency_report.yieldmachine.usdt_total_sheet"),

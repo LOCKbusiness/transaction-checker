@@ -1,7 +1,9 @@
 package ch.dfx.defichain.provider;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -78,6 +80,8 @@ public interface DefiDataProvider {
   DefiPoolPairData getPoolPair(@Nonnull String poolId) throws DfxException;
 
   DefiFixedIntervalPriceData getFixedIntervalPrice(@Nonnull String fixedIntervalPriceId) throws DfxException;
+
+  Map<String, BigDecimal> getActivePriceMap(@Nonnull Set<String> tokenSet) throws DfxException;
 
   List<String> getAccount(@Nonnull String address) throws DfxException;
 

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +35,7 @@ import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
- * 
+ * Version 2: One customer sheets for all Tokens (Vaults only) ...
  */
 public class YieldmachineTransparencyReporting2 extends Reporting {
   private static final Logger LOGGER = LogManager.getLogger(YieldmachineTransparencyReporting2.class);
@@ -66,14 +65,19 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
   private Map<String, BigDecimal> vault3TokenToAmountMap = null;
   private Map<String, BigDecimal> vault3TokenToVaultCollateralMap = null;
 
+  private Map<String, BigDecimal> dusdLMTokenToAmountMap = null;
+  private Map<String, BigDecimal> btcLMTokenToAmountMap = null;
+  private Map<String, BigDecimal> ethLMTokenToAmountMap = null;
+  private Map<String, BigDecimal> usdtLMTokenToAmountMap = null;
+  private Map<String, BigDecimal> usdcLMTokenToAmountMap = null;
+
   /**
    * 
    */
   public YieldmachineTransparencyReporting2(
       @Nonnull NetworkEnum network,
       @Nonnull DatabaseBlockHelper databaseBlockHelper,
-      @Nonnull DatabaseBalanceHelper databaseBalanceHelper,
-      @Nonnull List<String> logInfoList) {
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     super(network, databaseBlockHelper, databaseBalanceHelper);
 
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
@@ -162,6 +166,7 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
       currentDate = new Date();
     }
 
+    // ...
     if (null == liquidityTokenToAmountMap) {
       String liquidityAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_LIQUIDITY_ADDRESS, "");
       liquidityTokenToAmountMap = getTokenToAmountMap(liquidityAddress);
@@ -193,6 +198,32 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
       vault3TokenToAmountMap = getTokenToAmountMap(vault3Address);
       vault3TokenToVaultCollateralMap = getTokenToVaultCollateralMap(vault3Id);
     }
+
+    // ...
+    if (null == dusdLMTokenToAmountMap) {
+      String dusdLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_DUSD_LM_ADDRESS, "");
+      dusdLMTokenToAmountMap = getTokenToAmountMap(dusdLMAddress);
+    }
+
+    if (null == btcLMTokenToAmountMap) {
+      String btcLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_BTC_LM_ADDRESS, "");
+      btcLMTokenToAmountMap = getTokenToAmountMap(btcLMAddress);
+    }
+
+    if (null == ethLMTokenToAmountMap) {
+      String ethLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_ETH_LM_ADDRESS, "");
+      ethLMTokenToAmountMap = getTokenToAmountMap(ethLMAddress);
+    }
+
+    if (null == usdtLMTokenToAmountMap) {
+      String usdtLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_USDT_LM_ADDRESS, "");
+      usdtLMTokenToAmountMap = getTokenToAmountMap(usdtLMAddress);
+    }
+
+    if (null == usdcLMTokenToAmountMap) {
+      String usdcLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_USDC_LM_ADDRESS, "");
+      usdcLMTokenToAmountMap = getTokenToAmountMap(usdcLMAddress);
+    }
   }
 
   /**
@@ -203,7 +234,7 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
 
     List<String> accountList = dataProvider.getAccount(address);
 
-    return createTokenToAmountMap(accountList);
+    return TransactionCheckerUtils.getTokenToAmountMap(accountList);
   }
 
   /**
@@ -216,23 +247,7 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
 
     List<String> collateralAmountList = vaultData.getCollateralAmounts();
 
-    return createTokenToAmountMap(collateralAmountList);
-  }
-
-  /**
-   * 
-   */
-  private Map<String, BigDecimal> createTokenToAmountMap(@Nonnull List<String> accountList) throws DfxException {
-    LOGGER.debug("createTokenToAmountMap()");
-
-    Map<String, BigDecimal> tokenToAmountMap = new HashMap<>();
-
-    for (String accountEntry : accountList) {
-      String[] accountEntrySplitArray = accountEntry.split("\\@");
-      tokenToAmountMap.put(accountEntrySplitArray[1], new BigDecimal(accountEntrySplitArray[0]));
-    }
-
-    return tokenToAmountMap;
+    return TransactionCheckerUtils.getTokenToAmountMap(collateralAmountList);
   }
 
   /**
@@ -280,8 +295,8 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
     totalLockValue = totalLockValue.add(vault1Amount);
     totalLockValue = totalLockValue.add(vault1Collateral);
 
-    cellDataList.add(new CellData().setRowIndex(5).setCellIndex(5).setKeepStyle(true).setValue(vault1Amount));
-    cellDataList.add(new CellData().setRowIndex(6).setCellIndex(5).setKeepStyle(true).setValue(vault1Collateral));
+    cellDataList.add(new CellData().setRowIndex(6).setCellIndex(5).setKeepStyle(true).setValue(vault1Amount));
+    cellDataList.add(new CellData().setRowIndex(7).setCellIndex(5).setKeepStyle(true).setValue(vault1Collateral));
 
     // ...
     BigDecimal vault2Amount = vault2TokenToAmountMap.getOrDefault(token.toString(), BigDecimal.ZERO);
@@ -290,8 +305,8 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
     totalLockValue = totalLockValue.add(vault2Amount);
     totalLockValue = totalLockValue.add(vault2Collateral);
 
-    cellDataList.add(new CellData().setRowIndex(7).setCellIndex(5).setKeepStyle(true).setValue(vault2Amount));
-    cellDataList.add(new CellData().setRowIndex(8).setCellIndex(5).setKeepStyle(true).setValue(vault2Collateral));
+    cellDataList.add(new CellData().setRowIndex(8).setCellIndex(5).setKeepStyle(true).setValue(vault2Amount));
+    cellDataList.add(new CellData().setRowIndex(9).setCellIndex(5).setKeepStyle(true).setValue(vault2Collateral));
 
     // ...
     BigDecimal vault3Amount = vault3TokenToAmountMap.getOrDefault(token.toString(), BigDecimal.ZERO);
@@ -300,16 +315,16 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
     totalLockValue = totalLockValue.add(vault3Amount);
     totalLockValue = totalLockValue.add(vault3Collateral);
 
-    cellDataList.add(new CellData().setRowIndex(9).setCellIndex(5).setKeepStyle(true).setValue(vault3Amount));
-    cellDataList.add(new CellData().setRowIndex(10).setCellIndex(5).setKeepStyle(true).setValue(vault3Collateral));
+    cellDataList.add(new CellData().setRowIndex(10).setCellIndex(5).setKeepStyle(true).setValue(vault3Amount));
+    cellDataList.add(new CellData().setRowIndex(11).setCellIndex(5).setKeepStyle(true).setValue(vault3Collateral));
 
     // ...
-    cellDataList.add(new CellData().setRowIndex(16).setCellIndex(2).setKeepStyle(true).setValue(totalCustomerValue));
-    cellDataList.add(new CellData().setRowIndex(16).setCellIndex(5).setKeepStyle(true).setValue(totalLockValue));
+    cellDataList.add(new CellData().setRowIndex(17).setCellIndex(2).setKeepStyle(true).setValue(totalCustomerValue));
+    cellDataList.add(new CellData().setRowIndex(17).setCellIndex(5).setKeepStyle(true).setValue(totalLockValue));
 
     // ...
     BigDecimal difference = totalLockValue.subtract(totalCustomerValue);
-    cellDataList.add(new CellData().setRowIndex(18).setCellIndex(5).setKeepStyle(true).setValue(difference));
+    cellDataList.add(new CellData().setRowIndex(19).setCellIndex(5).setKeepStyle(true).setValue(difference));
 
     cellDataList.addProperty(TOTAL_DIFFERENCE_PROPERTY, difference);
 

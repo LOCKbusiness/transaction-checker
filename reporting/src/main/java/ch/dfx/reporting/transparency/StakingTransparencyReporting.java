@@ -2,6 +2,7 @@ package ch.dfx.reporting.transparency;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -47,12 +48,11 @@ public class StakingTransparencyReporting extends Reporting {
   public StakingTransparencyReporting(
       @Nonnull NetworkEnum network,
       @Nonnull DatabaseBlockHelper databaseBlockHelper,
-      @Nonnull DatabaseBalanceHelper databaseBalanceHelper,
-      @Nonnull List<String> logInfoList) {
+      @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     super(network, databaseBlockHelper, databaseBalanceHelper);
 
     this.balanceReporting =
-        new BalanceReporting(network, databaseBlockHelper, databaseBalanceHelper, logInfoList, BalanceReportingTypeEnum.STAKING);
+        new BalanceReporting(network, databaseBlockHelper, databaseBalanceHelper, new ArrayList<>(), BalanceReportingTypeEnum.STAKING);
 
     this.masternodeReporting =
         new MasternodeReporting(network, databaseBlockHelper, databaseBalanceHelper);
@@ -103,8 +103,13 @@ public class StakingTransparencyReporting extends Reporting {
       } else {
         String messageText =
             "Staking Transparency Report (" + token + "):\n"
-                + "LOCK Vermögen weniger als die Kundeneinlagen";
+                + "LOCK VermÃ¶gen weniger als die Kundeneinlagen";
         sendTelegramMessage(messageText);
+
+        // TODO: Only for testing purposes ...
+        writeTransparencyReport(rootPath, fileName, transparencyReportTotalSheet, transparencyReportingCellDataList);
+        writeStakingBalance(currentDate, rootPath, fileName, transparencyReportCustomerSheet, stakingBalanceRowDataList);
+        writeMasternodeBalance(currentDate, rootPath, fileName, transparencyReportMasternodeSheet, masternodeRowDataList);
       }
     } finally {
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));

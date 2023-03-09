@@ -3,7 +3,6 @@ package ch.dfx.reporting.transparency;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +31,7 @@ import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
- * 
+ * Version 1: Different customer sheets for all Tokens (Vaults only) ...
  */
 public class YieldmachineTransparencyReporting1 extends Reporting {
   private static final Logger LOGGER = LogManager.getLogger(YieldmachineTransparencyReporting1.class);
@@ -292,7 +291,7 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
 
     List<String> accountList = dataProvider.getAccount(address);
 
-    return createTokenToAmountMap(accountList);
+    return TransactionCheckerUtils.getTokenToAmountMap(accountList);
   }
 
   /**
@@ -305,21 +304,7 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
 
     List<String> collateralAmountList = vaultData.getCollateralAmounts();
 
-    return createTokenToAmountMap(collateralAmountList);
-  }
-
-  /**
-   * 
-   */
-  private Map<String, BigDecimal> createTokenToAmountMap(@Nonnull List<String> accountList) throws DfxException {
-    Map<String, BigDecimal> tokenToAmountMap = new HashMap<>();
-
-    for (String accountEntry : accountList) {
-      String[] accountEntrySplitArray = accountEntry.split("\\@");
-      tokenToAmountMap.put(accountEntrySplitArray[1], new BigDecimal(accountEntrySplitArray[0]));
-    }
-
-    return tokenToAmountMap;
+    return TransactionCheckerUtils.getTokenToAmountMap(collateralAmountList);
   }
 
   /**

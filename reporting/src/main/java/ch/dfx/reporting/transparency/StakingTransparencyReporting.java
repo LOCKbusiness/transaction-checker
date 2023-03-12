@@ -105,11 +105,6 @@ public class StakingTransparencyReporting extends Reporting {
             "Staking Transparency Report (" + token + "):\n"
                 + "LOCK Vermögen weniger als die Kundeneinlagen";
         sendTelegramMessage(messageText);
-
-        // TODO: Only for testing purposes ...
-        writeTransparencyReport(rootPath, fileName, transparencyReportTotalSheet, transparencyReportingCellDataList);
-        writeStakingBalance(currentDate, rootPath, fileName, transparencyReportCustomerSheet, stakingBalanceRowDataList);
-        writeMasternodeBalance(currentDate, rootPath, fileName, transparencyReportMasternodeSheet, masternodeRowDataList);
       }
     } finally {
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));

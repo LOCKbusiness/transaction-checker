@@ -47,6 +47,7 @@ public class TokenProvider {
       instance.tokenToNumberMap.put(TokenEnum.ETH, 2);
       instance.tokenToNumberMap.put(TokenEnum.USDT, 5);
       instance.tokenToNumberMap.put(TokenEnum.USDC, 22);
+      instance.tokenToNumberMap.put(TokenEnum.SPY, -1);
     } else {
       instance.tokenToNumberMap.put(TokenEnum.DFI, 0);
       instance.tokenToNumberMap.put(TokenEnum.DUSD, 15);
@@ -54,6 +55,7 @@ public class TokenProvider {
       instance.tokenToNumberMap.put(TokenEnum.ETH, 1);
       instance.tokenToNumberMap.put(TokenEnum.USDT, 3);
       instance.tokenToNumberMap.put(TokenEnum.USDC, 13);
+      instance.tokenToNumberMap.put(TokenEnum.SPY, 26);
     }
 
     // ...

@@ -15,7 +15,8 @@ public enum TokenEnum {
   BTC,
   ETH,
   USDT,
-  USDC;
+  USDC,
+  SPY;
 
   /**
    * 

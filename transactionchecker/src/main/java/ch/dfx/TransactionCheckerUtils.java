@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -60,6 +61,7 @@ public class TransactionCheckerUtils {
   public static final DecimalFormat GERMAN_DECIMAL_FORMAT = new DecimalFormat("#,##0.00000000");
 
   private static final MathContext MATH_CONTEXT = MathContext.DECIMAL64;
+  private static final int SCALE = 8;
 
   // ...
   private static final Gson GSON =
@@ -250,8 +252,10 @@ public class TransactionCheckerUtils {
     BigDecimal poolTokenBReserve = poolPairData.getReserveB();
     BigDecimal poolTotalLiquidity = poolPairData.getTotalLiquidity();
 
-    BigDecimal ourPoolTokenAAmount = poolTokenAReserve.divide(poolTotalLiquidity, MATH_CONTEXT).multiply(ourPoolAmount);
-    BigDecimal ourPoolTokenBAmount = poolTokenBReserve.divide(poolTotalLiquidity, MATH_CONTEXT).multiply(ourPoolAmount);
+    BigDecimal ourPoolTokenAAmount =
+        poolTokenAReserve.divide(poolTotalLiquidity, MATH_CONTEXT).multiply(ourPoolAmount, MATH_CONTEXT).setScale(SCALE, RoundingMode.HALF_UP);
+    BigDecimal ourPoolTokenBAmount =
+        poolTokenBReserve.divide(poolTotalLiquidity, MATH_CONTEXT).multiply(ourPoolAmount, MATH_CONTEXT).setScale(SCALE, RoundingMode.HALF_UP);
 
     return Pair.of(ourPoolTokenAAmount, ourPoolTokenBAmount);
   }

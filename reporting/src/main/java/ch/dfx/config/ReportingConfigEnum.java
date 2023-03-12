@@ -40,6 +40,7 @@ public enum ReportingConfigEnum implements ConfigEntry {
   YM_ETH_LM_ADDRESS("yieldmachine.liquidity_mining.eth_address"),
   YM_USDT_LM_ADDRESS("yieldmachine.liquidity_mining.usdt_address"),
   YM_USDC_LM_ADDRESS("yieldmachine.liquidity_mining.usdc_address"),
+  YM_SPY_LM_ADDRESS("yieldmachine.liquidity_mining.spy_address"),
 
   // Reporting ...
   GOOGLE_ROOT_PATH("google.[ENVIRONMENT].[HOST_ID].root_path"),
@@ -79,6 +80,7 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_ETH_TOTAL_SHEET("google.transparency_report.yieldmachine.eth_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDT_TOTAL_SHEET("google.transparency_report.yieldmachine.usdt_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDC_TOTAL_SHEET("google.transparency_report.yieldmachine.usdc_total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_SPY_TOTAL_SHEET("google.transparency_report.yieldmachine.spy_total_sheet"),
 
   // H2 Database ...
   H2_DB_DIR("database.[ENVIRONMENT].db_dir"),

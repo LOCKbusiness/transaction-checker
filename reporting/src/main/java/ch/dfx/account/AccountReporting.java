@@ -90,6 +90,9 @@ public class AccountReporting extends Reporting {
         transactionDataList.addAll(customerTransactionDataList);
 
         // ...
+        fillTotalBalance(transactionDataList);
+
+        // ...
         Comparator<TransactionData> comparator =
             Comparator.comparing(TransactionData::getTimestamp).reversed();
         transactionDataList.sort(comparator);
@@ -142,6 +145,9 @@ public class AccountReporting extends Reporting {
         transactionDataList.addAll(customerTransactionDataList);
 
         // ...
+        fillTotalBalance(transactionDataList);
+
+        // ...
         Comparator<TransactionData> comparator =
             Comparator.comparing(TransactionData::getTimestamp).reversed();
         transactionDataList.sort(comparator);
@@ -153,6 +159,29 @@ public class AccountReporting extends Reporting {
       closeStatements();
     } finally {
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
+    }
+  }
+
+  /**
+   * 
+   */
+  private void fillTotalBalance(@Nonnull List<TransactionData> transactionDataList) {
+    Comparator<TransactionData> comparator =
+        Comparator.comparing(TransactionData::getTimestamp);
+    transactionDataList.sort(comparator);
+
+    BigDecimal totalBalance = BigDecimal.ZERO;
+
+    for (TransactionData transactionData : transactionDataList) {
+      BigDecimal amount = transactionData.getAmount();
+
+      if (transactionData.isDeposit()) {
+        totalBalance = totalBalance.add(amount);
+      } else {
+        totalBalance = totalBalance.subtract(amount);
+      }
+
+      transactionData.setTotalBalance(totalBalance);
     }
   }
 
@@ -180,6 +209,8 @@ public class AccountReporting extends Reporting {
         rowData.addCellData(new CellData().setValue(""));
         rowData.addCellData(new CellData().setValue(transactionData.getAmount()));
       }
+
+      rowData.addCellData(new CellData().setValue(transactionData.getTotalBalance()));
 
       rowDataList.add(rowData);
     }
@@ -475,6 +506,8 @@ public class AccountReporting extends Reporting {
     private String txId = null;
     private BigDecimal amount = null;
 
+    private BigDecimal totalBalance = null;
+
     private boolean isDeposit() {
       return isDeposit;
     }
@@ -505,6 +538,14 @@ public class AccountReporting extends Reporting {
 
     private void setAmount(BigDecimal amount) {
       this.amount = amount;
+    }
+
+    private BigDecimal getTotalBalance() {
+      return totalBalance;
+    }
+
+    private void setTotalBalance(BigDecimal totalBalance) {
+      this.totalBalance = totalBalance;
     }
   }
 }

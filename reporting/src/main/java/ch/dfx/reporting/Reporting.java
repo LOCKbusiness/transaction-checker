@@ -125,6 +125,19 @@ public abstract class Reporting {
   /**
    * 
    */
+  protected void writeExcel(@Nonnull RowDataList rowDataList) throws DfxException {
+    LOGGER.trace("writeExcel()");
+
+    LOGGER.debug("Reporting: " + excelFile.getName());
+
+    if (null != excelWriter) {
+      excelWriter.insertRowData(rowDataList);
+    }
+  }
+
+  /**
+   * 
+   */
   protected void closeExcel() throws DfxException {
     LOGGER.trace("closeExcel()");
 

@@ -74,6 +74,7 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_FILENAME("google.transparency_report.yieldmachine.filename"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TRANSACTION_SHEET("google.transparency_report.yieldmachine.transaction_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_CUSTOMER_SHEET("google.transparency_report.yieldmachine.customer_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TOTAL_SHEET("google.transparency_report.yieldmachine.total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DFI_TOTAL_SHEET("google.transparency_report.yieldmachine.dfi_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DUSD_TOTAL_SHEET("google.transparency_report.yieldmachine.dusd_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_BTC_TOTAL_SHEET("google.transparency_report.yieldmachine.btc_total_sheet"),
@@ -81,6 +82,9 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDT_TOTAL_SHEET("google.transparency_report.yieldmachine.usdt_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDC_TOTAL_SHEET("google.transparency_report.yieldmachine.usdc_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_SPY_TOTAL_SHEET("google.transparency_report.yieldmachine.spy_total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DIAGRAM_SHEET("google.transparency_report.yieldmachine.diagram_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_AMOUNT_SHEET("google.transparency_report.yieldmachine.history_amount_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_PRICE_SHEET("google.transparency_report.yieldmachine.history_price_sheet"),
 
   // H2 Database ...
   H2_DB_DIR("database.[ENVIRONMENT].db_dir"),

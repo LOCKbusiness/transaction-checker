@@ -305,8 +305,13 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
       String fileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_FILENAME);
 
+      String totalSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TOTAL_SHEET);
       String transactionSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TRANSACTION_SHEET);
       String customerSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_CUSTOMER_SHEET);
+
+      String diagramSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DIAGRAM_SHEET);
+      String historyAmountSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_AMOUNT_SHEET);
+      String historyPriceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_PRICE_SHEET);
 
       String dfiTotalSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DFI_TOTAL_SHEET);
       String dusdTotalSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DUSD_TOTAL_SHEET);
@@ -316,6 +321,18 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       String usdcTotalSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDC_TOTAL_SHEET);
       String spyTotalSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_SPY_TOTAL_SHEET);
 
+      // ...
+      Map<YieldmachineTransparencyReporting3.SheetEnum, String> sheetIdToSheetNameMap = new EnumMap<>(YieldmachineTransparencyReporting3.SheetEnum.class);
+      sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.TOTAL, totalSheet);
+      sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.TRANSACTION, transactionSheet);
+      sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.CUSTOMER, customerSheet);
+      sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.DIAGRAM, diagramSheet);
+      sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.HISTORY_AMOUNT, historyAmountSheet);
+      sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.HISTORY_PRICE, historyPriceSheet);
+
+      boolean isSheetNameNull = sheetIdToSheetNameMap.values().stream().anyMatch(sheetName -> null == sheetName);
+
+      // ...
       Map<TokenEnum, String> tokenToSheetNameMap = new EnumMap<>(TokenEnum.class);
       tokenToSheetNameMap.put(TokenEnum.DFI, dfiTotalSheet);
       tokenToSheetNameMap.put(TokenEnum.DUSD, dusdTotalSheet);
@@ -325,19 +342,18 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       tokenToSheetNameMap.put(TokenEnum.USDC, usdcTotalSheet);
       tokenToSheetNameMap.put(TokenEnum.SPY, spyTotalSheet);
 
-      boolean isSheetNameNull = tokenToSheetNameMap.values().stream().anyMatch(sheetName -> null == sheetName);
+      boolean isTokenSheetNameNull = tokenToSheetNameMap.values().stream().anyMatch(sheetName -> null == sheetName);
 
       if (null != rootPath
           && null != fileName
-          && null != transactionSheet
-          && null != customerSheet
-          && !isSheetNameNull) {
+          && !isSheetNameNull
+          && !isTokenSheetNameNull) {
 //        YieldmachineTransparencyReporting2 transparencyReporting =
 //            new YieldmachineTransparencyReporting2(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
         YieldmachineTransparencyReporting3 transparencyReporting =
             new YieldmachineTransparencyReporting3(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
 
-        transparencyReporting.report(rootPath, fileName, transactionSheet, customerSheet, tokenToSheetNameMap);
+        transparencyReporting.report(rootPath, fileName, sheetIdToSheetNameMap, tokenToSheetNameMap);
       }
     } catch (Exception e) {
       LOGGER.error("createYieldmachineBTCTransparencyReport", e);

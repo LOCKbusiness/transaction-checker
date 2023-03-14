@@ -22,8 +22,16 @@ public class RowData {
     return cellDataList;
   }
 
-  public void addCellData(@Nonnull CellData cellData) {
+  public RowData addCellData(@Nonnull CellData cellData) {
     cellDataList.add(cellData);
+
+    return this;
+  }
+
+  public RowData addCellDataList(@Nonnull CellDataList cellDataList) {
+    this.cellDataList.addAll(cellDataList);
+
+    return this;
   }
 
   @Override

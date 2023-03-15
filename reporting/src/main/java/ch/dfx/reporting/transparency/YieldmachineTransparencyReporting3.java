@@ -2044,10 +2044,16 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       cellDataList.add(new CellData().setCellIndex(0).setValue(historyPriceSheetDTO.getTimestamp()));
 
       int i = 1;
+      BigDecimal totalPrice = BigDecimal.ZERO;
 
       for (TokenEnum token : TokenEnum.values()) {
-        cellDataList.add(new CellData().setCellIndex(i++).setValue(historyPriceSheetDTO.getPrice(token)));
+        BigDecimal price = historyPriceSheetDTO.getPrice(token);
+        totalPrice = totalPrice.add(price);
+
+        cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
       }
+
+      cellDataList.add(new CellData().setCellIndex(i++).setValue(totalPrice));
 
       return cellDataList;
     }

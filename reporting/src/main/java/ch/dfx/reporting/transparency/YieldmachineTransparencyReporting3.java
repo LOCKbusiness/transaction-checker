@@ -187,10 +187,21 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap = createTokenToTotalSheetDTOMap(tokenToReportDTOMap);
 
       // ...
-      writeReport(
-          rootPath, fileName, sheetIdToSheetNameMap,
-          tokenToReportDTOMap, tokenToTransactionSheetDTOMap, tokenToTotalSheetDTOMap, depositAddressToStakingDTOMap);
+      BigDecimal totalBalance =
+          tokenToTotalSheetDTOMap.values().stream()
+              .map(dto -> dto.getValue())
+              .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+      if (-1 == BigDecimal.ZERO.compareTo(totalBalance)) {
+        writeReport(
+            rootPath, fileName, sheetIdToSheetNameMap,
+            tokenToReportDTOMap, tokenToTransactionSheetDTOMap, tokenToTotalSheetDTOMap, depositAddressToStakingDTOMap);
+      } else {
+        String messageText =
+            "Yieldmachine Transparency Report:\n"
+                + "LOCK Vermögen weniger als die Kundeneinlagen";
+        sendTelegramMessage(messageText);
+      }
     } finally {
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }

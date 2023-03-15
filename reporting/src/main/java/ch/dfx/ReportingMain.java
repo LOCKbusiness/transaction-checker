@@ -1,10 +1,13 @@
 package ch.dfx;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -100,7 +103,12 @@ public class ReportingMain {
 
     if (60 <= runPeriodReport) {
       ReportingRunnable reporting = new ReportingRunnable(network, databaseManager);
-      SchedulerProvider.getInstance().add(reporting, 5, runPeriodReport, TimeUnit.SECONDS);
+
+      Date now = new Date();
+      Date nextHour = DateUtils.ceiling(now, Calendar.HOUR);
+      int delayToNextHour = (int) (nextHour.getTime() - now.getTime()) / 1000;
+
+      SchedulerProvider.getInstance().add(reporting, delayToNextHour, runPeriodReport, TimeUnit.SECONDS);
     }
 
     if (30 <= runPeriodDefiManager) {

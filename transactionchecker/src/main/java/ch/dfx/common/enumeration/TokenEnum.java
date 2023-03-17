@@ -12,10 +12,13 @@ import ch.dfx.common.provider.TokenProvider;
 public enum TokenEnum {
   DFI,
   DUSD,
+
   BTC,
   ETH,
   USDT,
   USDC,
+  EUROC,
+
   SPY;
 
   /**

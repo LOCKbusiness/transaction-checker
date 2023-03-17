@@ -77,12 +77,12 @@ public class StakingTransparencyReporting extends Reporting {
       Date currentDate = new Date();
 
       // ...
-      RowDataList stakingBalanceRowDataList = balanceReporting.createRowDataList(token);
+      RowDataList stakingBalanceRowDataList = balanceReporting.createStakingCustomerRowDataList();
       RowDataList masternodeRowDataList = masternodeReporting.createRowDataList();
 
       // ...
       int stakingNumberOfAddress = stakingBalanceRowDataList.size();
-      BigDecimal stakingBalance = balanceReporting.getTotalBalance();
+      BigDecimal stakingBalance = (BigDecimal) stakingBalanceRowDataList.getProperty(BalanceReporting.TOTAL_BALANCE_PROPERTY);
 
       int masternodeNumberOfAddress = masternodeRowDataList.size();
       BigDecimal masternodeBalance = masternodeReporting.getTotalBalance();
@@ -225,8 +225,10 @@ public class StakingTransparencyReporting extends Reporting {
     cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
     cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(BigDecimal.ZERO));
 
+    BigDecimal dfiTotalBalance = (BigDecimal) rowDataList.getProperty(BalanceReporting.TOTAL_BALANCE_PROPERTY);
+
     CellDataList cellDataList = new CellDataList();
-    cellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(balanceReporting.getTotalBalance()));
+    cellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(dfiTotalBalance));
 
     // ...
     openExcel(rootPath, fileName, sheet);

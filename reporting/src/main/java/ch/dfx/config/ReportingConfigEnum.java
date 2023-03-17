@@ -47,12 +47,7 @@ public enum ReportingConfigEnum implements ConfigEntry {
 
   GOOGLE_BALANCE_FILENAME("google.balance.filename"),
   GOOGLE_BALANCE_STAKING_SHEET("google.balance.staking_sheet"),
-  GOOGLE_BALANCE_DFI_YIELDMACHINE_SHEET("google.balance.dfi_yieldmachine_sheet"),
-  GOOGLE_BALANCE_DUSD_YIELDMACHINE_SHEET("google.balance.dusd_yieldmachine_sheet"),
-  GOOGLE_BALANCE_BTC_YIELDMACHINE_SHEET("google.balance.btc_yieldmachine_sheet"),
-  GOOGLE_BALANCE_ETH_YIELDMACHINE_SHEET("google.balance.eth_yieldmachine_sheet"),
-  GOOGLE_BALANCE_USDT_YIELDMACHINE_SHEET("google.balance.usdt_yieldmachine_sheet"),
-  GOOGLE_BALANCE_USDC_YIELDMACHINE_SHEET("google.balance.usdc_yieldmachine_sheet"),
+  GOOGLE_BALANCE_YIELDMACHINE_SHEET("google.balance.yieldmachine_sheet"),
 
   GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_FILENAME("google.liquidity_masternode_staking_check.filename"),
   GOOGLE_LIQUIDITY_MASTERNODE_STAKING_CHECK_SHEET("google.liquidity_masternode_staking_check.sheet"),

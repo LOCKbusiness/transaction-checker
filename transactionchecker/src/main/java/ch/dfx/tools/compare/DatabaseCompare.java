@@ -79,12 +79,10 @@ public class DatabaseCompare extends DatabaseTool {
 
       doCompare(localConnection, remoteConnection, TOKEN_STAKING_SCHEMA, TokenEnum.DFI);
 
-      doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DFI);
-      doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.DUSD);
-      doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.BTC);
-      doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.ETH);
-      doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.USDT);
-      doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, TokenEnum.USDC);
+      for (TokenEnum token : TokenEnum.values()) {
+        doCompare(localConnection, remoteConnection, TOKEN_YIELDMACHINE_SCHEMA, token);
+      }
+
     } finally {
       closeConnection(localConnection);
       closeConnection(remoteConnection);

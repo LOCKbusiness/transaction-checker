@@ -69,7 +69,7 @@ public class DatabaseSync extends DatabaseTool {
       @Nonnull Connection remoteConnection) throws DfxException {
     LOGGER.trace("doSync()");
 
-    syncDuplicateCheck(localConnection, remoteConnection);
+    // syncDuplicateCheck(localConnection, remoteConnection);
     // resyncDuplicateCheck(localConnection, remoteConnection);
   }
 
@@ -134,7 +134,7 @@ public class DatabaseSync extends DatabaseTool {
       // ...
       Statement localSelectStatement = localConnection.createStatement();
 
-      String localSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".api_duplicate_check WHERE withdrawal_id > 675";
+      String localSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".api_duplicate_check WHERE withdrawal_id > 7531";
       ResultSet localResultSet = localSelectStatement.executeQuery(DatabaseUtils.replaceSchema(network, localSelectSql));
 
       while (localResultSet.next()) {

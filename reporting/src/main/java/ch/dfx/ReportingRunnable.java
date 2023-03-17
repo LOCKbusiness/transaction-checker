@@ -138,38 +138,23 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
       String balanceFileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_FILENAME);
       String stakingBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_STAKING_SHEET);
-      String dfiYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_DFI_YIELDMACHINE_SHEET);
-      String dusdYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_DUSD_YIELDMACHINE_SHEET);
-      String btcYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_BTC_YIELDMACHINE_SHEET);
-      String ethYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_ETH_YIELDMACHINE_SHEET);
-      String usdtYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_USDT_YIELDMACHINE_SHEET);
-      String usdcYieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_USDC_YIELDMACHINE_SHEET);
+      String yieldmachineBalanceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_BALANCE_YIELDMACHINE_SHEET);
 
       if (null != rootPath
           && null != balanceFileName
           && null != stakingBalanceSheet
-          && null != dfiYieldmachineBalanceSheet
-          && null != dusdYieldmachineBalanceSheet
-          && null != btcYieldmachineBalanceSheet
-          && null != ethYieldmachineBalanceSheet
-          && null != usdtYieldmachineBalanceSheet
-          && null != usdcYieldmachineBalanceSheet) {
+          && null != yieldmachineBalanceSheet) {
         Date currentDate = new Date();
 
         BalanceReporting stakingBalanceReporting =
             new BalanceReporting(network, databaseBlockHelper, databaseStakingBalanceHelper,
                 logInfoList, BalanceReporting.BalanceReportingTypeEnum.STAKING);
-        stakingBalanceReporting.report(connection, currentDate, TokenEnum.DFI, rootPath, balanceFileName, stakingBalanceSheet);
+        stakingBalanceReporting.report(connection, currentDate, rootPath, balanceFileName, stakingBalanceSheet);
 
         BalanceReporting yieldmachineBalanceReporting =
             new BalanceReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper,
                 logInfoList, BalanceReporting.BalanceReportingTypeEnum.YIELD_MACHINE);
-        yieldmachineBalanceReporting.report(connection, currentDate, TokenEnum.DFI, rootPath, balanceFileName, dfiYieldmachineBalanceSheet);
-        yieldmachineBalanceReporting.report(connection, currentDate, TokenEnum.DUSD, rootPath, balanceFileName, dusdYieldmachineBalanceSheet);
-        yieldmachineBalanceReporting.report(connection, currentDate, TokenEnum.BTC, rootPath, balanceFileName, btcYieldmachineBalanceSheet);
-        yieldmachineBalanceReporting.report(connection, currentDate, TokenEnum.ETH, rootPath, balanceFileName, ethYieldmachineBalanceSheet);
-        yieldmachineBalanceReporting.report(connection, currentDate, TokenEnum.USDT, rootPath, balanceFileName, usdtYieldmachineBalanceSheet);
-        yieldmachineBalanceReporting.report(connection, currentDate, TokenEnum.USDC, rootPath, balanceFileName, usdcYieldmachineBalanceSheet);
+        yieldmachineBalanceReporting.report(connection, currentDate, rootPath, balanceFileName, yieldmachineBalanceSheet);
 
         logInfoList.add("");
       }

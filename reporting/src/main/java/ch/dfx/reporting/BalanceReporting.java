@@ -2,15 +2,22 @@ package ch.dfx.reporting;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
@@ -19,8 +26,6 @@ import ch.dfx.excel.data.CellData;
 import ch.dfx.excel.data.CellDataList;
 import ch.dfx.excel.data.RowData;
 import ch.dfx.excel.data.RowDataList;
-import ch.dfx.transactionserver.data.DepositDTO;
-import ch.dfx.transactionserver.data.StakingAddressDTO;
 import ch.dfx.transactionserver.data.StakingDTO;
 import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
 import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
@@ -32,6 +37,9 @@ public class BalanceReporting extends Reporting {
   private static final Logger LOGGER = LogManager.getLogger(BalanceReporting.class);
 
   // ...
+  public static final String TOTAL_BALANCE_PROPERTY = "TOTAL_BALANCE";
+
+  // ...
   public enum BalanceReportingTypeEnum {
     STAKING,
     YIELD_MACHINE
@@ -40,9 +48,6 @@ public class BalanceReporting extends Reporting {
   // ...
   private final List<String> logInfoList;
   private final BalanceReportingTypeEnum balanceReportingType;
-
-  // ...
-  private BigDecimal totalBalance = BigDecimal.ZERO;
 
   /**
    * 
@@ -62,23 +67,14 @@ public class BalanceReporting extends Reporting {
   /**
    * 
    */
-  public BigDecimal getTotalBalance() {
-    return totalBalance;
-  }
-
-  /**
-   * 
-   */
   public void report(
       @Nonnull Connection connection,
       @Nonnull Date reportingDate,
-      @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet) throws DfxException {
     LOGGER.debug("report()");
 
-    Objects.requireNonNull(token, "null 'token' not allowed");
     Objects.requireNonNull(rootPath, "null 'rootPath' not allowed");
     Objects.requireNonNull(fileName, "null 'fileName' not allowed");
     Objects.requireNonNull(sheet, "null 'sheet' not allowed");
@@ -86,23 +82,17 @@ public class BalanceReporting extends Reporting {
     long startTime = System.currentTimeMillis();
 
     try {
-      RowDataList rowDataList = createRowDataList(token);
+      if (BalanceReportingTypeEnum.STAKING == balanceReportingType) {
+        RowDataList stakingCustomerRowDataList = createStakingCustomerRowDataList();
+        logInfoList.add("Addresses: " + stakingCustomerRowDataList.size() + " (" + balanceReportingType + ")");
 
-      CellDataList cellDataList = new CellDataList();
-      cellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(totalBalance));
+        stakingBalanceReport(reportingDate, rootPath, fileName, sheet, stakingCustomerRowDataList);
+      } else {
+        RowDataList yieldmachineCustomerRowDataList = createYieldmachineRowDataList();
+        logInfoList.add("Addresses: " + yieldmachineCustomerRowDataList.size() + " (" + balanceReportingType + ")");
 
-      // ...
-      openExcel(rootPath, fileName, sheet);
-
-      CellDataList cleanCellDataList = new CellDataList();
-      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
-      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(BigDecimal.ZERO));
-
-      cleanExcel(2);
-      cleanExcel(cleanCellDataList);
-
-      writeExcel(rowDataList, cellDataList);
-      closeExcel();
+        yieldmachineBalanceReport(reportingDate, rootPath, fileName, sheet, yieldmachineCustomerRowDataList);
+      }
     } finally {
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
@@ -111,25 +101,52 @@ public class BalanceReporting extends Reporting {
   /**
    * 
    */
-  public RowDataList createRowDataList(@Nonnull TokenEnum token) throws DfxException {
-    LOGGER.trace("createRowDataList()");
+  public RowDataList createStakingCustomerRowDataList() throws DfxException {
+    LOGGER.trace("createStakingCustomerRowDataList()");
 
-    // ...
-    totalBalance = BigDecimal.ZERO;
+    Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap = getDepositAddressToStakingDTOMap();
+    return createStakingCustomerRowDataList(depositAddressToStakingDTOMap);
+  }
 
-    // ...
+  /**
+   * 
+   */
+  public RowDataList createStakingCustomerRowDataList(@Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap) throws DfxException {
+    LOGGER.debug("createStakingCustomerRowDataList()");
+
     RowDataList rowDataList = new RowDataList(2);
 
-    // ...
-    List<StakingAddressDTO> stakingAddressDTOList = databaseBalanceHelper.getStakingAddressDTOList();
+    BigDecimal totalBalance = BigDecimal.ZERO;
 
-    for (StakingAddressDTO stakingAddressDTO : stakingAddressDTOList) {
-      if (-1 == stakingAddressDTO.getRewardAddressNumber()) {
-        LOGGER.debug("Liquidity Address: " + stakingAddressDTO.getLiquidityAddress());
+    for (Integer depositAddressNumber : depositAddressToStakingDTOMap.keySet()) {
+      List<StakingDTO> stakingDTOList = (List<StakingDTO>) depositAddressToStakingDTOMap.get(depositAddressNumber);
 
-        addDeposit(token, stakingAddressDTO, rowDataList);
+      StakingDTO firstStakingDTO = stakingDTOList.get(0);
+
+      RowData rowData = new RowData();
+      rowData.addCellData(new CellData().setValue(firstStakingDTO.getCustomerAddress()));
+      rowData.addCellData(new CellData().setValue(firstStakingDTO.getDepositAddress()));
+
+      // ...
+      Map<TokenEnum, BigDecimal> tokenToBalanceMap = new EnumMap<>(TokenEnum.class);
+
+      for (StakingDTO stakingDTO : stakingDTOList) {
+        TokenEnum token = TokenEnum.createWithNumber(stakingDTO.getTokenNumber());
+        BigDecimal balance = stakingDTO.getVin().subtract(stakingDTO.getVout());
+
+        tokenToBalanceMap.merge(token, balance, (currVal, newVal) -> currVal.add(newVal));
+
+        totalBalance = totalBalance.add(balance);
       }
+
+      // ...
+      BigDecimal balance = tokenToBalanceMap.getOrDefault(TokenEnum.DFI, BigDecimal.ZERO);
+      rowData.addCellData(new CellData().setValue(balance));
+
+      rowDataList.add(rowData);
     }
+
+    rowDataList.addProperty(TOTAL_BALANCE_PROPERTY, totalBalance);
 
     return rowDataList;
   }
@@ -137,68 +154,161 @@ public class BalanceReporting extends Reporting {
   /**
    * 
    */
-  private void addDeposit(
-      @Nonnull TokenEnum token,
-      @Nonnull StakingAddressDTO stakingAddressDTO,
-      @Nonnull RowDataList rowDataList) throws DfxException {
-    LOGGER.trace("addDeposit()");
+  public RowDataList createYieldmachineRowDataList() throws DfxException {
+    LOGGER.trace("createYieldmachineRowDataList()");
 
-    List<DepositDTO> depositDTOList =
-        databaseBalanceHelper.getDepositDTOListByLiquidityAddressNumber(stakingAddressDTO.getLiquidityAddressNumber());
-    LOGGER.debug("Number of Deposit Addresses: " + depositDTOList.size());
-
-    // ...
-    if (BalanceReportingTypeEnum.STAKING == balanceReportingType && TokenEnum.DFI == token) {
-      logInfoList.add("Staking Addresses:      " + depositDTOList.size() + " (" + token + ")");
-    } else if (BalanceReportingTypeEnum.YIELD_MACHINE == balanceReportingType && TokenEnum.DUSD == token) {
-      logInfoList.add("Yieldmachine Addresses: " + depositDTOList.size() + " (" + token + ")");
-    }
-
-    // ...
-    depositDTOList.sort(new Comparator<DepositDTO>() {
-      @Override
-      public int compare(DepositDTO dto1, DepositDTO dto2) {
-        return dto2.getStartBlockNumber() - dto1.getStartBlockNumber();
-      }
-    });
-
-    // ...
-    for (DepositDTO depositDTO : depositDTOList) {
-      RowData rowData = new RowData();
-      rowData.addCellData(new CellData().setValue(depositDTO.getCustomerAddress()));
-      rowData.addCellData(new CellData().setValue(depositDTO.getDepositAddress()));
-
-      addStaking(token, stakingAddressDTO, depositDTO, rowData);
-
-      rowDataList.add(rowData);
-    }
+    Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap = getDepositAddressToStakingDTOMap();
+    return createYieldmachineRowDataList(depositAddressToStakingDTOMap);
   }
 
   /**
    * 
    */
-  private void addStaking(
-      @Nonnull TokenEnum token,
-      @Nonnull StakingAddressDTO stakingAddressDTO,
-      @Nonnull DepositDTO depositDTO,
-      @Nonnull RowData rowData) throws DfxException {
-    LOGGER.trace("addStaking()");
+  public RowDataList createYieldmachineRowDataList(@Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap) throws DfxException {
+    LOGGER.debug("createYieldmachineRowDataList()");
 
-    BigDecimal totalVin = BigDecimal.ZERO;
-    BigDecimal totalVout = BigDecimal.ZERO;
+    RowDataList rowDataList = new RowDataList(2);
 
-    List<StakingDTO> stakingDTOList =
-        databaseBalanceHelper.getStakingDTOListByLiquidityAdressNumberAndDepositAddressNumber(
-            token, stakingAddressDTO.getLiquidityAddressNumber(), depositDTO.getDepositAddressNumber());
+    Map<TokenEnum, BigDecimal> tokenToTotalBalanceMap = new EnumMap<>(TokenEnum.class);
 
-    for (StakingDTO stakingDTO : stakingDTOList) {
-      totalVin = totalVin.add(stakingDTO.getVin());
-      totalVout = totalVout.add(stakingDTO.getVout());
+    for (Integer depositAddressNumber : depositAddressToStakingDTOMap.keySet()) {
+      List<StakingDTO> stakingDTOList = (List<StakingDTO>) depositAddressToStakingDTOMap.get(depositAddressNumber);
+
+      StakingDTO firstStakingDTO = stakingDTOList.get(0);
+
+      RowData rowData = new RowData();
+      rowData.addCellData(new CellData().setValue(firstStakingDTO.getCustomerAddress()));
+      rowData.addCellData(new CellData().setValue(firstStakingDTO.getDepositAddress()));
+
+      // ...
+      Map<TokenEnum, BigDecimal> tokenToBalanceMap = new EnumMap<>(TokenEnum.class);
+
+      for (StakingDTO stakingDTO : stakingDTOList) {
+        TokenEnum token = TokenEnum.createWithNumber(stakingDTO.getTokenNumber());
+        BigDecimal balance = stakingDTO.getVin().subtract(stakingDTO.getVout());
+
+        tokenToBalanceMap.merge(token, balance, (currVal, newVal) -> currVal.add(newVal));
+
+        tokenToTotalBalanceMap.merge(token, balance, (currVal, newVal) -> currVal.add(newVal));
+      }
+
+      // ...
+      for (TokenEnum token : TokenEnum.values()) {
+        // TODO: currently without SPY, coming later ...
+        if (TokenEnum.SPY != token) {
+          BigDecimal balance = tokenToBalanceMap.getOrDefault(token, BigDecimal.ZERO);
+          rowData.addCellData(new CellData().setValue(balance));
+        }
+      }
+
+      rowDataList.add(rowData);
     }
 
-    BigDecimal balance = totalVin.subtract(totalVout);
-    rowData.addCellData(new CellData().setValue(balance));
+    rowDataList.addProperty(TOTAL_BALANCE_PROPERTY, tokenToTotalBalanceMap);
 
-    totalBalance = totalBalance.add(balance);
+    return rowDataList;
+  }
+
+  /**
+   * 
+   */
+  public Multimap<Integer, StakingDTO> getDepositAddressToStakingDTOMap() throws DfxException {
+    LOGGER.debug("getDepositAddressToStakingDTOMap()");
+
+    // ...
+    List<StakingDTO> stakingDTOList = new ArrayList<>();
+
+    for (TokenEnum token : TokenEnum.values()) {
+      stakingDTOList.addAll(databaseBalanceHelper.getStakingDTOList(token));
+    }
+
+    // ...
+    stakingDTOList.sort(new Comparator<StakingDTO>() {
+      @Override
+      public int compare(StakingDTO dto1, StakingDTO dto2) {
+        int dto1BlockNumber = Math.max(dto1.getLastInBlockNumber(), dto1.getLastOutBlockNumber());
+        int dto2BlockNumber = Math.max(dto2.getLastInBlockNumber(), dto2.getLastOutBlockNumber());
+
+        int compare = dto2BlockNumber - dto1BlockNumber;
+
+        if (0 == compare) {
+          compare = ObjectUtils.compare(dto1.getDepositAddress(), dto2.getDepositAddress());
+        }
+
+        return compare;
+      }
+    });
+
+    Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap = ArrayListMultimap.create();
+
+    for (StakingDTO stakingDTO : stakingDTOList) {
+      depositAddressToStakingDTOMap.put(stakingDTO.getDepositAddressNumber(), stakingDTO);
+    }
+
+    return depositAddressToStakingDTOMap;
+  }
+
+  /**
+   * 
+   */
+  private void stakingBalanceReport(
+      @Nonnull Date reportingDate,
+      @Nonnull String rootPath,
+      @Nonnull String fileName,
+      @Nonnull String sheet,
+      @Nonnull RowDataList customerRowDataList) throws DfxException {
+    LOGGER.trace("stakingBalanceReport()");
+
+    BigDecimal dfiTotalBalance = (BigDecimal) customerRowDataList.getProperty(TOTAL_BALANCE_PROPERTY);
+
+    // ...
+    openExcel(rootPath, fileName, sheet);
+
+    CellDataList cleanCellDataList = new CellDataList();
+    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
+    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(dfiTotalBalance));
+
+    cleanExcel(2);
+    cleanExcel(cleanCellDataList);
+
+    writeExcel(customerRowDataList, new CellDataList());
+    closeExcel();
+  }
+
+  /**
+   * 
+   */
+  private void yieldmachineBalanceReport(
+      @Nonnull Date reportingDate,
+      @Nonnull String rootPath,
+      @Nonnull String fileName,
+      @Nonnull String sheet,
+      @Nonnull RowDataList customerRowDataList) throws DfxException {
+    LOGGER.trace("yieldmachineBalanceReport()");
+
+    // ...
+    openExcel(rootPath, fileName, sheet);
+
+    CellDataList cleanCellDataList = new CellDataList();
+    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
+
+    @SuppressWarnings("unchecked")
+    Map<TokenEnum, BigDecimal> tokenToTotalBalanceMap = (EnumMap<TokenEnum, BigDecimal>) customerRowDataList.getProperty(TOTAL_BALANCE_PROPERTY);
+
+    int cellIndex = 2;
+
+    for (TokenEnum token : TokenEnum.values()) {
+      // TODO: currently without SPY, coming later ...
+      if (TokenEnum.SPY != token) {
+        cleanCellDataList.add(
+            new CellData().setRowIndex(0).setCellIndex(cellIndex++).setKeepStyle(true).setValue(tokenToTotalBalanceMap.getOrDefault(token, BigDecimal.ZERO)));
+      }
+    }
+
+    cleanExcel(2);
+    cleanExcel(cleanCellDataList);
+
+    writeExcel(customerRowDataList, new CellDataList());
+    closeExcel();
   }
 }

@@ -5,7 +5,6 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -13,12 +12,10 @@ import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 import ch.dfx.TransactionCheckerUtils;
@@ -35,6 +32,8 @@ import ch.dfx.excel.data.CellData;
 import ch.dfx.excel.data.CellDataList;
 import ch.dfx.excel.data.RowData;
 import ch.dfx.excel.data.RowDataList;
+import ch.dfx.reporting.BalanceReporting;
+import ch.dfx.reporting.BalanceReporting.BalanceReportingTypeEnum;
 import ch.dfx.reporting.Reporting;
 import ch.dfx.reporting.transparency.data.DFISheetDTO;
 import ch.dfx.reporting.transparency.data.DUSDSheetDTO;
@@ -71,14 +70,6 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
   private static final BigDecimal SIGN_CHANGER = new BigDecimal(-1);
 
-  private static final String TOTAL_DFI_BALANCE_PROPERTY = "TOTAL_DFI_BALANCE";
-  private static final String TOTAL_DUSD_BALANCE_PROPERTY = "TOTAL_DUSD_BALANCE";
-  private static final String TOTAL_BTC_BALANCE_PROPERTY = "TOTAL_BTC_BALANCE";
-  private static final String TOTAL_ETH_BALANCE_PROPERTY = "TOTAL_ETH_BALANCE";
-  private static final String TOTAL_USDT_BALANCE_PROPERTY = "TOTAL_USDT_BALANCE";
-  private static final String TOTAL_USDC_BALANCE_PROPERTY = "TOTAL_USDC_BALANCE";
-  private static final String TOTAL_SPY_BALANCE_PROPERTY = "TOTAL_SPY_BALANCE";
-
   // ...
   private final DefiDataProvider dataProvider;
 
@@ -86,6 +77,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   private final TransparencyReportCsvHelper transparencyReportCsvHelper;
 
   private final CellListCreator cellListCreator;
+  private final BalanceReporting balanceReporting;
 
   // ...
   private Timestamp currentTimestamp = null;
@@ -132,6 +124,9 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     this.transparencyReportCsvHelper = new TransparencyReportCsvHelper();
 
     this.cellListCreator = new CellListCreator();
+
+    this.balanceReporting =
+        new BalanceReporting(network, databaseBlockHelper, databaseBalanceHelper, new ArrayList<>(), BalanceReportingTypeEnum.YIELD_MACHINE);
   }
 
   /**
@@ -150,7 +145,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       setup();
 
       // ...
-      Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap = getDepositAddressToStakingDTOMap();
+      Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap = balanceReporting.getDepositAddressToStakingDTOMap();
 
       // ...
       Map<TokenEnum, ReportDTO> tokenToReportDTOMap = new EnumMap<>(TokenEnum.class);
@@ -1328,45 +1323,6 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   /**
    * 
    */
-  private Multimap<Integer, StakingDTO> getDepositAddressToStakingDTOMap() throws DfxException {
-    LOGGER.debug("getDepositAddressToStakingDTOMap()");
-
-    // ...
-    List<StakingDTO> stakingDTOList = new ArrayList<>();
-
-    for (TokenEnum token : TokenEnum.values()) {
-      stakingDTOList.addAll(databaseBalanceHelper.getStakingDTOList(token));
-    }
-
-    // ...
-    stakingDTOList.sort(new Comparator<StakingDTO>() {
-      @Override
-      public int compare(StakingDTO dto1, StakingDTO dto2) {
-        int dto1BlockNumber = Math.max(dto1.getLastInBlockNumber(), dto1.getLastOutBlockNumber());
-        int dto2BlockNumber = Math.max(dto2.getLastInBlockNumber(), dto2.getLastOutBlockNumber());
-
-        int compare = dto2BlockNumber - dto1BlockNumber;
-
-        if (0 == compare) {
-          compare = ObjectUtils.compare(dto1.getDepositAddress(), dto2.getDepositAddress());
-        }
-
-        return compare;
-      }
-    });
-
-    Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap = ArrayListMultimap.create();
-
-    for (StakingDTO stakingDTO : stakingDTOList) {
-      depositAddressToStakingDTOMap.put(stakingDTO.getDepositAddressNumber(), stakingDTO);
-    }
-
-    return depositAddressToStakingDTOMap;
-  }
-
-  /**
-   * 
-   */
   private void writeReport(
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -1514,26 +1470,25 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       @Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap) throws DfxException {
     LOGGER.trace("writeCustomerSheet()");
 
-    RowDataList customerRowDataList = createCustomerRowDataList(depositAddressToStakingDTOMap);
-
-    BigDecimal dfiTotalBalance = (BigDecimal) customerRowDataList.getProperty(TOTAL_DFI_BALANCE_PROPERTY);
-    BigDecimal dusdTotalBalance = (BigDecimal) customerRowDataList.getProperty(TOTAL_DUSD_BALANCE_PROPERTY);
-    BigDecimal btcTotalBalance = (BigDecimal) customerRowDataList.getProperty(TOTAL_BTC_BALANCE_PROPERTY);
-    BigDecimal ethTotalBalance = (BigDecimal) customerRowDataList.getProperty(TOTAL_ETH_BALANCE_PROPERTY);
-    BigDecimal usdtTotalBalance = (BigDecimal) customerRowDataList.getProperty(TOTAL_USDT_BALANCE_PROPERTY);
-    BigDecimal usdcTotalBalance = (BigDecimal) customerRowDataList.getProperty(TOTAL_USDC_BALANCE_PROPERTY);
-    BigDecimal spyTotalBalance = (BigDecimal) customerRowDataList.getProperty(TOTAL_SPY_BALANCE_PROPERTY);
+    RowDataList customerRowDataList = balanceReporting.createYieldmachineRowDataList(depositAddressToStakingDTOMap);
 
     CellDataList customerCellDataList = new CellDataList();
 
     customerCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(currentTimestamp));
-    customerCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(dfiTotalBalance));
-    customerCellDataList.add(new CellData().setRowIndex(0).setCellIndex(3).setKeepStyle(true).setValue(dusdTotalBalance));
-    customerCellDataList.add(new CellData().setRowIndex(0).setCellIndex(4).setKeepStyle(true).setValue(btcTotalBalance));
-    customerCellDataList.add(new CellData().setRowIndex(0).setCellIndex(5).setKeepStyle(true).setValue(ethTotalBalance));
-    customerCellDataList.add(new CellData().setRowIndex(0).setCellIndex(6).setKeepStyle(true).setValue(usdtTotalBalance));
-    customerCellDataList.add(new CellData().setRowIndex(0).setCellIndex(7).setKeepStyle(true).setValue(usdcTotalBalance));
-    customerCellDataList.add(new CellData().setRowIndex(0).setCellIndex(8).setKeepStyle(true).setValue(spyTotalBalance));
+
+    @SuppressWarnings("unchecked")
+    Map<TokenEnum, BigDecimal> tokenToTotalBalanceMap =
+        (EnumMap<TokenEnum, BigDecimal>) customerRowDataList.getProperty(BalanceReporting.TOTAL_BALANCE_PROPERTY);
+
+    int cellIndex = 2;
+
+    for (TokenEnum token : TokenEnum.values()) {
+      // TODO: currently without SPY, coming later ...
+      if (TokenEnum.SPY != token) {
+        customerCellDataList.add(
+            new CellData().setRowIndex(0).setCellIndex(cellIndex++).setKeepStyle(true).setValue(tokenToTotalBalanceMap.getOrDefault(token, BigDecimal.ZERO)));
+      }
+    }
 
     String customerSheetName = sheetIdToSheetNameMap.get(SheetEnum.CUSTOMER);
     setSheet(customerSheetName);
@@ -1620,86 +1575,6 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     }
 
     return historyPriceSheetDTO;
-  }
-
-  /**
-   * 
-   */
-  private RowDataList createCustomerRowDataList(@Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap) throws DfxException {
-    LOGGER.debug("createCustomerRowDataList()");
-
-    RowDataList rowDataList = new RowDataList(2);
-
-    BigDecimal totalDFIBalance = BigDecimal.ZERO;
-    BigDecimal totalDUSDBalance = BigDecimal.ZERO;
-    BigDecimal totalBTCBalance = BigDecimal.ZERO;
-    BigDecimal totalETHBalance = BigDecimal.ZERO;
-    BigDecimal totalUSDTBalance = BigDecimal.ZERO;
-    BigDecimal totalUSDCBalance = BigDecimal.ZERO;
-    BigDecimal totalSPYBalance = BigDecimal.ZERO;
-
-    for (Integer depositAddressNumber : depositAddressToStakingDTOMap.keySet()) {
-      List<StakingDTO> stakingDTOList = (List<StakingDTO>) depositAddressToStakingDTOMap.get(depositAddressNumber);
-
-      StakingDTO firstStakingDTO = stakingDTOList.get(0);
-
-      RowData rowData = new RowData();
-      rowData.addCellData(new CellData().setValue(firstStakingDTO.getCustomerAddress()));
-      rowData.addCellData(new CellData().setValue(firstStakingDTO.getDepositAddress()));
-
-      BigDecimal dfiBalance = BigDecimal.ZERO;
-      BigDecimal dusdBalance = BigDecimal.ZERO;
-      BigDecimal btcBalance = BigDecimal.ZERO;
-      BigDecimal ethBalance = BigDecimal.ZERO;
-      BigDecimal usdtBalance = BigDecimal.ZERO;
-      BigDecimal usdcBalance = BigDecimal.ZERO;
-      BigDecimal spyBalance = BigDecimal.ZERO;
-
-      for (StakingDTO stakingDTO : stakingDTOList) {
-        if (TokenEnum.DFI.getNumber() == stakingDTO.getTokenNumber()) {
-          dfiBalance = stakingDTO.getVin().subtract(stakingDTO.getVout());
-          totalDFIBalance = totalDFIBalance.add(dfiBalance);
-        } else if (TokenEnum.DUSD.getNumber() == stakingDTO.getTokenNumber()) {
-          dusdBalance = stakingDTO.getVin().subtract(stakingDTO.getVout());
-          totalDUSDBalance = totalDUSDBalance.add(dusdBalance);
-        } else if (TokenEnum.BTC.getNumber() == stakingDTO.getTokenNumber()) {
-          btcBalance = stakingDTO.getVin().subtract(stakingDTO.getVout());
-          totalBTCBalance = totalBTCBalance.add(btcBalance);
-        } else if (TokenEnum.ETH.getNumber() == stakingDTO.getTokenNumber()) {
-          ethBalance = stakingDTO.getVin().subtract(stakingDTO.getVout());
-          totalETHBalance = totalETHBalance.add(ethBalance);
-        } else if (TokenEnum.USDT.getNumber() == stakingDTO.getTokenNumber()) {
-          usdtBalance = stakingDTO.getVin().subtract(stakingDTO.getVout());
-          totalUSDTBalance = totalUSDTBalance.add(usdtBalance);
-        } else if (TokenEnum.USDC.getNumber() == stakingDTO.getTokenNumber()) {
-          usdcBalance = stakingDTO.getVin().subtract(stakingDTO.getVout());
-          totalUSDCBalance = totalUSDCBalance.add(usdcBalance);
-        } else if (TokenEnum.SPY.getNumber() == stakingDTO.getTokenNumber()) {
-          spyBalance = stakingDTO.getVin().subtract(stakingDTO.getVout());
-          totalSPYBalance = totalSPYBalance.add(spyBalance);
-        }
-      }
-
-      rowData.addCellData(new CellData().setValue(dfiBalance));
-      rowData.addCellData(new CellData().setValue(dusdBalance));
-      rowData.addCellData(new CellData().setValue(btcBalance));
-      rowData.addCellData(new CellData().setValue(ethBalance));
-      rowData.addCellData(new CellData().setValue(usdtBalance));
-      rowData.addCellData(new CellData().setValue(usdcBalance));
-      rowData.addCellData(new CellData().setValue(spyBalance));
-
-      rowDataList.add(rowData);
-    }
-
-    rowDataList.addProperty(TOTAL_DFI_BALANCE_PROPERTY, totalDFIBalance);
-    rowDataList.addProperty(TOTAL_DUSD_BALANCE_PROPERTY, totalDUSDBalance);
-    rowDataList.addProperty(TOTAL_BTC_BALANCE_PROPERTY, totalBTCBalance);
-    rowDataList.addProperty(TOTAL_ETH_BALANCE_PROPERTY, totalETHBalance);
-    rowDataList.addProperty(TOTAL_USDT_BALANCE_PROPERTY, totalUSDTBalance);
-    rowDataList.addProperty(TOTAL_USDC_BALANCE_PROPERTY, totalUSDCBalance);
-    rowDataList.addProperty(TOTAL_SPY_BALANCE_PROPERTY, totalSPYBalance);
-
-    return rowDataList;
   }
 
   /**

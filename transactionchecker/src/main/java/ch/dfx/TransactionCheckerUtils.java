@@ -8,8 +8,11 @@ import java.math.RoundingMode;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -192,6 +195,13 @@ public class TransactionCheckerUtils {
         .append(".").append(getEnvironment())
         .append(".lock")
         .toString();
+  }
+
+  /**
+   * 
+   */
+  public static Timestamp getCurrentTimeInUTC() {
+    return Timestamp.valueOf(LocalDateTime.ofEpochSecond(System.currentTimeMillis() / 1000, 0, ZoneOffset.UTC));
   }
 
   /**

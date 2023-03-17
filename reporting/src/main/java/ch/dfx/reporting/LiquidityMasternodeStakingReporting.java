@@ -8,8 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +78,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
    */
   public void report(
       @Nonnull Connection connection,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -105,7 +106,7 @@ public class LiquidityMasternodeStakingReporting extends Reporting {
       openExcel(rootPath, fileName, sheet);
 
       CellDataList cleanCellDataList = new CellDataList();
-      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(new Date()));
+      cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingTimestamp));
 
       cleanExcel(2);
       cleanExcel(cleanCellDataList);

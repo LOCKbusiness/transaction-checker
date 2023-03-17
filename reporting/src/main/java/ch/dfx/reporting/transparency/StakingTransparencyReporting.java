@@ -2,8 +2,8 @@ package ch.dfx.reporting.transparency;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -63,6 +63,7 @@ public class StakingTransparencyReporting extends Reporting {
    */
   public void report(
       @Nonnull Connection connection,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -74,8 +75,6 @@ public class StakingTransparencyReporting extends Reporting {
     long startTime = System.currentTimeMillis();
 
     try {
-      Date currentDate = new Date();
-
       // ...
       RowDataList stakingBalanceRowDataList = balanceReporting.createStakingCustomerRowDataList();
       RowDataList masternodeRowDataList = masternodeReporting.createRowDataList();
@@ -90,7 +89,7 @@ public class StakingTransparencyReporting extends Reporting {
       // ...
       CellDataList transparencyReportingCellDataList =
           createCellDataList(
-              currentDate, token, rootPath, fileName, transparencyReportTotalSheet,
+              reportingTimestamp, token, rootPath, fileName, transparencyReportTotalSheet,
               stakingNumberOfAddress, stakingBalance,
               masternodeNumberOfAddress, masternodeBalance);
 
@@ -98,8 +97,8 @@ public class StakingTransparencyReporting extends Reporting {
 
       if (-1 == BigDecimal.ZERO.compareTo(difference)) {
         writeTransparencyReport(rootPath, fileName, transparencyReportTotalSheet, transparencyReportingCellDataList);
-        writeStakingBalance(currentDate, rootPath, fileName, transparencyReportCustomerSheet, stakingBalanceRowDataList);
-        writeMasternodeBalance(currentDate, rootPath, fileName, transparencyReportMasternodeSheet, masternodeRowDataList);
+        writeStakingBalance(reportingTimestamp, rootPath, fileName, transparencyReportCustomerSheet, stakingBalanceRowDataList);
+        writeMasternodeBalance(rootPath, fileName, transparencyReportMasternodeSheet, masternodeRowDataList);
       } else {
         String messageText =
             "Staking Transparency Report (" + token + "):\n"
@@ -115,7 +114,7 @@ public class StakingTransparencyReporting extends Reporting {
    * 
    */
   private CellDataList createCellDataList(
-      @Nonnull Date currentDate,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -136,7 +135,7 @@ public class StakingTransparencyReporting extends Reporting {
 
     // ...
     CellDataList cellDataList = new CellDataList();
-    cellDataList.add(new CellData().setRowIndex(1).setCellIndex(4).setKeepStyle(true).setValue(currentDate));
+    cellDataList.add(new CellData().setRowIndex(1).setCellIndex(4).setKeepStyle(true).setValue(reportingTimestamp));
     cellDataList.add(new CellData().setRowIndex(4).setCellIndex(0).setKeepStyle(true).setValue(stakingNumberOfCustomer));
     cellDataList.add(new CellData().setRowIndex(4).setCellIndex(2).setKeepStyle(true).setValue(stakingBalance));
 
@@ -213,7 +212,7 @@ public class StakingTransparencyReporting extends Reporting {
    * 
    */
   private void writeStakingBalance(
-      @Nonnull Date reportingDate,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet,
@@ -222,7 +221,7 @@ public class StakingTransparencyReporting extends Reporting {
 
     // ...
     CellDataList cleanCellDataList = new CellDataList();
-    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
+    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingTimestamp));
     cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(BigDecimal.ZERO));
 
     BigDecimal dfiTotalBalance = (BigDecimal) rowDataList.getProperty(BalanceReporting.TOTAL_BALANCE_PROPERTY);
@@ -244,7 +243,6 @@ public class StakingTransparencyReporting extends Reporting {
    * 
    */
   private void writeMasternodeBalance(
-      @Nonnull Date reportingDate,
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet,

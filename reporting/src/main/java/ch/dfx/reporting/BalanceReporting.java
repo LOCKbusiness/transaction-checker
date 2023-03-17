@@ -2,9 +2,9 @@ package ch.dfx.reporting;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +69,7 @@ public class BalanceReporting extends Reporting {
    */
   public void report(
       @Nonnull Connection connection,
-      @Nonnull Date reportingDate,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet) throws DfxException {
@@ -86,12 +86,12 @@ public class BalanceReporting extends Reporting {
         RowDataList stakingCustomerRowDataList = createStakingCustomerRowDataList();
         logInfoList.add("Addresses: " + stakingCustomerRowDataList.size() + " (" + balanceReportingType + ")");
 
-        stakingBalanceReport(reportingDate, rootPath, fileName, sheet, stakingCustomerRowDataList);
+        stakingBalanceReport(reportingTimestamp, rootPath, fileName, sheet, stakingCustomerRowDataList);
       } else {
         RowDataList yieldmachineCustomerRowDataList = createYieldmachineRowDataList();
         logInfoList.add("Addresses: " + yieldmachineCustomerRowDataList.size() + " (" + balanceReportingType + ")");
 
-        yieldmachineBalanceReport(reportingDate, rootPath, fileName, sheet, yieldmachineCustomerRowDataList);
+        yieldmachineBalanceReport(reportingTimestamp, rootPath, fileName, sheet, yieldmachineCustomerRowDataList);
       }
     } finally {
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
@@ -194,8 +194,8 @@ public class BalanceReporting extends Reporting {
 
       // ...
       for (TokenEnum token : TokenEnum.values()) {
-        // TODO: currently without SPY, coming later ...
-        if (TokenEnum.SPY != token) {
+        // TODO: currently without SPY or EUROC, coming later ...
+        if (TokenEnum.SPY != token && TokenEnum.EUROC != token) {
           BigDecimal balance = tokenToBalanceMap.getOrDefault(token, BigDecimal.ZERO);
           rowData.addCellData(new CellData().setValue(balance));
         }
@@ -252,7 +252,7 @@ public class BalanceReporting extends Reporting {
    * 
    */
   private void stakingBalanceReport(
-      @Nonnull Date reportingDate,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet,
@@ -265,7 +265,7 @@ public class BalanceReporting extends Reporting {
     openExcel(rootPath, fileName, sheet);
 
     CellDataList cleanCellDataList = new CellDataList();
-    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
+    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingTimestamp));
     cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(dfiTotalBalance));
 
     cleanExcel(2);
@@ -279,7 +279,7 @@ public class BalanceReporting extends Reporting {
    * 
    */
   private void yieldmachineBalanceReport(
-      @Nonnull Date reportingDate,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet,
@@ -290,7 +290,7 @@ public class BalanceReporting extends Reporting {
     openExcel(rootPath, fileName, sheet);
 
     CellDataList cleanCellDataList = new CellDataList();
-    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
+    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingTimestamp));
 
     @SuppressWarnings("unchecked")
     Map<TokenEnum, BigDecimal> tokenToTotalBalanceMap = (EnumMap<TokenEnum, BigDecimal>) customerRowDataList.getProperty(TOTAL_BALANCE_PROPERTY);
@@ -298,8 +298,8 @@ public class BalanceReporting extends Reporting {
     int cellIndex = 2;
 
     for (TokenEnum token : TokenEnum.values()) {
-      // TODO: currently without SPY, coming later ...
-      if (TokenEnum.SPY != token) {
+      // TODO: currently without SPY or EUROC, coming later ...
+      if (TokenEnum.SPY != token && TokenEnum.EUROC != token) {
         cleanCellDataList.add(
             new CellData().setRowIndex(0).setCellIndex(cellIndex++).setKeepStyle(true).setValue(tokenToTotalBalanceMap.getOrDefault(token, BigDecimal.ZERO)));
       }

@@ -1,8 +1,8 @@
 package ch.dfx.reporting.transparency;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +52,6 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
   private final DefiDataProvider dataProvider;
 
   // ...
-  private Date currentDate = null;
-
   private Map<String, BigDecimal> liquidityTokenToAmountMap = null;
 
   private Map<String, BigDecimal> vault1TokenToAmountMap = null;
@@ -87,6 +85,7 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
    * 
    */
   public void report(
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String transparencyReportDFITotalSheet,
@@ -108,15 +107,15 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
       Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap = createDepositAddressToStakingDTOMap();
 
       tokenToReportDataMap
-          .put(TokenEnum.DFI, createReportData(TokenEnum.DFI, transparencyReportDFITotalSheet, depositAddressToStakingDTOMap));
+          .put(TokenEnum.DFI, createReportData(reportingTimestamp, TokenEnum.DFI, transparencyReportDFITotalSheet, depositAddressToStakingDTOMap));
       tokenToReportDataMap
-          .put(TokenEnum.BTC, createReportData(TokenEnum.BTC, transparencyReportBTCTotalSheet, depositAddressToStakingDTOMap));
+          .put(TokenEnum.BTC, createReportData(reportingTimestamp, TokenEnum.BTC, transparencyReportBTCTotalSheet, depositAddressToStakingDTOMap));
       tokenToReportDataMap
-          .put(TokenEnum.ETH, createReportData(TokenEnum.ETH, transparencyReportETHTotalSheet, depositAddressToStakingDTOMap));
+          .put(TokenEnum.ETH, createReportData(reportingTimestamp, TokenEnum.ETH, transparencyReportETHTotalSheet, depositAddressToStakingDTOMap));
       tokenToReportDataMap
-          .put(TokenEnum.USDT, createReportData(TokenEnum.USDT, transparencyReportUSDTTotalSheet, depositAddressToStakingDTOMap));
+          .put(TokenEnum.USDT, createReportData(reportingTimestamp, TokenEnum.USDT, transparencyReportUSDTTotalSheet, depositAddressToStakingDTOMap));
       tokenToReportDataMap
-          .put(TokenEnum.USDC, createReportData(TokenEnum.USDC, transparencyReportUSDCTotalSheet, depositAddressToStakingDTOMap));
+          .put(TokenEnum.USDC, createReportData(reportingTimestamp, TokenEnum.USDC, transparencyReportUSDCTotalSheet, depositAddressToStakingDTOMap));
 
       // ...
       boolean isDifferenceNegative = tokenToReportDataMap.values().stream().anyMatch(data -> -1 != BigDecimal.ZERO.compareTo(data.difference));
@@ -138,12 +137,13 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
    * 
    */
   private ReportData createReportData(
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull String transparencyReportTotalSheet,
       @Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap) throws DfxException {
     // ...
     CellDataList transparencyReportingCellDataList =
-        createCellDataList(currentDate, token, depositAddressToStakingDTOMap);
+        createCellDataList(reportingTimestamp, token, depositAddressToStakingDTOMap);
 
     BigDecimal difference = (BigDecimal) transparencyReportingCellDataList.getProperty(TOTAL_DIFFERENCE_PROPERTY);
 
@@ -161,10 +161,6 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
    */
   private void setup() throws DfxException {
     LOGGER.debug("setup()");
-
-    if (null == currentDate) {
-      currentDate = new Date();
-    }
 
     // ...
     if (null == liquidityTokenToAmountMap) {
@@ -254,7 +250,7 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
    * 
    */
   private CellDataList createCellDataList(
-      @Nonnull Date currentDate,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap) throws DfxException {
     LOGGER.debug("createCellDataList(): token=" + token);
@@ -278,7 +274,7 @@ public class YieldmachineTransparencyReporting2 extends Reporting {
     totalCustomerValue = totalCustomerValue.add(stakingBalance);
 
     CellDataList cellDataList = new CellDataList();
-    cellDataList.add(new CellData().setRowIndex(1).setCellIndex(4).setKeepStyle(true).setValue(currentDate));
+    cellDataList.add(new CellData().setRowIndex(1).setCellIndex(4).setKeepStyle(true).setValue(reportingTimestamp));
     cellDataList.add(new CellData().setRowIndex(4).setCellIndex(0).setKeepStyle(true).setValue(numberOfCustomer));
     cellDataList.add(new CellData().setRowIndex(4).setCellIndex(2).setKeepStyle(true).setValue(stakingBalance));
 

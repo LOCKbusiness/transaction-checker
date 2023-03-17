@@ -4,8 +4,8 @@ import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHE
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
 
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -144,17 +144,17 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != balanceFileName
           && null != stakingBalanceSheet
           && null != yieldmachineBalanceSheet) {
-        Date currentDate = new Date();
+        Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
 
         BalanceReporting stakingBalanceReporting =
             new BalanceReporting(network, databaseBlockHelper, databaseStakingBalanceHelper,
                 logInfoList, BalanceReporting.BalanceReportingTypeEnum.STAKING);
-        stakingBalanceReporting.report(connection, currentDate, rootPath, balanceFileName, stakingBalanceSheet);
+        stakingBalanceReporting.report(connection, reportingTimestamp, rootPath, balanceFileName, stakingBalanceSheet);
 
         BalanceReporting yieldmachineBalanceReporting =
             new BalanceReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper,
                 logInfoList, BalanceReporting.BalanceReportingTypeEnum.YIELD_MACHINE);
-        yieldmachineBalanceReporting.report(connection, currentDate, rootPath, balanceFileName, yieldmachineBalanceSheet);
+        yieldmachineBalanceReporting.report(connection, reportingTimestamp, rootPath, balanceFileName, yieldmachineBalanceSheet);
 
         logInfoList.add("");
       }
@@ -179,9 +179,11 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       if (null != rootPath
           && null != checkFileName
           && null != checkSheet) {
+        Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
+
         LiquidityMasternodeStakingReporting liquidityMasternodeStakingReporting =
             new LiquidityMasternodeStakingReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
-        liquidityMasternodeStakingReporting.report(connection, TokenEnum.DFI, rootPath, checkFileName, checkSheet);
+        liquidityMasternodeStakingReporting.report(connection, reportingTimestamp, TokenEnum.DFI, rootPath, checkFileName, checkSheet);
 
         logInfoList.add("");
       }
@@ -206,9 +208,11 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       if (null != rootPath
           && null != checkFileName
           && null != checkSheet) {
+        Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
+
         VaultReporting vaultReporting =
             new VaultReporting(network, databaseBlockHelper, databaseStakingBalanceHelper, logInfoList);
-        vaultReporting.report(connection, TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
+        vaultReporting.report(connection, reportingTimestamp, TokenEnum.DUSD, rootPath, checkFileName, checkSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createVaultReport", e);
@@ -270,9 +274,11 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != totalSheet
           && null != customerSheet
           && null != masternodeSheet) {
+        Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
+
         StakingTransparencyReporting transparencyReporting =
             new StakingTransparencyReporting(network, databaseBlockHelper, databaseStakingBalanceHelper);
-        transparencyReporting.report(connection, TokenEnum.DFI, rootPath, fileName, totalSheet, customerSheet, masternodeSheet);
+        transparencyReporting.report(connection, reportingTimestamp, TokenEnum.DFI, rootPath, fileName, totalSheet, customerSheet, masternodeSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createStakingTransparencyReport", e);
@@ -333,12 +339,14 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
           && null != fileName
           && !isSheetNameNull
           && !isTokenSheetNameNull) {
+        Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
+
 //        YieldmachineTransparencyReporting2 transparencyReporting =
 //            new YieldmachineTransparencyReporting2(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
         YieldmachineTransparencyReporting3 transparencyReporting =
             new YieldmachineTransparencyReporting3(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
 
-        transparencyReporting.report(rootPath, fileName, sheetIdToSheetNameMap, tokenToSheetNameMap);
+        transparencyReporting.report(reportingTimestamp, rootPath, fileName, sheetIdToSheetNameMap, tokenToSheetNameMap);
       }
     } catch (Exception e) {
       LOGGER.error("createYieldmachineBTCTransparencyReport", e);

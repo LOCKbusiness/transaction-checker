@@ -1,8 +1,8 @@
 package ch.dfx.reporting.transparency;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -44,8 +44,6 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
   private final DefiDataProvider dataProvider;
 
   // ...
-  private Date currentDate = null;
-
   private Map<String, BigDecimal> liquidityTokenToAmountMap = null;
 
   private Map<String, BigDecimal> vault1TokenToAmountMap = null;
@@ -74,6 +72,7 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
    * 
    */
   public void report(
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -94,13 +93,13 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
 
       // ...
       CellDataList transparencyReportingCellDataList =
-          createCellDataList(currentDate, token, rootPath, fileName, transparencyReportTotalSheet, numberOfCustomer, stakingBalance);
+          createCellDataList(reportingTimestamp, token, rootPath, fileName, transparencyReportTotalSheet, numberOfCustomer, stakingBalance);
 
       BigDecimal difference = (BigDecimal) transparencyReportingCellDataList.getProperty(TOTAL_DIFFERENCE_PROPERTY);
 
       if (-1 == BigDecimal.ZERO.compareTo(difference)) {
         writeTransparencyReport(rootPath, fileName, transparencyReportTotalSheet, transparencyReportingCellDataList);
-        writeYieldmachineBalance(currentDate, rootPath, fileName, transparencyReportCustomerSheet, yieldmachineBalanceRowDataList);
+        writeYieldmachineBalance(reportingTimestamp, rootPath, fileName, transparencyReportCustomerSheet, yieldmachineBalanceRowDataList);
       } else {
         String messageText =
             "Yield Machine Transparency Report (" + token + "):\n"
@@ -116,10 +115,6 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
    * 
    */
   private void setup() throws DfxException {
-    if (null == currentDate) {
-      currentDate = new Date();
-    }
-
     if (null == liquidityTokenToAmountMap) {
       String liquidityAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_LIQUIDITY_ADDRESS, "");
       liquidityTokenToAmountMap = getTokenToAmountMap(liquidityAddress);
@@ -157,7 +152,7 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
    * 
    */
   private CellDataList createCellDataList(
-      @Nonnull Date currentDate,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -174,7 +169,7 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
     totalCustomerValue = totalCustomerValue.add(stakingBalance);
 
     CellDataList cellDataList = new CellDataList();
-    cellDataList.add(new CellData().setRowIndex(1).setCellIndex(4).setKeepStyle(true).setValue(currentDate));
+    cellDataList.add(new CellData().setRowIndex(1).setCellIndex(4).setKeepStyle(true).setValue(reportingTimestamp));
     cellDataList.add(new CellData().setRowIndex(4).setCellIndex(0).setKeepStyle(true).setValue(numberOfCustomer));
     cellDataList.add(new CellData().setRowIndex(4).setCellIndex(2).setKeepStyle(true).setValue(stakingBalance));
 
@@ -330,7 +325,7 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
    * 
    */
   private void writeYieldmachineBalance(
-      @Nonnull Date reportingDate,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet,
@@ -339,7 +334,7 @@ public class YieldmachineTransparencyReporting1 extends Reporting {
 
     // ...
     CellDataList cleanCellDataList = new CellDataList();
-    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingDate));
+    cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingTimestamp));
     cleanCellDataList.add(new CellData().setRowIndex(0).setCellIndex(2).setKeepStyle(true).setValue(BigDecimal.ZERO));
 
     BigDecimal btcTotalBalance = (BigDecimal) rowDataList.getProperty(TOTAL_BALANCE_PROPERTY);

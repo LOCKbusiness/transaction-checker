@@ -8,8 +8,8 @@ import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -80,6 +80,7 @@ public class VaultReporting extends Reporting {
    */
   public void report(
       @Nonnull Connection connection,
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
       @Nonnull String fileName,
@@ -114,7 +115,7 @@ public class VaultReporting extends Reporting {
 
           RowDataList rowDataList = new RowDataList(2);
           CellDataList cellDataList =
-              doCheckVaultValue(listVaultData, liquidityTokenToAmountMap, vaultTokenToAmountMap, totalStakingBalance);
+              doCheckVaultValue(reportingTimestamp, listVaultData, liquidityTokenToAmountMap, vaultTokenToAmountMap, totalStakingBalance);
 
           openExcel(rootPath, fileName, sheet);
           writeExcel(rowDataList, cellDataList);
@@ -172,6 +173,7 @@ public class VaultReporting extends Reporting {
    * 
    */
   private CellDataList doCheckVaultValue(
+      @Nonnull Timestamp reportingTimestamp,
       @Nonnull DefiListVaultData listVaultData,
       @Nonnull Map<String, BigDecimal> liquidityTokenToAmountMap,
       @Nonnull Map<String, BigDecimal> vaultTokenToAmountMap,
@@ -227,7 +229,7 @@ public class VaultReporting extends Reporting {
 
     // ...
     CellDataList cellDataList = new CellDataList();
-    cellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(new Date()));
+    cellDataList.add(new CellData().setRowIndex(0).setCellIndex(1).setKeepStyle(true).setValue(reportingTimestamp));
 
     // Amount ...
     cellDataList.add(createCellData(3, ourSpyAmount));

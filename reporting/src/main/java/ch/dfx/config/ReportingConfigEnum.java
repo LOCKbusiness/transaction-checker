@@ -81,6 +81,11 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_AMOUNT_SHEET("google.transparency_report.yieldmachine.history_amount_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_PRICE_SHEET("google.transparency_report.yieldmachine.history_price_sheet"),
 
+  // Rendite ...
+  GOOGLE_YIELD_REPORT_YIELDMACHINE_FILENAME("google.yield_report.filename"),
+  GOOGLE_YIELD_REPORT_YIELDMACHINE_RENDITE_SHEET("google.yield_report.rendite_sheet"),
+  GOOGLE_YIELD_REPORT_YIELDMACHINE_USDT_DUSD_SHEET("google.yield_report.usdt_dusd_sheet"),
+
   // H2 Database ...
   H2_DB_DIR("database.[ENVIRONMENT].db_dir"),
   H2_DB_NAME("database.[ENVIRONMENT].db_name"),

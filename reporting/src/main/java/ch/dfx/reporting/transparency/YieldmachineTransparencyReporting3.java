@@ -162,6 +162,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       tokenToReportDTOMap
           .put(TokenEnum.USDC, createReportDTO(TokenEnum.USDC, tokenToSheetNameMap, depositAddressToStakingDTOMap));
       tokenToReportDTOMap
+          .put(TokenEnum.EUROC, createReportDTO(TokenEnum.EUROC, tokenToSheetNameMap, depositAddressToStakingDTOMap));
+      tokenToReportDTOMap
           .put(TokenEnum.SPY, createReportDTO(TokenEnum.SPY, tokenToSheetNameMap, depositAddressToStakingDTOMap));
 
       // ...
@@ -1486,8 +1488,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     int cellIndex = 2;
 
     for (TokenEnum token : TokenEnum.values()) {
-      // TODO: currently without SPY, coming later ...
-      if (TokenEnum.SPY != token) {
+      // TODO: currently without SPY or EUROC, coming later ...
+      if (TokenEnum.SPY != token && TokenEnum.EUROC != token) {
         customerCellDataList.add(
             new CellData().setRowIndex(0).setCellIndex(cellIndex++).setKeepStyle(true).setValue(tokenToTotalBalanceMap.getOrDefault(token, BigDecimal.ZERO)));
       }
@@ -1559,8 +1561,11 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     HistoryAmountSheetDTO historyAmountSheetDTO = new HistoryAmountSheetDTO(reportingTimestamp);
 
     for (TokenEnum token : TokenEnum.values()) {
-      TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
-      historyAmountSheetDTO.put(token, totalSheetDTO.getAmount());
+      // TODO: currently without EUROC, coming later ...
+      if (TokenEnum.EUROC != token) {
+        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+        historyAmountSheetDTO.put(token, totalSheetDTO.getAmount());
+      }
     }
 
     return historyAmountSheetDTO;
@@ -1577,8 +1582,11 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     HistoryPriceSheetDTO historyPriceSheetDTO = new HistoryPriceSheetDTO(reportingTimestamp);
 
     for (TokenEnum token : TokenEnum.values()) {
-      TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
-      historyPriceSheetDTO.put(token, totalSheetDTO.getValue());
+      // TODO: currently without EUROC, coming later ...
+      if (TokenEnum.EUROC != token) {
+        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+        historyPriceSheetDTO.put(token, totalSheetDTO.getValue());
+      }
     }
 
     return historyPriceSheetDTO;
@@ -1867,10 +1875,13 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       int rowIndex = 1;
 
       for (TokenEnum token : TokenEnum.values()) {
-        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
-        totalBalance = totalBalance.add(totalSheetDTO.getValue());
+        // TODO: currently without EUROC, coming later ...
+        if (TokenEnum.EUROC != token) {
+          TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+          totalBalance = totalBalance.add(totalSheetDTO.getValue());
 
-        fillTotalCellDataList(totalSheetDTO, rowIndex++, cellDataList);
+          fillTotalCellDataList(totalSheetDTO, rowIndex++, cellDataList);
+        }
       }
 
       rowIndex++;
@@ -1908,7 +1919,10 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       int i = 1;
 
       for (TokenEnum token : TokenEnum.values()) {
-        cellDataList.add(new CellData().setCellIndex(i++).setValue(historyAmountSheetDTO.getAmount(token)));
+        // TODO: currently without EUROC, coming later ...
+        if (TokenEnum.EUROC != token) {
+          cellDataList.add(new CellData().setCellIndex(i++).setValue(historyAmountSheetDTO.getAmount(token)));
+        }
       }
 
       return cellDataList;
@@ -1929,10 +1943,13 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       BigDecimal totalPrice = BigDecimal.ZERO;
 
       for (TokenEnum token : TokenEnum.values()) {
-        BigDecimal price = historyPriceSheetDTO.getPrice(token);
-        totalPrice = totalPrice.add(price);
+        // TODO: currently without EUROC, coming later ...
+        if (TokenEnum.EUROC != token) {
+          BigDecimal price = historyPriceSheetDTO.getPrice(token);
+          totalPrice = totalPrice.add(price);
 
-        cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
+          cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
+        }
       }
 
       cellDataList.add(new CellData().setCellIndex(i++).setValue(totalPrice));

@@ -23,6 +23,7 @@ import ch.dfx.config.ReportingConfigEnum;
 import ch.dfx.reporting.BalanceReporting;
 import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
 import ch.dfx.reporting.VaultReporting;
+import ch.dfx.reporting.YieldmachineYieldReporting;
 import ch.dfx.reporting.transparency.StakingTransparencyReporting;
 import ch.dfx.reporting.transparency.YieldmachineTransparencyReporting3;
 import ch.dfx.statistik.StakingStatistikProvider;
@@ -110,6 +111,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 
       createStakingTransparencyReport(connection);
       createYieldmachineTransparencyReport(connection);
+
+      createYieldmachineYieldReport(connection);
 
       createStatistikReport(connection);
 
@@ -439,6 +442,33 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 //      LOGGER.error("createYieldmachineTransparencyReport", e);
 //    }
 //  }
+
+  /**
+   * 
+   */
+  private void createYieldmachineYieldReport(@Nonnull Connection connection) {
+    LOGGER.trace("createYieldmachineYieldReport() ...");
+
+    try {
+      // ...
+      String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
+      String fileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_YIELD_REPORT_YIELDMACHINE_FILENAME);
+      String usdtDUSDSheetName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_YIELD_REPORT_YIELDMACHINE_USDT_DUSD_SHEET);
+
+      if (null != rootPath
+          && null != fileName
+          && null != usdtDUSDSheetName) {
+        Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
+
+        YieldmachineYieldReporting yieldmachineYieldReporting =
+            new YieldmachineYieldReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
+
+        yieldmachineYieldReporting.report(reportingTimestamp, rootPath, fileName, usdtDUSDSheetName);
+      }
+    } catch (Exception e) {
+      LOGGER.error("createYieldmachineYieldReport", e);
+    }
+  }
 
   /**
    * 

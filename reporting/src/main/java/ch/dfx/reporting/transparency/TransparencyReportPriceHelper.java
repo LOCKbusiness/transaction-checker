@@ -139,12 +139,12 @@ public class TransparencyReportPriceHelper {
       usdtDUSDDexFeePctTokenB = BigDecimal.ZERO;
     }
 
-    BigDecimal dusd2Price = usdtDUSDRatioAB;
-    dusd2Price = dusd2Price.multiply(BigDecimal.ONE.subtract(usdtDUSDDexFeePctTokenB));
-    dusd2Price = dusd2Price.multiply(BigDecimal.ONE.subtract(usdtDUSDCommission));
-    dusd2Price = dusd2Price.setScale(SCALE, RoundingMode.HALF_UP);
+    BigDecimal dusdPrice = usdtDUSDRatioAB;
+    dusdPrice = dusdPrice.multiply(BigDecimal.ONE.subtract(usdtDUSDDexFeePctTokenB));
+    dusdPrice = dusdPrice.multiply(BigDecimal.ONE.subtract(usdtDUSDCommission));
+    dusdPrice = dusdPrice.setScale(SCALE, RoundingMode.HALF_UP);
 
-    return dusd2Price;
+    return dusdPrice;
   }
 
   /**

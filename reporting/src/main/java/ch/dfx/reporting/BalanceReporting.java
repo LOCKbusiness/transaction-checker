@@ -194,8 +194,8 @@ public class BalanceReporting extends Reporting {
 
       // ...
       for (TokenEnum token : TokenEnum.values()) {
-        // TODO: currently without SPY or EUROC, coming later ...
-        if (TokenEnum.SPY != token && TokenEnum.EUROC != token) {
+        // TODO: currently without SPY, coming later ...
+        if (TokenEnum.SPY != token) {
           BigDecimal balance = tokenToBalanceMap.getOrDefault(token, BigDecimal.ZERO);
           rowData.addCellData(new CellData().setValue(balance));
         }
@@ -298,8 +298,8 @@ public class BalanceReporting extends Reporting {
     int cellIndex = 2;
 
     for (TokenEnum token : TokenEnum.values()) {
-      // TODO: currently without SPY or EUROC, coming later ...
-      if (TokenEnum.SPY != token && TokenEnum.EUROC != token) {
+      // TODO: currently without SPY, coming later ...
+      if (TokenEnum.SPY != token) {
         cleanCellDataList.add(
             new CellData().setRowIndex(0).setCellIndex(cellIndex++).setKeepStyle(true).setValue(tokenToTotalBalanceMap.getOrDefault(token, BigDecimal.ZERO)));
       }

@@ -37,6 +37,7 @@ public class DatabaseBlockHelper {
 
   // ...
   private PreparedStatement blockByNumberSelectStatement = null;
+  private PreparedStatement blockByHashSelectStatement = null;
   private PreparedStatement blockInsertStatement = null;
 
   private PreparedStatement transactionByBlockNumberSelectStatement = null;
@@ -86,6 +87,9 @@ public class DatabaseBlockHelper {
       // Block ...
       String blockByNumberSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".block WHERE number=?";
       blockByNumberSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, blockByNumberSelectSql));
+
+      String blockByHashSelectSql = "SELECT * FROM " + TOKEN_PUBLIC_SCHEMA + ".block WHERE hash=?";
+      blockByHashSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, blockByHashSelectSql));
 
       String blockInsertSql = "INSERT INTO " + TOKEN_PUBLIC_SCHEMA + ".block (number, hash, timestamp) VALUES (?, ?, ?)";
       blockInsertStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, blockInsertSql));
@@ -194,6 +198,7 @@ public class DatabaseBlockHelper {
 
     try {
       blockByNumberSelectStatement.close();
+      blockByHashSelectStatement.close();
       blockInsertStatement.close();
 
       transactionByBlockNumberSelectStatement.close();
@@ -250,6 +255,35 @@ public class DatabaseBlockHelper {
       return blockDTO;
     } catch (Exception e) {
       throw new DfxException("getBlockDTOByNumber", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public @Nullable BlockDTO getBlockDTOByHash(String hash) throws DfxException {
+    LOGGER.trace("getBlockDTOByHash()");
+
+    try {
+      BlockDTO blockDTO = null;
+
+      blockByHashSelectStatement.setString(1, hash);
+
+      ResultSet resultSet = blockByHashSelectStatement.executeQuery();
+
+      if (resultSet.next()) {
+        blockDTO =
+            new BlockDTO(
+                resultSet.getInt("number"),
+                resultSet.getString("hash"),
+                resultSet.getLong("timestamp"));
+      }
+
+      resultSet.close();
+
+      return blockDTO;
+    } catch (Exception e) {
+      throw new DfxException("getBlockDTOByHash", e);
     }
   }
 

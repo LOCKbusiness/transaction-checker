@@ -44,6 +44,7 @@ import ch.dfx.defichain.data.block.DefiBlockResultData;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.custom.DefiCustomResultData;
 import ch.dfx.defichain.data.custom.DefiCustomResultWrapperData;
+import ch.dfx.defichain.data.masternode.DefiMasternodeBlocksResultData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeData;
 import ch.dfx.defichain.data.masternode.DefiMasternodeResultData;
 import ch.dfx.defichain.data.network.PeerInfoData;
@@ -75,9 +76,10 @@ public class DefiDataProviderImpl implements DefiDataProvider {
   private static final byte OP_PUSHDATA4 = 0x4e;
 
   // DfTx: 44665478 ...
-  private static final byte[] DFTX_BYTES = {
-      0x44, 0x66, 0x54, 0x78
-  };
+  private static final byte[] DFTX_BYTES =
+      {
+          0x44, 0x66, 0x54, 0x78
+      };
 
   // ...
   private final HttpClient httpClient;
@@ -94,9 +96,10 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     this.httpClient = httpClient;
     this.httpPost = httpPost;
 
-    this.gson = new GsonBuilder()
-        .registerTypeAdapter(DefiCustomResultWrapperData.class, new CustomTypeAdapter())
-        .create();
+    this.gson =
+        new GsonBuilder()
+            .registerTypeAdapter(DefiCustomResultWrapperData.class, new CustomTypeAdapter())
+            .create();
   }
 
   /**
@@ -411,6 +414,21 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    * 
    */
   @Override
+  public Map<String, String> getMasternodeBlocks(@Nonnull String masternodeId) throws DfxException {
+    LOGGER.trace("getMasternodeBlocks(): masternodeId=" + masternodeId);
+
+    Map<String, String> paramMap = new HashMap<>();
+    paramMap.put("id", masternodeId);
+
+    List<Object> paramList = Arrays.asList(paramMap);
+
+    return getData("getmasternodeblocks", paramList, DefiMasternodeBlocksResultData.class).getResult();
+  }
+
+  /**
+   * 
+   */
+  @Override
   public DefiPoolPairData getPoolPair(@Nonnull String poolId) throws DfxException {
     LOGGER.trace("getPoolPair(): poolId=" + poolId);
 
@@ -442,6 +460,8 @@ public class DefiDataProviderImpl implements DefiDataProvider {
    */
   @Override
   public Map<String, BigDecimal> getActivePriceMap(@Nonnull Set<String> tokenSet) throws DfxException {
+    LOGGER.trace("getActivePriceMap()");
+
     Map<String, BigDecimal> activePriceMap = new HashMap<>();
 
     for (String token : tokenSet) {
@@ -450,6 +470,28 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     }
 
     return activePriceMap;
+  }
+
+  /**
+   * 8RbpgySS2qkXQG2UosQCqADtS7zRAr8bx5: One of the Token Collateral Addresses ...
+   */
+  @Override
+  public BigDecimal testPoolSwap(@Nonnull String fromToken, @Nonnull String toToken) throws DfxException {
+    LOGGER.trace("testPoolSwap(): fromToken=" + fromToken + " / toToken=" + toToken);
+
+    Map<String, Object> resultMap = new HashMap<>();
+
+    resultMap.put("from", "8RbpgySS2qkXQG2UosQCqADtS7zRAr8bx5");
+    resultMap.put("tokenFrom", fromToken);
+    resultMap.put("amountFrom", "1");
+    resultMap.put("to", "8RbpgySS2qkXQG2UosQCqADtS7zRAr8bx5");
+    resultMap.put("tokenTo", toToken);
+    resultMap.put("maxPrice", "100");
+
+    List<Object> paramList = Arrays.asList(resultMap, "auto");
+
+    String result = getData("testpoolswap", paramList, DefiStringResultData.class).getResult();
+    return new BigDecimal(result.split("@")[0]);
   }
 
   /**
@@ -569,10 +611,11 @@ public class DefiDataProviderImpl implements DefiDataProvider {
       setHttpURI(wallet);
 
       // ...
-      StringBuilder methodBuilder = new StringBuilder("{")
-          .append("\"method\":\"").append(methodName).append("\"")
-          .append(", \"params\":")
-          .append(gson.toJson(paramList));
+      StringBuilder methodBuilder =
+          new StringBuilder("{")
+              .append("\"method\":\"").append(methodName).append("\"")
+              .append(", \"params\":")
+              .append(gson.toJson(paramList));
 
       if (null != wallet) {
         methodBuilder.append(", \"wallet\":\"").append(wallet).append("\"");

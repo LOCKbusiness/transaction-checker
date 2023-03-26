@@ -77,11 +77,15 @@ public interface DefiDataProvider {
       @Nonnull String wallet,
       @Nonnull String transactionId) throws DfxException;
 
+  Map<String, String> getMasternodeBlocks(@Nonnull String masternodeId) throws DfxException;
+
   DefiPoolPairData getPoolPair(@Nonnull String poolId) throws DfxException;
 
   DefiFixedIntervalPriceData getFixedIntervalPrice(@Nonnull String fixedIntervalPriceId) throws DfxException;
 
   Map<String, BigDecimal> getActivePriceMap(@Nonnull Set<String> tokenSet) throws DfxException;
+
+  BigDecimal testPoolSwap(@Nonnull String fromToken, @Nonnull String toToken) throws DfxException;
 
   List<String> getAccount(@Nonnull String address) throws DfxException;
 

@@ -66,7 +66,8 @@ public class StakingTransparencyReporting extends Reporting {
       @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
       @Nonnull String rootPath,
-      @Nonnull String fileName,
+      @Nonnull String fileNameExtern,
+      @Nonnull String fileNameIntern,
       @Nonnull String transparencyReportTotalSheet,
       @Nonnull String transparencyReportCustomerSheet,
       @Nonnull String transparencyReportMasternodeSheet) throws DfxException {
@@ -89,17 +90,31 @@ public class StakingTransparencyReporting extends Reporting {
       // ...
       CellDataList transparencyReportingCellDataList =
           createCellDataList(
-              reportingTimestamp, token, rootPath, fileName, transparencyReportTotalSheet,
+              reportingTimestamp, token,
               stakingNumberOfAddress, stakingBalance,
               masternodeNumberOfAddress, masternodeBalance);
 
+      // ...
+      int hour = reportingTimestamp.toLocalDateTime().getHour();
+
       BigDecimal difference = (BigDecimal) transparencyReportingCellDataList.getProperty(TOTAL_DIFFERENCE_PROPERTY);
 
-      if (-1 == BigDecimal.ZERO.compareTo(difference)) {
-        writeTransparencyReport(rootPath, fileName, transparencyReportTotalSheet, transparencyReportingCellDataList);
-        writeStakingBalance(reportingTimestamp, rootPath, fileName, transparencyReportCustomerSheet, stakingBalanceRowDataList);
-        writeMasternodeBalance(rootPath, fileName, transparencyReportMasternodeSheet, masternodeRowDataList);
-      } else {
+      if (0 == hour
+          && -1 == BigDecimal.ZERO.compareTo(difference)) {
+        writeReport(
+            reportingTimestamp, rootPath, fileNameExtern,
+            transparencyReportTotalSheet, transparencyReportCustomerSheet, transparencyReportMasternodeSheet,
+            transparencyReportingCellDataList, stakingBalanceRowDataList, masternodeRowDataList);
+      }
+
+      // ...
+      writeReport(
+          reportingTimestamp, rootPath, fileNameIntern,
+          transparencyReportTotalSheet, transparencyReportCustomerSheet, transparencyReportMasternodeSheet,
+          transparencyReportingCellDataList, stakingBalanceRowDataList, masternodeRowDataList);
+
+      // ...
+      if (-1 != BigDecimal.ZERO.compareTo(difference)) {
         String messageText =
             "Staking Transparency Report (" + token + "):\n"
                 + "LOCK Vermögen weniger als die Kundeneinlagen";
@@ -116,9 +131,6 @@ public class StakingTransparencyReporting extends Reporting {
   private CellDataList createCellDataList(
       @Nonnull Timestamp reportingTimestamp,
       @Nonnull TokenEnum token,
-      @Nonnull String rootPath,
-      @Nonnull String fileName,
-      @Nonnull String transparencyReportTotalSheet,
       int stakingNumberOfCustomer,
       @Nonnull BigDecimal stakingBalance,
       int masternodeNumberOfAddress,
@@ -187,6 +199,26 @@ public class StakingTransparencyReporting extends Reporting {
     }
 
     return totalLiquidityBalance;
+  }
+
+  /**
+   * 
+   */
+  private void writeReport(
+      @Nonnull Timestamp reportingTimestamp,
+      @Nonnull String rootPath,
+      @Nonnull String fileName,
+      @Nonnull String transparencyReportTotalSheet,
+      @Nonnull String transparencyReportCustomerSheet,
+      @Nonnull String transparencyReportMasternodeSheet,
+      @Nonnull CellDataList transparencyReportingCellDataList,
+      @Nonnull RowDataList stakingBalanceRowDataList,
+      @Nonnull RowDataList masternodeRowDataList) throws DfxException {
+    LOGGER.debug("writeReport()");
+
+    writeTransparencyReport(rootPath, fileName, transparencyReportTotalSheet, transparencyReportingCellDataList);
+    writeStakingBalance(reportingTimestamp, rootPath, fileName, transparencyReportCustomerSheet, stakingBalanceRowDataList);
+    writeMasternodeBalance(rootPath, fileName, transparencyReportMasternodeSheet, masternodeRowDataList);
   }
 
   /**

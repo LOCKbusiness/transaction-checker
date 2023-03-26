@@ -3,6 +3,7 @@ package ch.dfx.statistik;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,6 +42,14 @@ public class StakingStatistikProvider extends StatistikProvider {
       @Nonnull DatabaseBlockHelper databaseBlockHelper,
       @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     super(network, databaseBlockHelper, databaseBalanceHelper);
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public File getDataPath() {
+    return new File("data", "staking");
   }
 
   /**
@@ -182,7 +191,7 @@ public class StakingStatistikProvider extends StatistikProvider {
       @Nonnull TokenEnum token,
       int liquidityAddressNumber,
       @Nonnull LocalDate workDate) throws DfxException {
-    LOGGER.trace("getDfiSumVin()");
+    LOGGER.trace("getSumVin()");
 
     try {
       long[] timestampOfDayArray = getTimestampOfDay(workDate);
@@ -209,7 +218,7 @@ public class StakingStatistikProvider extends StatistikProvider {
 
       return sumVin;
     } catch (Exception e) {
-      throw new DfxException("getDfiSumVin", e);
+      throw new DfxException("getSumVin", e);
     }
   }
 
@@ -221,7 +230,7 @@ public class StakingStatistikProvider extends StatistikProvider {
       @Nonnull TokenEnum token,
       int liquidityAddressNumber,
       @Nonnull LocalDate workDate) throws DfxException {
-    LOGGER.trace("getDfiSumVout()");
+    LOGGER.trace("getSumVout()");
 
     try {
       long[] timestampOfDayArray = getTimestampOfDay(workDate);
@@ -248,7 +257,7 @@ public class StakingStatistikProvider extends StatistikProvider {
 
       return sumVin;
     } catch (Exception e) {
-      throw new DfxException("getDfiSumVout", e);
+      throw new DfxException("getSumVout", e);
     }
   }
 }

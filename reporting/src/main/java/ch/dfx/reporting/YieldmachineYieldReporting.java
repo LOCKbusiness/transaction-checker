@@ -5,6 +5,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,13 +52,7 @@ public class YieldmachineYieldReporting extends Reporting {
   private final TransparencyReportCsvHelper transparencyReportCsvHelper;
 
   // ...
-
-  private Map<String, BigDecimal> dusdLMTokenToAmountMap = null;
-  private Map<String, BigDecimal> btcLMTokenToAmountMap = null;
-  private Map<String, BigDecimal> ethLMTokenToAmountMap = null;
-  private Map<String, BigDecimal> usdtLMTokenToAmountMap = null;
-  private Map<String, BigDecimal> usdcLMTokenToAmountMap = null;
-  private Map<String, BigDecimal> spyLMTokenToAmountMap = null;
+  private Map<TokenEnum, Map<String, BigDecimal>> lmTokenToAmountMap = null;
 
   private Map<String, DefiPoolPairData> dfiPoolTokenToPoolPairDataMap = null;
   private Map<String, DefiPoolPairData> dusdPoolTokenToPoolPairDataMap = null;
@@ -83,8 +78,7 @@ public class YieldmachineYieldReporting extends Reporting {
   public void report(
       @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
-      @Nonnull String fileName,
-      @Nonnull String sheetName) throws DfxException {
+      @Nonnull String fileName) throws DfxException {
     LOGGER.debug("report()");
 
     long startTime = System.currentTimeMillis();
@@ -93,7 +87,7 @@ public class YieldmachineYieldReporting extends Reporting {
       setup();
 
       // ...
-      writeReport(reportingTimestamp, rootPath, fileName, sheetName);
+      writeReport(reportingTimestamp, rootPath, fileName);
     } finally {
       LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
@@ -115,34 +109,22 @@ public class YieldmachineYieldReporting extends Reporting {
   private void setupLiquidMining() throws DfxException {
     LOGGER.trace("setupLiquidMining()");
 
-    if (null == btcLMTokenToAmountMap) {
+    if (null == lmTokenToAmountMap) {
       String btcLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_BTC_LM_ADDRESS, "");
-      btcLMTokenToAmountMap = getTokenToAmountMap(btcLMAddress);
-    }
-
-    if (null == ethLMTokenToAmountMap) {
       String ethLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_ETH_LM_ADDRESS, "");
-      ethLMTokenToAmountMap = getTokenToAmountMap(ethLMAddress);
-    }
-
-    if (null == dusdLMTokenToAmountMap) {
       String dusdLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_DUSD_LM_ADDRESS, "");
-      dusdLMTokenToAmountMap = getTokenToAmountMap(dusdLMAddress);
-    }
-
-    if (null == usdtLMTokenToAmountMap) {
       String usdtLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_USDT_LM_ADDRESS, "");
-      usdtLMTokenToAmountMap = getTokenToAmountMap(usdtLMAddress);
-    }
-
-    if (null == usdcLMTokenToAmountMap) {
       String usdcLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_USDC_LM_ADDRESS, "");
-      usdcLMTokenToAmountMap = getTokenToAmountMap(usdcLMAddress);
-    }
-
-    if (null == spyLMTokenToAmountMap) {
       String spyLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_SPY_LM_ADDRESS, "");
-      spyLMTokenToAmountMap = getTokenToAmountMap(spyLMAddress);
+
+      lmTokenToAmountMap = new EnumMap<>(TokenEnum.class);
+
+      lmTokenToAmountMap.put(TokenEnum.BTC, getTokenToAmountMap(btcLMAddress));
+      lmTokenToAmountMap.put(TokenEnum.ETH, getTokenToAmountMap(ethLMAddress));
+      lmTokenToAmountMap.put(TokenEnum.DUSD, getTokenToAmountMap(dusdLMAddress));
+      lmTokenToAmountMap.put(TokenEnum.USDT, getTokenToAmountMap(usdtLMAddress));
+      lmTokenToAmountMap.put(TokenEnum.USDC, getTokenToAmountMap(usdcLMAddress));
+      lmTokenToAmountMap.put(TokenEnum.SPY, getTokenToAmountMap(spyLMAddress));
     }
   }
 
@@ -181,9 +163,6 @@ public class YieldmachineYieldReporting extends Reporting {
         dusdPoolTokenToPoolPairDataMap.put(dusdPoolToken, poolPairData);
       }
     }
-
-    transparencyReportPriceHelper.setDFIPoolTokenToPoolPairDataMap(dfiPoolTokenToPoolPairDataMap);
-    transparencyReportPriceHelper.setdusdPoolTokenToPoolPairDataMap(dusdPoolTokenToPoolPairDataMap);
   }
 
   /**
@@ -200,79 +179,39 @@ public class YieldmachineYieldReporting extends Reporting {
   /**
    * 
    */
-  private Pair<BigDecimal, BigDecimal> getBTCPoolAmount() {
-    LOGGER.trace("getBTCPoolAmount()");
+  private PoolTokenPairData getDFIPoolTokenPairData(@Nonnull TokenEnum tokenA) {
+    LOGGER.trace("getDFIPoolTokenPairData()");
 
-    String poolToken = "BTC-DFI";
+    TokenEnum tokenB = TokenEnum.DFI;
+
+    String poolToken = tokenA.toString() + "-" + tokenB.toString();
     DefiPoolPairData poolPairData = dfiPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = btcLMTokenToAmountMap.get(poolToken);
+    BigDecimal poolAmount = lmTokenToAmountMap.get(tokenA).getOrDefault(poolToken, BigDecimal.ZERO);
+    Pair<BigDecimal, BigDecimal> poolTokenAmountPair = TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
 
-    return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
+    PoolTokenPairData poolTokenPairData = new PoolTokenPairData(poolToken, tokenA, tokenB);
+    poolTokenPairData.setPoolTokenAmountPair(poolTokenAmountPair);
+
+    return poolTokenPairData;
   }
 
   /**
    * 
    */
-  private Pair<BigDecimal, BigDecimal> getETHPoolAmount() {
-    LOGGER.trace("getETHPoolAmount()");
+  private PoolTokenPairData getDUSDPoolTokenPairData(@Nonnull TokenEnum tokenA) {
+    LOGGER.trace("getDUSDPoolTokenPairData()");
 
-    String poolToken = "ETH-DFI";
-    DefiPoolPairData poolPairData = dfiPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = ethLMTokenToAmountMap.get(poolToken);
+    TokenEnum tokenB = TokenEnum.DUSD;
 
-    return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
-  }
-
-  /**
-   * 
-   */
-  private Pair<BigDecimal, BigDecimal> getDUSDPoolAmount() {
-    LOGGER.trace("getDUSDPoolAmount()");
-
-    String poolToken = "DUSD-DFI";
-    DefiPoolPairData poolPairData = dfiPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = dusdLMTokenToAmountMap.get(poolToken);
-
-    return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
-  }
-
-  /**
-   * 
-   */
-  private Pair<BigDecimal, BigDecimal> getUSDTPoolAmount() {
-    LOGGER.trace("getUSDTPoolAmount()");
-
-    String poolToken = "USDT-DUSD";
+    String poolToken = tokenA.toString() + "-" + tokenB.toString();
     DefiPoolPairData poolPairData = dusdPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = usdtLMTokenToAmountMap.get(poolToken);
+    BigDecimal poolAmount = lmTokenToAmountMap.get(tokenA).getOrDefault(poolToken, BigDecimal.ZERO);
+    Pair<BigDecimal, BigDecimal> poolTokenAmountPair = TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
 
-    return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
-  }
+    PoolTokenPairData poolTokenPairData = new PoolTokenPairData(poolToken, tokenA, tokenB);
+    poolTokenPairData.setPoolTokenAmountPair(poolTokenAmountPair);
 
-  /**
-   * 
-   */
-  private Pair<BigDecimal, BigDecimal> getUSDCPoolAmount() {
-    LOGGER.trace("getUSDCPoolAmount()");
-
-    String poolToken = "USDC-DUSD";
-    DefiPoolPairData poolPairData = dusdPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = usdcLMTokenToAmountMap.get(poolToken);
-
-    return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
-  }
-
-  /**
-   * 
-   */
-  private Pair<BigDecimal, BigDecimal> getSPYPoolAmount() {
-    LOGGER.trace("getSPYPoolAmount()");
-
-    String poolToken = "SPY-DUSD";
-    DefiPoolPairData poolPairData = dusdPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = spyLMTokenToAmountMap.get(poolToken);
-
-    return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
+    return poolTokenPairData;
   }
 
   /**
@@ -281,53 +220,72 @@ public class YieldmachineYieldReporting extends Reporting {
   private void writeReport(
       @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
-      @Nonnull String fileName,
-      @Nonnull String sheetName) throws DfxException {
+      @Nonnull String fileName) throws DfxException {
     LOGGER.debug("writeReport()");
 
     // ...
-    YieldPoolSheetDTO yieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp);
-    transparencyReportCsvHelper.writeToCSV(yieldPoolSheetDTO);
+    Map<TokenEnum, BigDecimal> tokenToPriceMap = transparencyReportPriceHelper.createTokenToPriceMap();
 
     // ...
-    openExcel(rootPath, fileName, sheetName);
-    writeYieldSheet();
+    openExcel(rootPath, fileName);
+
+    // ...
+    PoolTokenPairData usdtPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.USDT);
+    YieldPoolSheetDTO usdtYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, usdtPoolTokenPairData, tokenToPriceMap);
+    transparencyReportCsvHelper.writeToCSV(usdtYieldPoolSheetDTO);
+
+    setSheet(usdtPoolTokenPairData.getPoolTokenId());
+    writeYieldSheet(usdtPoolTokenPairData.getPoolTokenId());
+
+    // ...
+    PoolTokenPairData usdcPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.USDC);
+    YieldPoolSheetDTO usdcYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, usdcPoolTokenPairData, tokenToPriceMap);
+    transparencyReportCsvHelper.writeToCSV(usdcYieldPoolSheetDTO);
+
+    setSheet(usdcPoolTokenPairData.getPoolTokenId());
+    writeYieldSheet(usdcPoolTokenPairData.getPoolTokenId());
+
+    // ...
+    PoolTokenPairData spyPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.SPY);
+    YieldPoolSheetDTO spyYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, spyPoolTokenPairData, tokenToPriceMap);
+    transparencyReportCsvHelper.writeToCSV(spyYieldPoolSheetDTO);
+
+    setSheet(spyPoolTokenPairData.getPoolTokenId());
+    writeYieldSheet(spyPoolTokenPairData.getPoolTokenId());
+
     closeExcel();
   }
 
   /**
    * 
    */
-  private YieldPoolSheetDTO createYieldPoolSheetDTO(@Nonnull Timestamp reportingTimestamp) {
-    LOGGER.debug("createYieldPoolSheetDTO()");
+  private YieldPoolSheetDTO createYieldPoolSheetDTO(
+      @Nonnull Timestamp reportingTimestamp,
+      @Nonnull PoolTokenPairData poolTokenPairData,
+      @Nonnull Map<TokenEnum, BigDecimal> tokenToPriceMap) {
+    LOGGER.debug("createYieldPoolSheetDTO(): poolTokenId=" + poolTokenPairData.getPoolTokenId());
 
     // ...
-    Map<TokenEnum, BigDecimal> tokenToPriceMap = transparencyReportPriceHelper.createTokenToPriceMap();
+    YieldPoolSheetDTO yieldPoolDTO = new YieldPoolSheetDTO(poolTokenPairData.getPoolTokenId(), reportingTimestamp);
 
     // ...
-    Pair<BigDecimal, BigDecimal> usdtPoolAmountPair = getUSDTPoolAmount();
-    BigDecimal usdtLMDFIAmount = usdtLMTokenToAmountMap.getOrDefault(TokenEnum.DFI.toString(), BigDecimal.ZERO);
+    BigDecimal tokenAAmount = poolTokenPairData.getTokenAAmount();
+    BigDecimal tokenAPrice =
+        tokenAAmount.multiply(tokenToPriceMap.getOrDefault(poolTokenPairData.getTokenA(), BigDecimal.ZERO), MATH_CONTEXT).setScale(SCALE, RoundingMode.HALF_UP);
 
-    YieldPoolSheetDTO yieldPoolDTO = new YieldPoolSheetDTO("USDT-DUSD", reportingTimestamp);
-
-    // ...
-    BigDecimal usdtAmount = usdtPoolAmountPair.getLeft();
-    BigDecimal usdtPrice =
-        usdtAmount.multiply(tokenToPriceMap.getOrDefault(TokenEnum.USDT, BigDecimal.ZERO), MATH_CONTEXT).setScale(SCALE, RoundingMode.HALF_UP);
-
-    yieldPoolDTO.setTokenAAmount(usdtAmount);
-    yieldPoolDTO.setTokenAPrice(usdtPrice);
+    yieldPoolDTO.setTokenAAmount(tokenAAmount);
+    yieldPoolDTO.setTokenAPrice(tokenAPrice);
 
     // ...
-    BigDecimal dusdAmount = usdtPoolAmountPair.getRight();
-    BigDecimal dusdPrice =
-        dusdAmount.multiply(tokenToPriceMap.getOrDefault(TokenEnum.DUSD, BigDecimal.ZERO), MATH_CONTEXT).setScale(SCALE, RoundingMode.HALF_UP);
+    BigDecimal tokenBAmount = poolTokenPairData.getTokenBAmount();
+    BigDecimal tokenBPrice =
+        tokenBAmount.multiply(tokenToPriceMap.getOrDefault(poolTokenPairData.getTokenB(), BigDecimal.ZERO), MATH_CONTEXT).setScale(SCALE, RoundingMode.HALF_UP);
 
-    yieldPoolDTO.setTokenBAmount(dusdAmount);
-    yieldPoolDTO.setTokenBPrice(dusdPrice);
+    yieldPoolDTO.setTokenBAmount(tokenBAmount);
+    yieldPoolDTO.setTokenBPrice(tokenBPrice);
 
     // ...
-    BigDecimal dfiAmount = usdtLMDFIAmount;
+    BigDecimal dfiAmount = lmTokenToAmountMap.get(poolTokenPairData.getTokenA()).getOrDefault(TokenEnum.DFI.toString(), BigDecimal.ZERO);
     BigDecimal dfiPrice =
         dfiAmount.multiply(tokenToPriceMap.getOrDefault(TokenEnum.DFI, BigDecimal.ZERO), MATH_CONTEXT).setScale(SCALE, RoundingMode.HALF_UP);
 
@@ -340,12 +298,12 @@ public class YieldmachineYieldReporting extends Reporting {
   /**
    * 
    */
-  private void writeYieldSheet() throws DfxException {
-    LOGGER.debug("writeYieldSheet()");
+  private void writeYieldSheet(@Nonnull String poolTokenId) throws DfxException {
+    LOGGER.debug("writeYieldSheet(): poolTokenId=" + poolTokenId);
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<YieldPoolSheetDTO> yieldPoolSheetDTOList = transparencyReportCsvHelper.readYieldPoolSheetDTOFromCSV();
+    List<YieldPoolSheetDTO> yieldPoolSheetDTOList = transparencyReportCsvHelper.readYieldPoolSheetDTOFromCSV(poolTokenId);
 
     for (YieldPoolSheetDTO yieldPoolSheetDTO : yieldPoolSheetDTOList) {
       CellDataList cellDataList = new CellDataList();
@@ -359,9 +317,17 @@ public class YieldmachineYieldReporting extends Reporting {
       cellDataList.add(new CellData().setCellIndex(5).setValue(yieldPoolSheetDTO.getBalanceAmount()));
       cellDataList.add(new CellData().setCellIndex(6).setValue(yieldPoolSheetDTO.getBalancePrice()));
 
-      cellDataList.add(new CellData().setCellIndex(7).setValue(yieldPoolSheetDTO.getDifference()));
-      cellDataList.add(new CellData().setCellIndex(8).setValue(yieldPoolSheetDTO.getInterval()));
-      cellDataList.add(new CellData().setCellIndex(9).setValue(yieldPoolSheetDTO.getYield()));
+      cellDataList.add(new CellData().setCellIndex(7).setValue(yieldPoolSheetDTO.getHourDifference()));
+      cellDataList.add(new CellData().setCellIndex(8).setValue(yieldPoolSheetDTO.getHourInterval()));
+      cellDataList.add(new CellData().setCellIndex(9).setValue(yieldPoolSheetDTO.getHourYield()));
+
+      BigDecimal dayDifference = yieldPoolSheetDTO.getDayDifference();
+
+      if (0 != BigDecimal.ZERO.compareTo(dayDifference)) {
+        cellDataList.add(new CellData().setCellIndex(10).setValue(yieldPoolSheetDTO.getDayDifference()));
+        cellDataList.add(new CellData().setCellIndex(11).setValue(yieldPoolSheetDTO.getDayInterval()));
+        cellDataList.add(new CellData().setCellIndex(12).setValue(yieldPoolSheetDTO.getDayYield()));
+      }
 
       RowData rowData = new RowData().addCellDataList(cellDataList);
       rowDataList.add(rowData);
@@ -369,5 +335,50 @@ public class YieldmachineYieldReporting extends Reporting {
 
     cleanExcel(1);
     writeExcel(rowDataList);
+  }
+
+  /**
+   * 
+   */
+  private class PoolTokenPairData {
+    private final String poolTokenId;
+
+    private final TokenEnum tokenA;
+    private final TokenEnum tokenB;
+
+    private Pair<BigDecimal, BigDecimal> poolTokenAmountPair = Pair.of(BigDecimal.ZERO, BigDecimal.ZERO);
+
+    private PoolTokenPairData(
+        @Nonnull String poolTokenId,
+        @Nonnull TokenEnum tokenA,
+        @Nonnull TokenEnum tokenB) {
+      this.poolTokenId = poolTokenId;
+      this.tokenA = tokenA;
+      this.tokenB = tokenB;
+    }
+
+    private String getPoolTokenId() {
+      return poolTokenId;
+    }
+
+    private TokenEnum getTokenA() {
+      return tokenA;
+    }
+
+    private TokenEnum getTokenB() {
+      return tokenB;
+    }
+
+    private void setPoolTokenAmountPair(@Nonnull Pair<BigDecimal, BigDecimal> poolTokenAmountPair) {
+      this.poolTokenAmountPair = poolTokenAmountPair;
+    }
+
+    private BigDecimal getTokenAAmount() {
+      return poolTokenAmountPair.getLeft();
+    }
+
+    private BigDecimal getTokenBAmount() {
+      return poolTokenAmountPair.getRight();
+    }
   }
 }

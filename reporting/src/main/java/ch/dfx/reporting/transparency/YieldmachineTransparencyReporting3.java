@@ -7,8 +7,10 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -105,8 +107,6 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   private Map<String, DefiPoolPairData> dfiPoolTokenToPoolPairDataMap = null;
   private Map<String, DefiPoolPairData> dusdPoolTokenToPoolPairDataMap = null;
 
-//  private Map<String, BigDecimal> activePriceMap = null;
-
   /**
    * 
    */
@@ -133,7 +133,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   public void report(
       @Nonnull Timestamp reportingTimestamp,
       @Nonnull String rootPath,
-      @Nonnull String fileName,
+      @Nonnull String fileNameExtern,
+      @Nonnull String fileNameIntern,
       @Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap,
       @Nonnull Map<TokenEnum, String> tokenToSheetNameMap) throws DfxException {
     LOGGER.debug("report()");
@@ -183,17 +184,39 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap = createTokenToTotalSheetDTOMap(tokenToReportDTOMap);
 
       // ...
+      HistoryAmountSheetDTO historyAmountSheetDTO = createHistoryAmountSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
+      HistoryPriceSheetDTO historyPriceSheetDTO = createHistoryPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
+      transparencyReportCsvHelper.writeToCSV(historyAmountSheetDTO, historyPriceSheetDTO);
+
+      // ...
+      int hour = reportingTimestamp.toLocalDateTime().getHour();
+
       BigDecimal totalBalance =
           tokenToTotalSheetDTOMap.values().stream()
               .map(dto -> dto.getValue())
               .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-      if (-1 == BigDecimal.ZERO.compareTo(totalBalance)) {
+      if (0 == hour
+          && -1 == BigDecimal.ZERO.compareTo(totalBalance)) {
+        Set<Integer> historyHourSet = new HashSet<>();
+        historyHourSet.add(hour);
+
         writeReport(
             reportingTimestamp,
-            rootPath, fileName, sheetIdToSheetNameMap,
-            tokenToReportDTOMap, tokenToTransactionSheetDTOMap, tokenToTotalSheetDTOMap, depositAddressToStakingDTOMap);
-      } else {
+            rootPath, fileNameExtern, sheetIdToSheetNameMap,
+            tokenToReportDTOMap, tokenToTransactionSheetDTOMap, tokenToTotalSheetDTOMap, depositAddressToStakingDTOMap,
+            historyHourSet);
+      }
+
+      // ...
+      writeReport(
+          reportingTimestamp,
+          rootPath, fileNameIntern, sheetIdToSheetNameMap,
+          tokenToReportDTOMap, tokenToTransactionSheetDTOMap, tokenToTotalSheetDTOMap, depositAddressToStakingDTOMap,
+          new HashSet<>());
+
+      // ...
+      if (-1 != BigDecimal.ZERO.compareTo(totalBalance)) {
         String messageText =
             "Yieldmachine Transparency Report:\n"
                 + "LOCK Vermögen weniger als die Kundeneinlagen";
@@ -353,7 +376,6 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     setupVault();
     setupLiquidMining();
     setupLiquidMiningPoolInfo();
-//    setupPriceFeed();
   }
 
   /**
@@ -485,25 +507,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
         dusdPoolTokenToPoolPairDataMap.put(dusdPoolToken, poolPairData);
       }
     }
-
-    transparencyReportPriceHelper.setDFIPoolTokenToPoolPairDataMap(dfiPoolTokenToPoolPairDataMap);
-    transparencyReportPriceHelper.setdusdPoolTokenToPoolPairDataMap(dusdPoolTokenToPoolPairDataMap);
   }
-
-//  /**
-//   * 
-//   */
-//  private void setupPriceFeed() throws DfxException {
-//    LOGGER.trace("setupPriceFeed()");
-//
-//    Set<String> priceFeedTokenMap = new HashSet<>();
-//
-//    for (TokenEnum token : TokenEnum.values()) {
-//      priceFeedTokenMap.add(token.toString());
-//    }
-//
-//    activePriceMap = dataProvider.getActivePriceMap(priceFeedTokenMap);
-//  }
 
   /**
    * 
@@ -1034,7 +1038,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   /**
    * 
    */
-  private Map<TokenEnum, TotalSheetDTO> createTokenToTotalSheetDTOMap(@Nonnull Map<TokenEnum, ReportDTO> tokenToReportDTOMap) {
+  private Map<TokenEnum, TotalSheetDTO> createTokenToTotalSheetDTOMap(@Nonnull Map<TokenEnum, ReportDTO> tokenToReportDTOMap) throws DfxException {
     LOGGER.trace("createTokenToTotalSheetDTOMap()");
 
     Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap = new HashMap<>();
@@ -1329,24 +1333,19 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       @Nonnull Map<TokenEnum, ReportDTO> tokenToReportDTOMap,
       @Nonnull Map<TokenEnum, TransactionSheetDTO> tokenToTransactionSheetDTOMap,
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap,
-      @Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap) throws DfxException {
+      @Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap,
+      @Nonnull Set<Integer> historyHourSet) throws DfxException {
     LOGGER.debug("writeReport()");
 
     openExcel(rootPath, fileName);
 
-    // ...
     writeTokenSheet(reportingTimestamp, tokenToReportDTOMap);
     writeTransactionSheet(sheetIdToSheetNameMap, tokenToTransactionSheetDTOMap);
     writeTotalSheet(sheetIdToSheetNameMap, tokenToTotalSheetDTOMap);
     writeCustomerSheet(reportingTimestamp, sheetIdToSheetNameMap, depositAddressToStakingDTOMap);
 
-    // ...
-    HistoryAmountSheetDTO historyAmountSheetDTO = createHistoryAmountSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-    HistoryPriceSheetDTO historyPriceSheetDTO = createHistoryPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-    transparencyReportCsvHelper.writeToCSV(historyAmountSheetDTO, historyPriceSheetDTO);
-
-    writeHistoryAmountSheet(sheetIdToSheetNameMap);
-    writeHistoryPriceSheet(sheetIdToSheetNameMap);
+    writeHistoryAmountSheet(sheetIdToSheetNameMap, historyHourSet);
+    writeHistoryPriceSheet(sheetIdToSheetNameMap, historyHourSet);
 
     closeExcel();
   }
@@ -1505,12 +1504,14 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   /**
    * 
    */
-  private void writeHistoryAmountSheet(@Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap) throws DfxException {
+  private void writeHistoryAmountSheet(
+      @Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap,
+      @Nonnull Set<Integer> historyHourSet) throws DfxException {
     LOGGER.trace("writeHistoryAmountSheet()");
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<HistoryAmountSheetDTO> historyAmountSheetDTOList = transparencyReportCsvHelper.readHistoryAmountSheetDTOFromCSV();
+    List<HistoryAmountSheetDTO> historyAmountSheetDTOList = transparencyReportCsvHelper.readHistoryAmountSheetDTOFromCSV(historyHourSet);
 
     for (HistoryAmountSheetDTO historyAmountSheetDTO : historyAmountSheetDTOList) {
       CellDataList historyAmountCellDataList = cellListCreator.createHistoryAmountCellDataList(historyAmountSheetDTO);
@@ -1529,12 +1530,14 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   /**
    * 
    */
-  private void writeHistoryPriceSheet(@Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap) throws DfxException {
+  private void writeHistoryPriceSheet(
+      @Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap,
+      @Nonnull Set<Integer> historyHourSet) throws DfxException {
     LOGGER.trace("writeHistoryPriceSheet()");
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<HistoryPriceSheetDTO> historyPriceSheetDTOList = transparencyReportCsvHelper.readHistoryPriceSheetDTOFromCSV();
+    List<HistoryPriceSheetDTO> historyPriceSheetDTOList = transparencyReportCsvHelper.readHistoryPriceSheetDTOFromCSV(historyHourSet);
 
     for (HistoryPriceSheetDTO historyPriceSheetDTO : historyPriceSheetDTOList) {
       CellDataList historyPriceCellDataList = cellListCreator.createHistoryPriceCellDataList(historyPriceSheetDTO);

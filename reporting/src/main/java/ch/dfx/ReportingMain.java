@@ -1,9 +1,13 @@
 package ch.dfx;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,8 +18,10 @@ import ch.dfx.common.logging.MessageEventBus;
 import ch.dfx.common.logging.MessageEventCollector;
 import ch.dfx.common.logging.MessageEventProvider;
 import ch.dfx.config.ReportingConfigEnum;
+import ch.dfx.supervision.DefiManagerRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
+import ch.dfx.transactionserver.scheduler.SchedulerProvider;
 
 /**
  * 
@@ -95,22 +101,19 @@ public class ReportingMain {
     LOGGER.debug("run period report: " + runPeriodReport);
     LOGGER.debug("run period defi manager: " + runPeriodDefiManager);
 
-    ReportingRunnable reporting = new ReportingRunnable(network, databaseManager);
-    reporting.run();
+    if (60 <= runPeriodReport) {
+      ReportingRunnable reporting = new ReportingRunnable(network, databaseManager);
 
-//    if (60 <= runPeriodReport) {
-//      ReportingRunnable reporting = new ReportingRunnable(network, databaseManager);
-//
-//      Date now = new Date();
-//      Date nextHour = DateUtils.ceiling(now, Calendar.HOUR);
-//      int delayToNextHour = (int) (nextHour.getTime() - now.getTime()) / 1000;
-//
-//      SchedulerProvider.getInstance().add(reporting, delayToNextHour, runPeriodReport, TimeUnit.SECONDS);
-//    }
-//
-//    if (30 <= runPeriodDefiManager) {
-//      DefiManagerRunnable defiManagerRunnable = new DefiManagerRunnable(messageEventProvider);
-//      SchedulerProvider.getInstance().add(defiManagerRunnable, 30, runPeriodDefiManager, TimeUnit.SECONDS);
-//    }
+      Date now = new Date();
+      Date nextHour = DateUtils.ceiling(now, Calendar.HOUR);
+      int delayToNextHour = (int) (nextHour.getTime() - now.getTime()) / 1000;
+
+      SchedulerProvider.getInstance().add(reporting, delayToNextHour, runPeriodReport, TimeUnit.SECONDS);
+    }
+
+    if (30 <= runPeriodDefiManager) {
+      DefiManagerRunnable defiManagerRunnable = new DefiManagerRunnable(messageEventProvider);
+      SchedulerProvider.getInstance().add(defiManagerRunnable, 30, runPeriodDefiManager, TimeUnit.SECONDS);
+    }
   }
 }

@@ -62,11 +62,13 @@ public enum ReportingConfigEnum implements ConfigEntry {
 
   // Transparency Report ...
   GOOGLE_TRANSPARENCY_REPORT_STAKING_FILENAME("google.transparency_report.staking.filename"),
+  GOOGLE_TRANSPARENCY_REPORT_STAKING_FILENAME_INTERN("google.transparency_report.staking.filename_intern"),
   GOOGLE_TRANSPARENCY_REPORT_STAKING_TOTAL_SHEET("google.transparency_report.staking.total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_STAKING_CUSTOMER_SHEET("google.transparency_report.staking.customer_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_STAKING_MASTERNODE_SHEET("google.transparency_report.staking.masternode_sheet"),
 
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_FILENAME("google.transparency_report.yieldmachine.filename"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_FILENAME_INTERN("google.transparency_report.yieldmachine.filename_intern"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TRANSACTION_SHEET("google.transparency_report.yieldmachine.transaction_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_CUSTOMER_SHEET("google.transparency_report.yieldmachine.customer_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TOTAL_SHEET("google.transparency_report.yieldmachine.total_sheet"),
@@ -83,8 +85,6 @@ public enum ReportingConfigEnum implements ConfigEntry {
 
   // Rendite ...
   GOOGLE_YIELD_REPORT_YIELDMACHINE_FILENAME("google.yield_report.filename"),
-  GOOGLE_YIELD_REPORT_YIELDMACHINE_RENDITE_SHEET("google.yield_report.rendite_sheet"),
-  GOOGLE_YIELD_REPORT_YIELDMACHINE_USDT_DUSD_SHEET("google.yield_report.usdt_dusd_sheet"),
 
   // H2 Database ...
   H2_DB_DIR("database.[ENVIRONMENT].db_dir"),

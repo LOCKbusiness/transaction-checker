@@ -268,12 +268,14 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
     try {
       String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
       String fileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_STAKING_FILENAME);
+      String fileNameIntern = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_STAKING_FILENAME_INTERN);
       String totalSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_STAKING_TOTAL_SHEET);
       String customerSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_STAKING_CUSTOMER_SHEET);
       String masternodeSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_STAKING_MASTERNODE_SHEET);
 
       if (null != rootPath
           && null != fileName
+          && null != fileNameIntern
           && null != totalSheet
           && null != customerSheet
           && null != masternodeSheet) {
@@ -281,7 +283,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 
         StakingTransparencyReporting transparencyReporting =
             new StakingTransparencyReporting(network, databaseBlockHelper, databaseStakingBalanceHelper);
-        transparencyReporting.report(connection, reportingTimestamp, TokenEnum.DFI, rootPath, fileName, totalSheet, customerSheet, masternodeSheet);
+        transparencyReporting
+            .report(connection, reportingTimestamp, TokenEnum.DFI, rootPath, fileName, fileNameIntern, totalSheet, customerSheet, masternodeSheet);
       }
     } catch (Exception e) {
       LOGGER.error("createStakingTransparencyReport", e);
@@ -298,6 +301,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       // ...
       String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
       String fileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_FILENAME);
+      String fileNameIntern = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_FILENAME_INTERN);
 
       String totalSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TOTAL_SHEET);
       String transactionSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_TRANSACTION_SHEET);
@@ -340,6 +344,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 
       if (null != rootPath
           && null != fileName
+          && null != fileNameIntern
           && !isSheetNameNull
           && !isTokenSheetNameNull) {
         Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
@@ -349,7 +354,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
         YieldmachineTransparencyReporting3 transparencyReporting =
             new YieldmachineTransparencyReporting3(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
 
-        transparencyReporting.report(reportingTimestamp, rootPath, fileName, sheetIdToSheetNameMap, tokenToSheetNameMap);
+        transparencyReporting.report(reportingTimestamp, rootPath, fileName, fileNameIntern, sheetIdToSheetNameMap, tokenToSheetNameMap);
       }
     } catch (Exception e) {
       LOGGER.error("createYieldmachineBTCTransparencyReport", e);
@@ -453,17 +458,15 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       // ...
       String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
       String fileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_YIELD_REPORT_YIELDMACHINE_FILENAME);
-      String usdtDUSDSheetName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_YIELD_REPORT_YIELDMACHINE_USDT_DUSD_SHEET);
 
       if (null != rootPath
-          && null != fileName
-          && null != usdtDUSDSheetName) {
+          && null != fileName) {
         Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
 
         YieldmachineYieldReporting yieldmachineYieldReporting =
             new YieldmachineYieldReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
 
-        yieldmachineYieldReporting.report(reportingTimestamp, rootPath, fileName, usdtDUSDSheetName);
+        yieldmachineYieldReporting.report(reportingTimestamp, rootPath, fileName);
       }
     } catch (Exception e) {
       LOGGER.error("createYieldmachineYieldReport", e);

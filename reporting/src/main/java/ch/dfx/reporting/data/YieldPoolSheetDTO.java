@@ -23,9 +23,13 @@ public class YieldPoolSheetDTO {
   private BigDecimal balanceAmount = BigDecimal.ZERO;
   private BigDecimal balancePrice = BigDecimal.ZERO;
 
-  private BigDecimal difference = BigDecimal.ZERO;
-  private BigDecimal interval = BigDecimal.ZERO;
-  private BigDecimal yield = BigDecimal.ZERO;
+  private BigDecimal hourDifference = BigDecimal.ZERO;
+  private BigDecimal hourInterval = BigDecimal.ZERO;
+  private BigDecimal hourYield = BigDecimal.ZERO;
+
+  private BigDecimal dayDifference = BigDecimal.ZERO;
+  private BigDecimal dayInterval = BigDecimal.ZERO;
+  private BigDecimal dayYield = BigDecimal.ZERO;
 
   /**
    * 
@@ -93,28 +97,52 @@ public class YieldPoolSheetDTO {
     this.balancePrice = balancePrice;
   }
 
-  public BigDecimal getDifference() {
-    return difference;
+  public BigDecimal getHourDifference() {
+    return hourDifference;
   }
 
-  public void setDifference(BigDecimal difference) {
-    this.difference = difference;
+  public void setHourDifference(BigDecimal hourDifference) {
+    this.hourDifference = hourDifference;
   }
 
-  public BigDecimal getInterval() {
-    return interval;
+  public BigDecimal getHourInterval() {
+    return hourInterval;
   }
 
-  public void setInterval(BigDecimal interval) {
-    this.interval = interval;
+  public void setHourInterval(BigDecimal hourInterval) {
+    this.hourInterval = hourInterval;
   }
 
-  public BigDecimal getYield() {
-    return yield;
+  public BigDecimal getHourYield() {
+    return hourYield;
   }
 
-  public void setYield(BigDecimal yield) {
-    this.yield = yield;
+  public void setHourYield(BigDecimal hourYield) {
+    this.hourYield = hourYield;
+  }
+
+  public BigDecimal getDayDifference() {
+    return dayDifference;
+  }
+
+  public void setDayDifference(BigDecimal dayDifference) {
+    this.dayDifference = dayDifference;
+  }
+
+  public BigDecimal getDayInterval() {
+    return dayInterval;
+  }
+
+  public void setDayInterval(BigDecimal dayInterval) {
+    this.dayInterval = dayInterval;
+  }
+
+  public BigDecimal getDayYield() {
+    return dayYield;
+  }
+
+  public void setDayYield(BigDecimal dayYield) {
+    this.dayYield = dayYield;
   }
 
   @Override

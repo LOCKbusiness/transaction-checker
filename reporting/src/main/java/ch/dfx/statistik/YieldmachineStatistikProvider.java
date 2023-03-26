@@ -4,6 +4,7 @@ import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_NETWORK_CUST
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_PUBLIC_SCHEMA;
 import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -42,6 +43,14 @@ public class YieldmachineStatistikProvider extends StatistikProvider {
       @Nonnull DatabaseBlockHelper databaseBlockHelper,
       @Nonnull DatabaseBalanceHelper databaseBalanceHelper) {
     super(network, databaseBlockHelper, databaseBalanceHelper);
+  }
+
+  /**
+   * 
+   */
+  @Override
+  public File getDataPath() {
+    return new File("data", "yieldmachine");
   }
 
   /**
@@ -169,7 +178,7 @@ public class YieldmachineStatistikProvider extends StatistikProvider {
       @Nonnull TokenEnum token,
       int liquidityAddressNumber,
       @Nonnull LocalDate workDate) throws DfxException {
-    LOGGER.trace("getDusdSumVin()");
+    LOGGER.trace("getSumVin()");
 
     try {
       long[] timestampOfDayArray = getTimestampOfDay(workDate);
@@ -196,7 +205,7 @@ public class YieldmachineStatistikProvider extends StatistikProvider {
 
       return sumVin;
     } catch (Exception e) {
-      throw new DfxException("getDusdSumVin", e);
+      throw new DfxException("getSumVin", e);
     }
   }
 
@@ -208,7 +217,7 @@ public class YieldmachineStatistikProvider extends StatistikProvider {
       @Nonnull TokenEnum token,
       int liquidityAddressNumber,
       @Nonnull LocalDate workDate) throws DfxException {
-    LOGGER.trace("getDusdSumVout()");
+    LOGGER.trace("getSumVout()");
 
     try {
       long[] timestampOfDayArray = getTimestampOfDay(workDate);
@@ -235,7 +244,7 @@ public class YieldmachineStatistikProvider extends StatistikProvider {
 
       return sumVin;
     } catch (Exception e) {
-      throw new DfxException("getDusdSumVout", e);
+      throw new DfxException("getSumVout", e);
     }
   }
 }

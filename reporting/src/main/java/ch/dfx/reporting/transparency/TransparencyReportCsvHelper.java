@@ -12,9 +12,10 @@ import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -37,8 +38,10 @@ public class TransparencyReportCsvHelper {
   private static final MathContext MATH_CONTEXT = MathContext.DECIMAL64;
   private static final int SCALE = 8;
 
-  private static BigDecimal MINUTES_PER_DAY = new BigDecimal(1440);
-  private static BigDecimal YEAR_IN_DAYS = new BigDecimal(365);
+  private static final BigDecimal MINUTE_IN_MILLIES = new BigDecimal(60 * 1000);
+  private static final BigDecimal DAY_IN_MILLIES = new BigDecimal(24 * 60 * 60 * 1000);
+  private static final BigDecimal MINUTES_PER_DAY = new BigDecimal(1440);
+  private static final BigDecimal YEAR_IN_DAYS = new BigDecimal(365);
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   private static final DecimalFormat US_DECIMAL_FORMAT = new DecimalFormat("##,##0.00000000");
@@ -151,7 +154,7 @@ public class TransparencyReportCsvHelper {
   /**
    * 
    */
-  public List<HistoryAmountSheetDTO> readHistoryAmountSheetDTOFromCSV() throws DfxException {
+  public List<HistoryAmountSheetDTO> readHistoryAmountSheetDTOFromCSV(@Nonnull Set<Integer> historyHourSet) throws DfxException {
     LOGGER.debug("readHistoryAmountSheetDTOFromCSV()");
 
     File historyAmountFile = new File(DATA_PATH, HISTORY_AMOUNT_CSV_FILENAME);
@@ -166,18 +169,24 @@ public class TransparencyReportCsvHelper {
 
       while (null != (line = reader.readLine())) {
         String[] entryArray = line.split(";");
-        int i = 1;
 
-        HistoryAmountSheetDTO historyAmountSheetDTO = new HistoryAmountSheetDTO(Timestamp.valueOf(entryArray[0]));
+        Timestamp timestamp = Timestamp.valueOf(entryArray[0]);
 
-        for (TokenEnum token : TokenEnum.values()) {
-          // TODO: currently without EUROC, coming later ...
-          if (TokenEnum.EUROC != token) {
-            historyAmountSheetDTO.put(token, BigDecimal.valueOf(US_DECIMAL_FORMAT.parse(entryArray[i++]).doubleValue()));
+        if (historyHourSet.isEmpty()
+            || historyHourSet.contains(timestamp.toLocalDateTime().getHour())) {
+          HistoryAmountSheetDTO historyAmountSheetDTO = new HistoryAmountSheetDTO(timestamp);
+
+          int i = 1;
+
+          for (TokenEnum token : TokenEnum.values()) {
+            // TODO: currently without EUROC, coming later ...
+            if (TokenEnum.EUROC != token) {
+              historyAmountSheetDTO.put(token, BigDecimal.valueOf(US_DECIMAL_FORMAT.parse(entryArray[i++]).doubleValue()));
+            }
           }
-        }
 
-        historyAmountSheetDTOList.add(historyAmountSheetDTO);
+          historyAmountSheetDTOList.add(historyAmountSheetDTO);
+        }
       }
 
       return historyAmountSheetDTOList;
@@ -189,7 +198,7 @@ public class TransparencyReportCsvHelper {
   /**
    * 
    */
-  public List<HistoryPriceSheetDTO> readHistoryPriceSheetDTOFromCSV() throws DfxException {
+  public List<HistoryPriceSheetDTO> readHistoryPriceSheetDTOFromCSV(@Nonnull Set<Integer> historyHourSet) throws DfxException {
     LOGGER.debug("readHistoryPriceSheetDTOFromCSV()");
 
     File historyPriceFile = new File(DATA_PATH, HISTORY_PRICE_CSV_FILENAME);
@@ -204,18 +213,24 @@ public class TransparencyReportCsvHelper {
 
       while (null != (line = reader.readLine())) {
         String[] entryArray = line.split(";");
-        int i = 1;
 
-        HistoryPriceSheetDTO historyPriceSheetDTO = new HistoryPriceSheetDTO(Timestamp.valueOf(entryArray[0]));
+        Timestamp timestamp = Timestamp.valueOf(entryArray[0]);
 
-        for (TokenEnum token : TokenEnum.values()) {
-          // TODO: currently without EUROC, coming later ...
-          if (TokenEnum.EUROC != token) {
-            historyPriceSheetDTO.put(token, BigDecimal.valueOf(US_DECIMAL_FORMAT.parse(entryArray[i++]).doubleValue()));
+        if (historyHourSet.isEmpty()
+            || historyHourSet.contains(timestamp.toLocalDateTime().getHour())) {
+          HistoryPriceSheetDTO historyPriceSheetDTO = new HistoryPriceSheetDTO(timestamp);
+
+          int i = 1;
+
+          for (TokenEnum token : TokenEnum.values()) {
+            // TODO: currently without EUROC, coming later ...
+            if (TokenEnum.EUROC != token) {
+              historyPriceSheetDTO.put(token, BigDecimal.valueOf(US_DECIMAL_FORMAT.parse(entryArray[i++]).doubleValue()));
+            }
           }
-        }
 
-        historyPriceSheetDTOList.add(historyPriceSheetDTO);
+          historyPriceSheetDTOList.add(historyPriceSheetDTO);
+        }
       }
 
       return historyPriceSheetDTOList;
@@ -227,10 +242,10 @@ public class TransparencyReportCsvHelper {
   /**
    * 
    */
-  public List<YieldPoolSheetDTO> readYieldPoolSheetDTOFromCSV() throws DfxException {
-    LOGGER.debug("readYieldPoolSheetDTOFromCSV()");
+  public List<YieldPoolSheetDTO> readYieldPoolSheetDTOFromCSV(@Nonnull String poolTokenId) throws DfxException {
+    LOGGER.debug("readYieldPoolSheetDTOFromCSV(): poolTokenId=" + poolTokenId);
 
-    String csvFileName = new StringBuilder().append("Yield-").append("USDT-DUSD").append("-Pool.csv").toString();
+    String csvFileName = new StringBuilder().append("Yield-").append(poolTokenId).append("-Pool.csv").toString();
     File yieldFile = new File(DATA_PATH, csvFileName);
 
     try (BufferedReader reader = new BufferedReader(new FileReader(yieldFile))) {
@@ -245,7 +260,7 @@ public class TransparencyReportCsvHelper {
         String[] entryArray = line.split(";");
         int i = 1;
 
-        YieldPoolSheetDTO yieldPoolSheetDTO = new YieldPoolSheetDTO("USDT-DUSD", Timestamp.valueOf(entryArray[0]));
+        YieldPoolSheetDTO yieldPoolSheetDTO = new YieldPoolSheetDTO(poolTokenId, Timestamp.valueOf(entryArray[0]));
 
         yieldPoolSheetDTO.setTokenAAmount(BigDecimal.valueOf(US_DECIMAL_FORMAT.parse(entryArray[i++]).doubleValue()));
         yieldPoolSheetDTO.setTokenAPrice(BigDecimal.valueOf(US_DECIMAL_FORMAT.parse(entryArray[i++]).doubleValue()));
@@ -258,35 +273,88 @@ public class TransparencyReportCsvHelper {
       }
 
       // ...
-      YieldPoolSheetDTO previousYieldPoolSheetDTO = yieldPoolSheetDTOList.get(0);
-
-      for (int i = 1; i < yieldPoolSheetDTOList.size(); i++) {
-        Timestamp previusTimestamp = previousYieldPoolSheetDTO.getTimestamp();
-        BigDecimal previousBalancePrice = previousYieldPoolSheetDTO.getBalancePrice();
-
-        YieldPoolSheetDTO currentYieldPoolSheetDTO = yieldPoolSheetDTOList.get(i);
-        Timestamp currentTimestamp = currentYieldPoolSheetDTO.getTimestamp();
-        BigDecimal currentBalancePrice = currentYieldPoolSheetDTO.getBalancePrice();
-
-        BigDecimal intervalInMinutes = new BigDecimal(Duration.between(previusTimestamp.toLocalDateTime(), currentTimestamp.toLocalDateTime()).toMinutes());
-        BigDecimal difference = currentBalancePrice.subtract(previousBalancePrice);
-        BigDecimal yieldPerInterval = difference.divide(previousBalancePrice, MATH_CONTEXT);
-
-        BigDecimal interval = MINUTES_PER_DAY.divide(intervalInMinutes, MATH_CONTEXT);
-        BigDecimal yield = yieldPerInterval
-            .multiply(YEAR_IN_DAYS, MATH_CONTEXT)
-            .multiply(interval, MATH_CONTEXT);
-
-        currentYieldPoolSheetDTO.setDifference(difference.setScale(SCALE, RoundingMode.HALF_UP));
-        currentYieldPoolSheetDTO.setInterval(interval.setScale(SCALE, RoundingMode.HALF_UP));
-        currentYieldPoolSheetDTO.setYield(yield.setScale(SCALE, RoundingMode.HALF_UP));
-
-        previousYieldPoolSheetDTO = currentYieldPoolSheetDTO;
-      }
+      fillHourInterval(yieldPoolSheetDTOList);
+      fillDayInterval(yieldPoolSheetDTOList);
 
       return yieldPoolSheetDTOList;
     } catch (Exception e) {
       throw new DfxException("readYieldPoolSheetDTOFromCSV", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void fillHourInterval(@Nonnull List<YieldPoolSheetDTO> yieldPoolSheetDTOList) {
+    LOGGER.debug("fillHourInterval()");
+
+    YieldPoolSheetDTO previousYieldPoolSheetDTO = yieldPoolSheetDTOList.get(0);
+
+    for (int i = 1; i < yieldPoolSheetDTOList.size(); i++) {
+      Timestamp previousTimestamp = previousYieldPoolSheetDTO.getTimestamp();
+      BigDecimal previousBalancePrice = previousYieldPoolSheetDTO.getBalancePrice();
+
+      YieldPoolSheetDTO currentYieldPoolSheetDTO = yieldPoolSheetDTOList.get(i);
+      Timestamp currentTimestamp = currentYieldPoolSheetDTO.getTimestamp();
+      BigDecimal currentBalancePrice = currentYieldPoolSheetDTO.getBalancePrice();
+
+      BigDecimal timeDiff = new BigDecimal(currentTimestamp.getTime() - previousTimestamp.getTime());
+      BigDecimal intervalInMinutes = timeDiff.divide(MINUTE_IN_MILLIES, MATH_CONTEXT);
+
+      BigDecimal difference = currentBalancePrice.subtract(previousBalancePrice);
+      BigDecimal yieldPerInterval = difference.divide(previousBalancePrice, MATH_CONTEXT);
+
+      BigDecimal interval = MINUTES_PER_DAY.divide(intervalInMinutes, MATH_CONTEXT);
+      BigDecimal yield =
+          yieldPerInterval
+              .multiply(YEAR_IN_DAYS, MATH_CONTEXT)
+              .multiply(interval, MATH_CONTEXT);
+
+      currentYieldPoolSheetDTO.setHourDifference(difference.setScale(SCALE, RoundingMode.HALF_UP));
+      currentYieldPoolSheetDTO.setHourInterval(interval.setScale(SCALE, RoundingMode.HALF_UP));
+      currentYieldPoolSheetDTO.setHourYield(yield.setScale(SCALE, RoundingMode.HALF_UP));
+
+      previousYieldPoolSheetDTO = currentYieldPoolSheetDTO;
+    }
+  }
+
+  /**
+   * 
+   */
+  private void fillDayInterval(@Nonnull List<YieldPoolSheetDTO> yieldPoolSheetDTOList) {
+    LOGGER.debug("fillDayInterval()");
+
+    YieldPoolSheetDTO previousYieldPoolSheetDTO = yieldPoolSheetDTOList.get(0);
+
+    for (int i = 1; i < yieldPoolSheetDTOList.size(); i++) {
+      Timestamp previousTimestamp = previousYieldPoolSheetDTO.getTimestamp();
+      LocalDate previousDay = previousTimestamp.toLocalDateTime().toLocalDate();
+      BigDecimal previousBalancePrice = previousYieldPoolSheetDTO.getBalancePrice();
+
+      YieldPoolSheetDTO currentYieldPoolSheetDTO = yieldPoolSheetDTOList.get(i);
+      Timestamp currentTimestamp = currentYieldPoolSheetDTO.getTimestamp();
+      LocalDate currentDay = currentTimestamp.toLocalDateTime().toLocalDate();
+
+      if (0 == currentDay.compareTo(previousDay.plusDays(1))) {
+        BigDecimal currentBalancePrice = currentYieldPoolSheetDTO.getBalancePrice();
+
+        BigDecimal timeDiff = new BigDecimal(currentTimestamp.getTime() - previousTimestamp.getTime());
+        BigDecimal intervalInDays = timeDiff.divide(DAY_IN_MILLIES, MATH_CONTEXT);
+
+        BigDecimal difference = currentBalancePrice.subtract(previousBalancePrice);
+        BigDecimal yieldPerInterval = difference.divide(previousBalancePrice, MATH_CONTEXT);
+
+        BigDecimal interval = YEAR_IN_DAYS.divide(intervalInDays, MATH_CONTEXT);
+        BigDecimal yield =
+            yieldPerInterval
+                .multiply(interval, MATH_CONTEXT);
+
+        currentYieldPoolSheetDTO.setDayDifference(difference.setScale(SCALE, RoundingMode.HALF_UP));
+        currentYieldPoolSheetDTO.setDayInterval(interval.setScale(SCALE, RoundingMode.HALF_UP));
+        currentYieldPoolSheetDTO.setDayYield(yield.setScale(SCALE, RoundingMode.HALF_UP));
+
+        previousYieldPoolSheetDTO = currentYieldPoolSheetDTO;
+      }
     }
   }
 }

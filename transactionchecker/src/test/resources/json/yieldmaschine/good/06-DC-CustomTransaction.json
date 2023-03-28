@@ -1,0 +1,10 @@
+{
+  "txid": "0a8761b329082913c5ed359f40c7d440cbc8d367a588c488a871d60e303715a6",
+  "type": "PaybackLoan",
+  "valid": true,
+  "results": {
+    "vaultId": "7604d78bdb4bc72125ec5b8a7faf19bc434fc9ac31c0ba5f9dd7e00e3061c200",
+    "from": "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z",
+    "26": 14.52433126
+  }
+}

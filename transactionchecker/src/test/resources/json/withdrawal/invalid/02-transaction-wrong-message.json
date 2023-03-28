@@ -28,7 +28,8 @@
     },
     "payload": {
       "id": 103,
-      "assetType": "Coin"
+      "assetType": "Coin",
+      "type": "Withdrawal"
     }
   }
 ]

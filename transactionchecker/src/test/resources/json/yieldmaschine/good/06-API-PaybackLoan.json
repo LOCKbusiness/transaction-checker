@@ -1,0 +1,36 @@
+[
+  {
+    "id": "0a8761b329082913c5ed359f40c7d440cbc8d367a588c488a871d60e303715a6",
+    "issuerSignature": "IDnL/2jhhVoNwtPdxY4e9hfs/KEdVfhEIW86NNQWgJSdXc98NYQPaQs9pvVZQipcsx2jQqtdO2cibTE31X1Qpe4\u003d",
+    "rawTx": {
+      "id": "0a8761b329082913c5ed359f40c7d440cbc8d367a588c488a871d60e303715a6",
+      "hex": "040000000001016286fa36716359e6080318ef318c7139cdf592a5a4e605090b7f812423cc8ae70100000000ffffffff0200000000000000004b6a49446654784800c261300ee0d79d5fbac031acc94f43bc19af7f8a5bec2521c74bdb8bd70476160014b9476812a52a9c734540590a7f50d88987b97458011a000000e65e925600000000000b6c010000000000160014b9476812a52a9c734540590a7f50d88987b97458000114b9476812a52a9c734540590a7f50d88987b9745800000000",
+      "scriptHex": "0014b9476812a52a9c734540590a7f50d88987b97458",
+      "prevouts": [
+        {
+          "txid": "e78acc2324817f0b0905e6a4a592f5cd39718c31ef180308e659637136fa8662",
+          "vout": 1,
+          "value": "0.00093391",
+          "script": {
+            "stack": [
+              {
+                "type": "OP_0",
+                "code": 0
+              },
+              {
+                "type": "OP_PUSHDATA",
+                "hex": "b9476812a52a9c734540590a7f50d88987b97458"
+              }
+            ]
+          },
+          "tokenId": 0
+        }
+      ]
+    },
+    "payload": {
+      "type": "PaybackLoan",
+      "ownerWallet": "cold-wallet-a",
+      "accountIndex": 998
+    }
+  }
+]

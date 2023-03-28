@@ -13,6 +13,9 @@ import ch.dfx.api.data.transaction.OpenTransactionTypeEnum;
  * 
  */
 public enum ApiTransactionTypeEnum {
+  // ...
+  UNKNOWN(null, OpenTransactionTypeEnum.UNKNOWN),
+
   // Masternode ...
   CREATE_MASTERNODE("CreateMasternode", OpenTransactionTypeEnum.MASTERNODE),
   RESIGN_MASTERNODE("ResignMasternode", OpenTransactionTypeEnum.MASTERNODE),
@@ -34,13 +37,13 @@ public enum ApiTransactionTypeEnum {
   WITHDRAWAL("Withdrawal", OpenTransactionTypeEnum.WITHDRAWAL),
 
   // Yield Machine ...
-  CREATE_VAULT("CreateVault", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  DEPOSIT_TO_VAULT("DepositToVault", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  WITHDRAW_FROM_VAULT("WithdrawFromVault", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  TAKE_LOAN("TakeLoan", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  PAYBACK_LOAN("PaybackLoan", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  POOL_ADD_LIQUIDITY("PoolAddLiquidity", OpenTransactionTypeEnum.YIELD_MASCHINE),
-  POOL_REMOVE_LIQUIDITY("PoolRemoveLiquidity", OpenTransactionTypeEnum.YIELD_MASCHINE);
+  CREATE_VAULT("CreateVault", OpenTransactionTypeEnum.YIELD_MACHINE),
+  DEPOSIT_TO_VAULT("DepositToVault", OpenTransactionTypeEnum.YIELD_MACHINE),
+  WITHDRAW_FROM_VAULT("WithdrawFromVault", OpenTransactionTypeEnum.YIELD_MACHINE),
+  TAKE_LOAN("TakeLoan", OpenTransactionTypeEnum.YIELD_MACHINE),
+  PAYBACK_LOAN("PaybackLoan", OpenTransactionTypeEnum.YIELD_MACHINE),
+  POOL_ADD_LIQUIDITY("PoolAddLiquidity", OpenTransactionTypeEnum.YIELD_MACHINE),
+  POOL_REMOVE_LIQUIDITY("PoolRemoveLiquidity", OpenTransactionTypeEnum.YIELD_MACHINE);
 
   // ...
   private final String typeAsString;
@@ -56,15 +59,21 @@ public enum ApiTransactionTypeEnum {
     Stream.of(ApiTransactionTypeEnum.values()).forEach(type -> apiTransactionTypeStringCacheMap.put(type.getTypeAsString(), type));
   }
 
-  public static @Nullable ApiTransactionTypeEnum createByApiType(String apiTypeString) {
-    return apiTransactionTypeStringCacheMap.get(apiTypeString);
+  public static @Nonnull ApiTransactionTypeEnum createByApiType(@Nullable String apiTypeString) {
+    ApiTransactionTypeEnum apiTransactionType = apiTransactionTypeStringCacheMap.get(apiTypeString);
+
+    if (null == apiTransactionType) {
+      apiTransactionType = UNKNOWN;
+    }
+
+    return apiTransactionType;
   }
 
   /**
    * 
    */
   private ApiTransactionTypeEnum(
-      @Nonnull String typeAsString,
+      @Nullable String typeAsString,
       @Nonnull OpenTransactionTypeEnum openTransactionType) {
     this.typeAsString = typeAsString;
     this.openTransactionType = openTransactionType;
@@ -73,7 +82,7 @@ public enum ApiTransactionTypeEnum {
   /**
    * 
    */
-  public String getTypeAsString() {
+  public @Nullable String getTypeAsString() {
     return typeAsString;
   }
 

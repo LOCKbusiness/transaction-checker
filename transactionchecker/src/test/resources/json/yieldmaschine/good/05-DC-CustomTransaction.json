@@ -1,0 +1,10 @@
+{
+  "txid": "2a4386b8ea235c9e76d4f1b907a12686297475143684f37cbede4c2c0864ee04",
+  "type": "TakeLoan",
+  "valid": true,
+  "results": {
+    "vaultId": "7604d78bdb4bc72125ec5b8a7faf19bc434fc9ac31c0ba5f9dd7e00e3061c200",
+    "to": "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z",
+    "26": 19.47307750
+  }
+}

@@ -70,7 +70,7 @@ public class OpenTransactionManagerUtxoTest {
     }
   }
 
-  // @Test
+  @Test
   public void missingDataTest() {
     LOGGER.debug("missingDataTest()");
 
@@ -84,18 +84,45 @@ public class OpenTransactionManagerUtxoTest {
     }
   }
 
-  // @Test
-  public void validUtoxTest() {
-    LOGGER.debug("validUtoxTest()");
+  @Test
+  public void validUtoxMergeTest() {
+    LOGGER.debug("validUtoxMergeTest()");
 
     try {
-      TestUtils.setJSONTransactionFile("json/utxo/good/01-utxo.json");
-      TestUtils.setJSONChainTransactionFile("json/utxo/good/01-chaindata-utxo.json");
+      TestUtils.setJSONTransactionFile("json/utxo/good/01-API-UtxoMerge.json");
+      TestUtils.setJSONChainTransactionFile("json/utxo/good/01-DC-UtxoMerge.json");
 
       // ...
+      OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
+      verifiedDTO.setSignature("validUtoxMergeTest-signature");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
+
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponseList.get(0));
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void validUtoxSplitTest() {
+    LOGGER.debug("validUtoxSplitTest()");
+
+    try {
+      TestUtils.setJSONTransactionFile("json/utxo/good/02-API-UtxoSplit.json");
+      TestUtils.setJSONChainTransactionFile("json/utxo/good/02-DC-UtxoSplit.json");
+
       // ...
       OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
-      verifiedDTO.setSignature("validUtoxTest-signature");
+      verifiedDTO.setSignature("validUtoxSplitTest-signature");
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
@@ -118,13 +145,13 @@ public class OpenTransactionManagerUtxoTest {
     LOGGER.debug("utxoAddressNotInWhitelistTest()");
 
     try {
-      TestUtils.setJSONTransactionFile("json/utxo/invalid/01-utxo-not-in-whitelist.json");
-      TestUtils.setJSONChainTransactionFile("json/utxo/invalid/01-chaindata-utxo-not-in-whitelist.json");
+      TestUtils.setJSONTransactionFile("json/utxo/invalid/01-API-Utxo-not-in-whitelist.json");
+      TestUtils.setJSONChainTransactionFile("json/utxo/invalid/01-DC-Utxo-not-in-whitelist.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("utxoAddressNotInWhitelistTest-signature");
-      invalidatedDTO.setReason("[UTXO Transaction] ID: 60dd53580576d8c07e37c9511ea37f7c273712cdcbd42a214b542da069cf6a92 - address not in whitelist");
+      invalidatedDTO.setReason("[Transaction] ID: 60dd53580576d8c07e37c9511ea37f7c273712cdcbd42a214b542da069cf6a92 - vout address not in whitelist");
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);

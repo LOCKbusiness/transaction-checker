@@ -1,17 +1,8 @@
 package ch.dfx.manager;
 
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_STAKING_SCHEMA;
-import static ch.dfx.transactionserver.database.DatabaseUtils.TOKEN_YIELDMACHINE_SCHEMA;
-
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -24,7 +15,6 @@ import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.join.TransactionWithdrawalDTO;
 import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
 import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
-import ch.dfx.api.data.transaction.OpenTransactionCustomTypeEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
@@ -38,21 +28,16 @@ import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.defichain.data.custom.DefiCustomData;
-import ch.dfx.defichain.data.transaction.DefiTransactionData;
-import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
-import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
 import ch.dfx.defichain.handler.DefiMessageHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.manager.checker.transaction.CustomAddressChecker;
 import ch.dfx.manager.checker.transaction.DuplicateChecker;
+import ch.dfx.manager.checker.transaction.MasternodeWhitelistChecker;
 import ch.dfx.manager.checker.transaction.SignatureChecker;
 import ch.dfx.manager.checker.transaction.SizeChecker;
 import ch.dfx.manager.checker.transaction.TypeChecker;
-import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
-import ch.dfx.transactionserver.data.StakingAddressDTO;
+import ch.dfx.manager.checker.transaction.VoutAddressChecker;
 import ch.dfx.transactionserver.database.H2DBManager;
-import ch.dfx.transactionserver.database.helper.DatabaseBalanceHelper;
-import ch.dfx.transactionserver.database.helper.DatabaseBlockHelper;
 
 /**
  * 
@@ -62,14 +47,13 @@ public class OpenTransactionManager {
 
   // ...
   private final ApiAccessHandler apiAccessHandler;
-  private final H2DBManager databaseManager;
-  private final DefiDataProvider dataProvider;
 
-  private final DatabaseBlockHelper databaseBlockHelper;
-  private final DatabaseBalanceHelper databaseStakingBalanceHelper;
-  private final DatabaseBalanceHelper databaseYieldmachineBalanceHelper;
   private final DefiMessageHandler messageHandler;
   private final WithdrawalManager withdrawalManager;
+
+  private final MasternodeWhitelistChecker masternodeWhitelistChecker;
+  private final VoutAddressChecker voutAddressChecker;
+  private final CustomAddressChecker customAddressChecker;
 
   private final TypeChecker typeChecker;
   private final SizeChecker sizeChecker;
@@ -85,14 +69,13 @@ public class OpenTransactionManager {
       @Nonnull H2DBManager databaseManager,
       @Nonnull DefiDataProvider dataProvider) {
     this.apiAccessHandler = apiAccessHandler;
-    this.databaseManager = databaseManager;
-    this.dataProvider = dataProvider;
 
-    this.databaseBlockHelper = new DatabaseBlockHelper(network);
-    this.databaseStakingBalanceHelper = new DatabaseBalanceHelper(network);
-    this.databaseYieldmachineBalanceHelper = new DatabaseBalanceHelper(network);
     this.messageHandler = new DefiMessageHandler(dataProvider);
     this.withdrawalManager = new WithdrawalManager(network, databaseManager, dataProvider);
+
+    this.masternodeWhitelistChecker = new MasternodeWhitelistChecker(network, databaseManager);
+    this.customAddressChecker = new CustomAddressChecker(apiAccessHandler, dataProvider, masternodeWhitelistChecker);
+    this.voutAddressChecker = new VoutAddressChecker(apiAccessHandler, dataProvider, masternodeWhitelistChecker);
 
     this.typeChecker = new TypeChecker(apiAccessHandler, dataProvider);
     this.sizeChecker = new SizeChecker(apiAccessHandler, dataProvider);
@@ -153,70 +136,14 @@ public class OpenTransactionManager {
     openTransactionRawTxDTO.setHex(TransactionCheckerUtils.emptyIfNull(openTransactionRawTxDTO.getHex()));
 
     // Type ...
-    fillTypeOfOpenTransactionDTO(openTransactionDTO);
-  }
-
-  /**
-   * 
-   */
-  private void fillTypeOfOpenTransactionDTO(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("fillTypeOfOpenTransactionDTO()");
-
-    // Type ...
-    OpenTransactionTypeEnum openTransactionType = OpenTransactionTypeEnum.UNKNOWN;
-
     OpenTransactionPayloadDTO openTransactionPayloadDTO = openTransactionDTO.getPayload();
 
-    if (null == openTransactionPayloadDTO) {
-      openTransactionType = OpenTransactionTypeEnum.UTXO;
-    } else {
-      // TODO: New method, if the type is received within the payload ...
+    if (null != openTransactionPayloadDTO) {
       ApiTransactionTypeEnum apiTransactionType =
           ApiTransactionTypeEnum.createByApiType(openTransactionPayloadDTO.getType());
 
-      if (null != apiTransactionType) {
-        openTransactionType = apiTransactionType.getOpenTransactionType();
-      }
-
-      // TODO: Old method, will be replaced by the method before ...
-      if (OpenTransactionTypeEnum.UNKNOWN == openTransactionType) {
-        if (null != openTransactionPayloadDTO.getOwnerWallet()) {
-          openTransactionType = getTypeOfOpenTransactionWithOwnerWallet(openTransactionDTO);
-        } else if (null != openTransactionPayloadDTO.getId()) {
-          openTransactionType = OpenTransactionTypeEnum.WITHDRAWAL;
-        }
-      }
+      openTransactionDTO.setType(apiTransactionType);
     }
-
-    openTransactionDTO.setType(openTransactionType);
-  }
-
-  /**
-   * 
-   */
-  private OpenTransactionTypeEnum getTypeOfOpenTransactionWithOwnerWallet(@Nonnull OpenTransactionDTO openTransactionDTO) {
-    LOGGER.trace("fillTypeOfOpenTransactionWithOwnerWallet()");
-
-    OpenTransactionTypeEnum openTransactionType = OpenTransactionTypeEnum.UNKNOWN;
-
-    try {
-      String hex = openTransactionDTO.getRawTx().getHex();
-      DefiCustomData decodeCustomTransaction = dataProvider.decodeCustomTransaction(hex);
-
-      OpenTransactionCustomTypeEnum openTransactionCustomType =
-          OpenTransactionCustomTypeEnum.createByChainType(decodeCustomTransaction.getType());
-
-      if (null != openTransactionCustomType) {
-        ApiTransactionTypeEnum apiTransactionType = openTransactionCustomType.getApiTransactionType();
-        openTransactionType = apiTransactionType.getOpenTransactionType();
-      } else {
-        openTransactionType = OpenTransactionTypeEnum.UTXO;
-      }
-    } catch (Exception e) {
-      LOGGER.error("fillTypeOfOpenTransactionWithOwnerWallet", e);
-    }
-
-    return openTransactionType;
   }
 
   /**
@@ -267,7 +194,7 @@ public class OpenTransactionManager {
   /**
    * UTXO
    * MASTERNODE
-   * YIELD_MASCHINE
+   * YIELD_MACHINE
    * WITHDRAWAL
    */
   private void processOpenTransactionAndWithdrawal(
@@ -278,11 +205,11 @@ public class OpenTransactionManager {
     // ...
     OpenTransactionDTOList utxoOpenTransactionDTOList = new OpenTransactionDTOList();
     OpenTransactionDTOList masternodeOpenTransactionDTOList = new OpenTransactionDTOList();
-    OpenTransactionDTOList yieldMaschineOpenTransactionDTOList = new OpenTransactionDTOList();
+    OpenTransactionDTOList yieldMachineOpenTransactionDTOList = new OpenTransactionDTOList();
     OpenTransactionDTOList withdrawalOpenTransactionDTOList = new OpenTransactionDTOList();
 
     for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
-      OpenTransactionTypeEnum openTransactionType = openTransactionDTO.getType();
+      OpenTransactionTypeEnum openTransactionType = openTransactionDTO.getType().getOpenTransactionType();
 
       switch (openTransactionType) {
         case UTXO: {
@@ -295,8 +222,8 @@ public class OpenTransactionManager {
           break;
         }
 
-        case YIELD_MASCHINE: {
-          yieldMaschineOpenTransactionDTOList.add(openTransactionDTO);
+        case YIELD_MACHINE: {
+          yieldMachineOpenTransactionDTOList.add(openTransactionDTO);
           break;
         }
 
@@ -313,7 +240,7 @@ public class OpenTransactionManager {
     // ...
     processOpenUtxoTransaction(utxoOpenTransactionDTOList);
     processOpenMasternodeTransaction(masternodeOpenTransactionDTOList);
-    processOpenYieldMaschineTransaction(yieldMaschineOpenTransactionDTOList);
+    processOpenYieldMachineTransaction(yieldMachineOpenTransactionDTOList);
     processOpenWithdrawalTransaction(withdrawalOpenTransactionDTOList, apiPendingWithdrawalDTOList);
   }
 
@@ -323,19 +250,10 @@ public class OpenTransactionManager {
   private void processOpenUtxoTransaction(@Nonnull OpenTransactionDTOList utxoOpenTransactionDTOList) throws DfxException {
     LOGGER.trace("processOpenUtxoTransaction()");
 
-    for (OpenTransactionDTO openTransactionDTO : utxoOpenTransactionDTOList) {
-      String hex = openTransactionDTO.getRawTx().getHex();
+    OpenTransactionDTOList workOpenTransactionDTOList = voutAddressChecker.checkVoutAddress(utxoOpenTransactionDTOList);
 
-      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
-
-      Set<String> voutAddressSet = getVoutAddressSet(transactionData);
-
-      if (checkMasternodeWhitelist(new ArrayList<>(voutAddressSet))) {
-        sendVerified(openTransactionDTO);
-      } else {
-        openTransactionDTO.setInvalidatedReason("[UTXO Transaction] ID: " + openTransactionDTO.getId() + " - address not in whitelist");
-        sendInvalidated(openTransactionDTO);
-      }
+    for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
+      sendVerified(openTransactionDTO);
     }
   }
 
@@ -345,125 +263,31 @@ public class OpenTransactionManager {
   private void processOpenMasternodeTransaction(@Nonnull OpenTransactionDTOList masternodeOpenTransactionDTOList) throws DfxException {
     LOGGER.trace("processOpenMasternodeTransaction()");
 
-    for (OpenTransactionDTO openTransactionDTO : masternodeOpenTransactionDTOList) {
-      String hex = openTransactionDTO.getRawTx().getHex();
+    OpenTransactionDTOList workOpenTransactionDTOList = voutAddressChecker.checkVoutAddress(masternodeOpenTransactionDTOList);
 
-      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
-
-      Set<String> voutAddressSet = getVoutAddressSet(transactionData);
-
-      if (checkMasternodeWhitelist(new ArrayList<>(voutAddressSet))) {
-        sendVerified(openTransactionDTO);
-      } else {
-        openTransactionDTO.setInvalidatedReason("[Masternode Transaction] ID: " + openTransactionDTO.getId() + " - address not in whitelist");
-        sendInvalidated(openTransactionDTO);
-      }
+    for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
+      sendVerified(openTransactionDTO);
     }
   }
 
   /**
-   * 
+   * Check 1: Check Vout Address
+   * Check 2: Check Custom Address
    */
-  private void processOpenYieldMaschineTransaction(
-      @Nonnull OpenTransactionDTOList yieldMaschineOpenTransactionDTOList) throws DfxException {
-    LOGGER.trace("processOpenYieldMaschineTransaction()");
+  private void processOpenYieldMachineTransaction(
+      @Nonnull OpenTransactionDTOList yieldMachineOpenTransactionDTOList) throws DfxException {
+    LOGGER.trace("processOpenYieldMachineTransaction()");
 
-    for (OpenTransactionDTO openTransactionDTO : yieldMaschineOpenTransactionDTOList) {
-      String hex = openTransactionDTO.getRawTx().getHex();
+    // Check 1: Check Vout Address ...
+    OpenTransactionDTOList workOpenTransactionDTOList = voutAddressChecker.checkVoutAddress(yieldMachineOpenTransactionDTOList);
 
-      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
-
-      Set<String> voutAddressSet = getVoutAddressSet(transactionData);
-
-      if (checkMasternodeWhitelist(new ArrayList<>(voutAddressSet))) {
-        sendVerified(openTransactionDTO);
-      } else {
-        openTransactionDTO.setInvalidatedReason("[Yield Maschine Transaction] ID: " + openTransactionDTO.getId() + " - address not in whitelist");
-        sendInvalidated(openTransactionDTO);
-      }
-    }
-  }
-
-  /**
-   * 
-   */
-  private Set<String> getVoutAddressSet(@Nonnull DefiTransactionData transactionData) {
-    Set<String> voutAddressSet = new HashSet<>();
-
-    List<DefiTransactionVoutData> transactionVoutDataList = transactionData.getVout();
-
-    for (DefiTransactionVoutData transactionVoutData : transactionVoutDataList) {
-      DefiTransactionScriptPubKeyData transactionScriptPubKeyData = transactionVoutData.getScriptPubKey();
-
-      if (null != transactionScriptPubKeyData) {
-        List<String> addressList = transactionScriptPubKeyData.getAddresses();
-
-        if (null != addressList) {
-          voutAddressSet.addAll(addressList);
-        }
-      }
-    }
-
-    return voutAddressSet;
-  }
-
-  /**
-   * 
-   */
-  private boolean checkMasternodeWhitelist(@Nonnull List<String> voutAddressList) {
-    // ...
-    boolean isValid;
+    // Check 2: Check Custom Address ...
+    workOpenTransactionDTOList = customAddressChecker.checkCustomAddress(workOpenTransactionDTOList);
 
     // ...
-    BitSet bitSet = new BitSet(voutAddressList.size());
-    bitSet.clear();
-
-    // ...
-    Connection connection = null;
-
-    try {
-      connection = databaseManager.openConnection();
-
-      databaseBlockHelper.openStatements(connection);
-      databaseStakingBalanceHelper.openStatements(connection, TOKEN_STAKING_SCHEMA);
-      databaseYieldmachineBalanceHelper.openStatements(connection, TOKEN_YIELDMACHINE_SCHEMA);
-
-      // ...
-      Set<String> liquidityAddressSet = new HashSet<>();
-      List<StakingAddressDTO> stakingAddressDTOList = databaseStakingBalanceHelper.getStakingAddressDTOList();
-      stakingAddressDTOList.addAll(databaseYieldmachineBalanceHelper.getStakingAddressDTOList());
-
-      stakingAddressDTOList.forEach(dto -> liquidityAddressSet.add(dto.getLiquidityAddress()));
-
-      // ...
-      for (int i = 0; i < voutAddressList.size(); i++) {
-        String voutAddress = voutAddressList.get(i);
-
-        if (liquidityAddressSet.contains(voutAddress)) {
-          bitSet.set(i);
-        } else {
-          MasternodeWhitelistDTO masternodeWhitelistDTOByOwnerAddress =
-              databaseBlockHelper.getMasternodeWhitelistDTOByOwnerAddress(voutAddress);
-
-          if (null != masternodeWhitelistDTOByOwnerAddress
-              && voutAddress.equals(masternodeWhitelistDTOByOwnerAddress.getOwnerAddress())) {
-            bitSet.set(i);
-          }
-        }
-      }
-
-      isValid = bitSet.cardinality() == voutAddressList.size();
-
-      databaseStakingBalanceHelper.closeStatements();
-      databaseYieldmachineBalanceHelper.closeStatements();
-    } catch (Exception e) {
-      LOGGER.error("checkMasternodeWhitelist", e);
-      isValid = false;
-    } finally {
-      databaseManager.closeConnection(connection);
+    for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
+      sendVerified(openTransactionDTO);
     }
-
-    return isValid;
   }
 
   /**
@@ -531,7 +355,7 @@ public class OpenTransactionManager {
     for (OpenTransactionDTO openTransactionDTO : openTransactionDTOList) {
       Integer withdrawalId = getWithdrawalId(openTransactionDTO);
 
-      if (OpenTransactionTypeEnum.WITHDRAWAL == openTransactionDTO.getType()
+      if (OpenTransactionTypeEnum.WITHDRAWAL == openTransactionDTO.getType().getOpenTransactionType()
           && null != withdrawalId) {
         withdrawalIdToOpenTransactionDTOMap.put(withdrawalId, openTransactionDTO);
       }

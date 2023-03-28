@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
-import ch.dfx.api.data.transaction.OpenTransactionTypeEnum;
+import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 import ch.dfx.defichain.provider.DefiDataProvider;
 
 /**
@@ -52,7 +52,7 @@ public class TypeChecker extends TransactionChecker {
     boolean isValid;
 
     try {
-      isValid = OpenTransactionTypeEnum.UNKNOWN != openTransactionDTO.getType();
+      isValid = ApiTransactionTypeEnum.UNKNOWN != openTransactionDTO.getType();
 
       if (!isValid) {
         openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - unknown type");

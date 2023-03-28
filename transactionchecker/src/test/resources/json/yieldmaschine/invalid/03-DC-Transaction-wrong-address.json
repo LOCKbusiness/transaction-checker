@@ -1,0 +1,49 @@
+{
+  "txid": "7a348073524fb60f87a07e626da8960eeeca15c01237f327dc44ed6fa4b3b7b1",
+  "hash": "dda5a60861cb0309ee592b1b732eab5e12086e0cff54e3464ed88738c12644a9",
+  "version": 4,
+  "size": 188,
+  "vsize": 170,
+  "weight": 680,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "bd9e06ead1ad1bf92933b474e354b5cdffa7dc160e78011bba752a104a66b3f3",
+      "vout": 1,
+      "scriptSig": {
+        "asm": "",
+        "hex": ""
+      },
+      "txinwitness": [
+        "b9476812a52a9c734540590a7f50d88987b97458"
+      ],
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 0.00000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_RETURN 446654785300c261300ee0d79d5fbac031acc94f43bc19af7f8a5bec2521c74bdb8bd70476160014b9476812a52a9c734540590a7f50d88987b974580f4bc9ce4115000000",
+        "hex": "6a45446654785300c261300ee0d79d5fbac031acc94f43bc19af7f8a5bec2521c74bdb8bd70476160014b9476812a52a9c734540590a7f50d88987b974580f4bc9ce4115000000",
+        "type": "nulldata"
+      },
+      "tokenId": 0
+    },
+    {
+      "value": 0.00042466,
+      "n": 1,
+      "scriptPubKey": {
+        "asm": "0 b9476812a52a9c734540590a7f50d88987b97458",
+        "hex": "0014b9476812a52a9c734540590a7f50d88987b97458",
+        "reqSigs": 1,
+        "type": "witness_v0_keyhash",
+        "addresses": [
+          "xxxxx"
+        ]
+      },
+      "tokenId": 0
+    }
+  ]
+}

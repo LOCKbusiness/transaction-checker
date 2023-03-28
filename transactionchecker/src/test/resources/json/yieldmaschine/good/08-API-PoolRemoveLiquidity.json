@@ -1,0 +1,36 @@
+[
+  {
+    "id": "a7641e494c07b2543a78348dae81aa9eacf1a4be45173dbc5a4d353ab5fc1a18",
+    "issuerSignature": "HxSj1+v0hem4qnBfEy+vcPxsq7ORHp0nu1VPcfvo7KAQaSwFcVR7XchysCjn+ZKAGmlINRxThfH+owWHR8aVzA4\u003d",
+    "rawTx": {
+      "id": "a7641e494c07b2543a78348dae81aa9eacf1a4be45173dbc5a4d353ab5fc1a18",
+      "hex": "04000000000101f2c2461bcc90448354145190181ff7034a4f28ae39ea763df16afa1e82113e920100000000ffffffff020000000000000000276a254466547872160014b9476812a52a9c734540590a7f50d88987b974582600d0ed902e000000002cbf000000000000160014b9476812a52a9c734540590a7f50d88987b97458000114b9476812a52a9c734540590a7f50d88987b9745800000000",
+      "scriptHex": "0014b9476812a52a9c734540590a7f50d88987b97458",
+      "prevouts": [
+        {
+          "txid": "923e11821efa6af13d76ea39ae284f4a03f71f1890511454834490cc1b46c2f2",
+          "vout": 1,
+          "value": "0.000491",
+          "script": {
+            "stack": [
+              {
+                "type": "OP_0",
+                "code": 0
+              },
+              {
+                "type": "OP_PUSHDATA",
+                "hex": "b9476812a52a9c734540590a7f50d88987b97458"
+              }
+            ]
+          },
+          "tokenId": 0
+        }
+      ]
+    },
+    "payload": {
+      "type": "PoolRemoveLiquidity",
+      "ownerWallet": "cold-wallet-a",
+      "accountIndex": 998
+    }
+  }
+]

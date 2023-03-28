@@ -23,6 +23,7 @@ public abstract class TransactionChecker {
 
   // ...
   private final ApiAccessHandler apiAccessHandler;
+  protected final DefiDataProvider dataProvider;
   protected final DefiMessageHandler messageHandler;
 
   /**
@@ -32,6 +33,7 @@ public abstract class TransactionChecker {
       @Nonnull ApiAccessHandler apiAccessHandler,
       @Nonnull DefiDataProvider dataProvider) {
     this.apiAccessHandler = apiAccessHandler;
+    this.dataProvider = dataProvider;
 
     this.messageHandler = new DefiMessageHandler(dataProvider);
   }

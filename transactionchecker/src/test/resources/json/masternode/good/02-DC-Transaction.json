@@ -1,0 +1,36 @@
+{
+  "txid": "52d57c6a84b7343c6997cf2366b340d24ff7cd03c1f9581c3af847c16c1b20ea",
+  "hash": "8384a30954ca52a7b6abe6a9121d391b6e641e9f3ecae9ca640bcd24461debfc",
+  "version": 4,
+  "size": 145,
+  "vsize": 112,
+  "weight": 445,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "2f295a7b4daf4338c7d06cf7214938439ed2b5889f4a4811495bab805b39f206",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "",
+        "hex": ""
+      },
+      "txinwitness": [
+        "407b667bf27bb3134dd7fc49f62c0eb5ee0edc82",
+        "d46c402e67e823936d1673ec5f88c7ae459b03cc"
+      ],
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 0.00000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_RETURN 44665478527b8923bb762641a4790935cc40d6564da52ee154a21374939a3c9050d606b14a",
+        "hex": "6a2544665478527b8923bb762641a4790935cc40d6564da52ee154a21374939a3c9050d606b14a",
+        "type": "nulldata"
+      },
+      "tokenId": 0
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "txid": "a7641e494c07b2543a78348dae81aa9eacf1a4be45173dbc5a4d353ab5fc1a18",
+  "type": "RemovePoolLiquidity",
+  "valid": true,
+  "results": {
+    "from": "yyyyy",
+    "amount": "2000.00000000@38"
+  }
+}

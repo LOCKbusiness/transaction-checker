@@ -85,18 +85,48 @@ public class OpenTransactionManagerMasternodeTest {
   }
 
   @Test
-  public void validMasternodeTest() {
-    LOGGER.debug("validMasternodeTest()");
+  public void validCreateMasternodeTest() {
+    LOGGER.debug("validCreateMasternodeTest()");
 
     try {
-      TestUtils.setJSONTransactionFile("json/masternode/good/01-masternode.json");
-      TestUtils.setJSONChainTransactionFile("json/masternode/good/01-chaindata-masternode.json");
-      TestUtils.setJSONChainCustomTransactionFile("json/masternode/good/01-chaindata-masternode-custom.json");
+      TestUtils.setJSONTransactionFile("json/masternode/good/01-API-CreateMasternode.json");
+      TestUtils.setJSONChainTransactionFile("json/masternode/good/01-DC-Transaction.json");
+      TestUtils.setJSONChainCustomTransactionFile("json/masternode/good/01-DC-CustomTransaction.json");
 
       // ...
       // ...
       OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
-      verifiedDTO.setSignature("validMasternodeTest-signature");
+      verifiedDTO.setSignature("validCreateMasternodeTest-signature");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
+
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponseList.get(0));
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void validResignMasternodeTest() {
+    LOGGER.debug("validResignMasternodeTest()");
+
+    try {
+      TestUtils.setJSONTransactionFile("json/masternode/good/02-API-ResignMasternode.json");
+      TestUtils.setJSONChainTransactionFile("json/masternode/good/02-DC-Transaction.json");
+      TestUtils.setJSONChainCustomTransactionFile("json/masternode/good/02-DC-CustomTransaction.json");
+
+      // ...
+      // ...
+      OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
+      verifiedDTO.setSignature("validResignMasternodeTest-signature");
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
@@ -119,14 +149,14 @@ public class OpenTransactionManagerMasternodeTest {
     LOGGER.debug("masternodeAddressNotInWhitelistTest()");
 
     try {
-      TestUtils.setJSONTransactionFile("json/masternode/invalid/01-masternode-not-in-whitelist.json");
-      TestUtils.setJSONChainTransactionFile("json/masternode/invalid/01-chaindata-masternode-not-in-whitelist.json");
-      TestUtils.setJSONChainCustomTransactionFile("json/masternode/invalid/01-chaindata-masternode-custom-not-in-whitelist.json");
+      TestUtils.setJSONTransactionFile("json/masternode/invalid/01-API-Masternode-not-in-whitelist.json");
+      TestUtils.setJSONChainTransactionFile("json/masternode/invalid/01-DC-Transaction-not-in-whitelist.json");
+      TestUtils.setJSONChainCustomTransactionFile("json/masternode/invalid/01-DC-CustomTransaction-not-in-whitelist.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("masternodeAddressNotInWhitelistTest-signature");
-      invalidatedDTO.setReason("[Masternode Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - address not in whitelist");
+      invalidatedDTO.setReason("[Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - vout address not in whitelist");
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);

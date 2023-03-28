@@ -23,8 +23,8 @@ import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
 import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionPayloadDTO;
-import ch.dfx.api.data.transaction.OpenTransactionTypeEnum;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
+import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.manager.OpenTransactionManagerTest;
@@ -440,7 +440,7 @@ public class StakingBalanceCheckerTest {
     transactionWithdrawalDTO.setState(TransactionWithdrawalStateEnum.SIGNATURE_CHECKED);
 
     OpenTransactionDTO openTransactionDTO = new OpenTransactionDTO();
-    openTransactionDTO.setType(OpenTransactionTypeEnum.WITHDRAWAL);
+    openTransactionDTO.setType(ApiTransactionTypeEnum.WITHDRAWAL);
     openTransactionDTO.setId(transactionId);
 
     OpenTransactionPayloadDTO openTransactionPayloadDTO = new OpenTransactionPayloadDTO();

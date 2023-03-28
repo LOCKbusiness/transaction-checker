@@ -1808,6 +1808,9 @@
           "tokenId": 0
         }
       ]
+    },
+    "payload": {
+      "type": "UtxoMerge"
     }
   }
 ]

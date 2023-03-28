@@ -1,0 +1,10 @@
+{
+  "txid": "7a348073524fb60f87a07e626da8960eeeca15c01237f327dc44ed6fa4b3b7b1",
+  "type": "DepositToVault",
+  "valid": true,
+  "results": {
+    "vaultId": "7604d78bdb4bc72125ec5b8a7faf19bc434fc9ac31c0ba5f9dd7e00e3061c200",
+    "from": "yyyyy",
+    "amount": "912.98384203@15"
+  }
+}

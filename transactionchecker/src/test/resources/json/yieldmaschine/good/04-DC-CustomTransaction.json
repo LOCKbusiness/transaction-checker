@@ -1,0 +1,10 @@
+{
+  "txid": "2622c830c9005b8de22282ab2801e5ce7ee7773e87e2a8e339704234e455b106",
+  "type": "WithdrawFromVault",
+  "valid": true,
+  "results": {
+    "vaultId": "7604d78bdb4bc72125ec5b8a7faf19bc434fc9ac31c0ba5f9dd7e00e3061c200",
+    "to": "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z",
+    "amount": "2616.35774451@15"
+  }
+}

@@ -294,9 +294,9 @@ public class DatabaseRunnable implements SchedulerProviderRunnable {
           new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseStakingBalanceHelper);
       stakingWithdrawalReservedCleaner.clean(connection, TOKEN_STAKING_SCHEMA);
 
-      StakingWithdrawalReservedCleaner yieldmaschineWithdrawalReservedCleaner =
+      StakingWithdrawalReservedCleaner yieldmachineWithdrawalReservedCleaner =
           new StakingWithdrawalReservedCleaner(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
-      yieldmaschineWithdrawalReservedCleaner.clean(connection, TOKEN_YIELDMACHINE_SCHEMA);
+      yieldmachineWithdrawalReservedCleaner.clean(connection, TOKEN_YIELDMACHINE_SCHEMA);
 
       stakingWithdrawalReservedCleanerErrorCounter = 0;
     } catch (DfxException e) {

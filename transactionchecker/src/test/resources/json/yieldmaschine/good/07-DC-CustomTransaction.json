@@ -1,0 +1,10 @@
+{
+  "txid": "431e43dde6fa1534dc8299ad898556b5b149f90a0ecaccbc1a06e093a5f3933c",
+  "type": "AddPoolLiquidity",
+  "valid": true,
+  "results": {
+    "3": 276.11331300,
+    "15": 399.90000000,
+    "shareaddress": "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z"
+  }
+}

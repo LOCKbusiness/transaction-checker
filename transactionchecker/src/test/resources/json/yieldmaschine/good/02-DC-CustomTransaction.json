@@ -1,0 +1,9 @@
+{
+  "txid": "7604d78bdb4bc72125ec5b8a7faf19bc434fc9ac31c0ba5f9dd7e00e3061c200",
+  "type": "Vault",
+  "valid": true,
+  "results": {
+    "ownerAddress": "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z",
+    "loanSchemeId": "MIN150"
+  }
+}

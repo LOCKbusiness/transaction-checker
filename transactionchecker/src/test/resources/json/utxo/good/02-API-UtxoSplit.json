@@ -1,0 +1,34 @@
+[
+  {
+    "id": "a8222c23ffa6a80e95296bb9db5dbfc6d05146ee207fb82c2d34dd5e23228ab0",
+    "issuerSignature": "HyuILc8bN6A5iwmIgEQy70OeaNyMNau1BmNyMlacjyHWX/mR71ZoOaGesNidsCOy7anH9AQ62mQ1he478MhLMKE\u003d",
+    "rawTx": {
+      "id": "a8222c23ffa6a80e95296bb9db5dbfc6d05146ee207fb82c2d34dd5e23228ab0",
+      "hex": "04000000000101076d8deb0d45e55e37f1d433d1b92a35591e4207ae9359074954a2cd44fc3e180000000000ffffffff050087efc98b010000160014058502ec7f701e023daef55c16139c0bd0ebf6de000087efc98b010000160014058502ec7f701e023daef55c16139c0bd0ebf6de000087efc98b010000160014058502ec7f701e023daef55c16139c0bd0ebf6de000087efc98b010000160014058502ec7f701e023daef55c16139c0bd0ebf6de0039e8bce78b010000160014058502ec7f701e023daef55c16139c0bd0ebf6de000114058502ec7f701e023daef55c16139c0bd0ebf6de00000000",
+      "scriptHex": "0014058502ec7f701e023daef55c16139c0bd0ebf6de",
+      "prevouts": [
+        {
+          "txid": "183efc44cda25449075993ae07421e59352ab9d133d4f1375ee5450deb8d6d07",
+          "vout": 0,
+          "value": "84999.99999272",
+          "script": {
+            "stack": [
+              {
+                "type": "OP_0",
+                "code": 0
+              },
+              {
+                "type": "OP_PUSHDATA",
+                "hex": "058502ec7f701e023daef55c16139c0bd0ebf6de"
+              }
+            ]
+          },
+          "tokenId": 0
+        }
+      ]
+    },
+    "payload": {
+      "type": "UtxoSplit"
+    }
+  }
+]

@@ -8,6 +8,7 @@ import org.junit.runners.Suite;
 import ch.dfx.manager.OpenTransactionManagerMasternodeTest;
 import ch.dfx.manager.OpenTransactionManagerTest;
 import ch.dfx.manager.OpenTransactionManagerUtxoTest;
+import ch.dfx.manager.OpenTransactionYieldmachineTest;
 import ch.dfx.manager.checker.withdrawal.StakingBalanceCheckerTest;
 import ch.dfx.transactionserver.cleaner.StakingWithdrawalReservedCleanerTest;
 
@@ -21,7 +22,8 @@ import ch.dfx.transactionserver.cleaner.StakingWithdrawalReservedCleanerTest;
 
     OpenTransactionManagerTest.class,
     OpenTransactionManagerUtxoTest.class,
-    OpenTransactionManagerMasternodeTest.class
+    OpenTransactionManagerMasternodeTest.class,
+    OpenTransactionYieldmachineTest.class
 })
 
 public class TestSuite {
@@ -36,6 +38,7 @@ public class TestSuite {
     OpenTransactionManagerTest.isSuiteContext = true;
     OpenTransactionManagerUtxoTest.isSuiteContext = true;
     OpenTransactionManagerMasternodeTest.isSuiteContext = true;
+    OpenTransactionYieldmachineTest.isSuiteContext = true;
   }
 
   @AfterClass

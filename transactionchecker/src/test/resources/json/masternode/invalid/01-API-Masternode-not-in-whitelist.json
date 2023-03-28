@@ -28,6 +28,7 @@
       ]
     },
     "payload": {
+      "type": "CreateMasternode",
       "ownerWallet": "cold-wallet-a",
       "accountIndex": 1
     }

@@ -86,6 +86,10 @@ public class DefiVaultManager {
           && !checkRatioList.isEmpty()) {
         String message = doCheckCollateralizationRatio(vaultId, checkRatioList);
 
+        if (StateEnum.UNKNOWN == prevStateCollateralizationRatio) {
+          prevStateCollateralizationRatio = StateEnum.OK;
+        }
+
         if (prevStateCollateralizationRatio != currStateCollateralizationRatio) {
           MessageEventBus.getInstance().postEvent(new TelegramAutomaticVaultInformationBotEvent(message));
           LOGGER.info(message);
@@ -151,6 +155,10 @@ public class DefiVaultManager {
 
         // ...
         String message = doCheckDFIRatio(tokenToAmountMap, activePriceMap);
+
+        if (StateEnum.UNKNOWN == prevStateDFIRatio) {
+          prevStateDFIRatio = StateEnum.OK;
+        }
 
         if (prevStateDFIRatio != currStateDFIRatio) {
 //          MessageEventBus.getInstance().postEvent(new TelegramAutomaticVaultInformationBotEvent(message));

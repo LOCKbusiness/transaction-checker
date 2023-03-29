@@ -40,7 +40,8 @@
         "reqSigs": 1,
         "type": "witness_v0_keyhash",
         "addresses": [
-          "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z"
+          "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z",
+          "tf1qqkzs9mrlwq0qy0dw74wpvyuup0gwhak7jppxcv"
         ]
       },
       "tokenId": 0

@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,8 +17,10 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -47,6 +50,8 @@ public class RewardChecker {
   // ...
   private static final MathContext MATH_CONTEXT = MathContext.DECIMAL64;
   private static final int SCALE = 8;
+
+  private static final String STAKING_REWARD_ADDRESS = "df1qy2c4v4sjwtwcvxw24j99jxt0nfu98hc8hjwhxs";
 
   // ...
   private final NetworkEnum network;
@@ -82,14 +87,15 @@ public class RewardChecker {
     openStatements(connection);
 
     // ...
-    AddressDTO rewardAddressDTO = databaseBlockHelper.getAddressDTOByAddress("df1qy2c4v4sjwtwcvxw24j99jxt0nfu98hc8hjwhxs");
+    Set<Integer> usedRewardAddressSet = new HashSet<>();
+
+    AddressDTO rewardAddressDTO = databaseBlockHelper.getAddressDTOByAddress(STAKING_REWARD_ADDRESS);
     Integer rewardAddressNumber = (null == rewardAddressDTO ? 0 : rewardAddressDTO.getNumber());
 
     BigDecimal totalRewards = BigDecimal.ZERO;
     Map<LocalDate, BigDecimal> dayToRewardMap = new HashMap<>();
 
     List<String> masternodeRewardBlockHashList = createMasternodeRewardBlockHashList();
-    LOGGER.debug("Number of Reward Blocks: " + masternodeRewardBlockHashList.size());
 
     for (String masternodeRewardBlockHash : masternodeRewardBlockHashList) {
       BlockDTO blockDTO = databaseBlockHelper.getBlockDTOByHash(masternodeRewardBlockHash);
@@ -99,26 +105,31 @@ public class RewardChecker {
       }
 
       RewardCheckData rewardCheckData = getRewardCheckData(blockDTO.getNumber());
+      usedRewardAddressSet.add(rewardCheckData.addressNumber);
 
       Timestamp blockTimestamp = new Timestamp(blockDTO.getTimestamp() * 1000);
       LocalDate rewardDay = blockTimestamp.toLocalDateTime().toLocalDate();
 
       dayToRewardMap.merge(rewardDay, rewardCheckData.reward, (currVal, nextVal) -> currVal.add(nextVal));
 
-      if (rewardCheckData.addressNumber != rewardAddressNumber.intValue()) {
-        LOGGER.error("Wrong Reward Address: " + rewardCheckData);
-      }
-
       totalRewards = totalRewards.add(rewardCheckData.reward);
     }
 
     // ...
-    LOGGER.debug("Total Rewards: " + totalRewards);
-
     dumpAllDays(dayToRewardMap);
-    dumpLastDay(dayToRewardMap);
+
+    // ...
+    LOGGER.debug("");
+    LOGGER.debug("Number of Reward Blocks: " + masternodeRewardBlockHashList.size());
+    LOGGER.debug("Total Rewards:           " + totalRewards);
 
     closeStatements();
+
+    // ...
+    if (1 != usedRewardAddressSet.size()
+        || !usedRewardAddressSet.contains(rewardAddressNumber)) {
+      LOGGER.error("Wrong Reward Addresses: " + usedRewardAddressSet);
+    }
   }
 
   /**
@@ -171,7 +182,7 @@ public class RewardChecker {
         totalBalance = totalBalance.add(balance);
 
         BigDecimal yield = reward.divide(totalBalance, MATH_CONTEXT);
-        yield = yield.multiply(new BigDecimal(365));
+        yield = yield.multiply(new BigDecimal(365)).setScale(SCALE, RoundingMode.HALF_UP);
 
         writer.append(statistikDay.toString());
         writer.append(";").append(reward.toString());
@@ -184,27 +195,6 @@ public class RewardChecker {
     } catch (Exception e) {
       throw new DfxException("dumpAllDays", e);
     }
-  }
-
-  /**
-   * 
-   */
-  private void dumpLastDay(@Nonnull Map<LocalDate, BigDecimal> dayToRewardMap) throws DfxException {
-    LOGGER.trace("dumpLastDay()");
-
-    List<LocalDate> rewardDayList = new ArrayList<>(dayToRewardMap.keySet());
-    rewardDayList.sort((d1, d2) -> d1.compareTo(d2));
-
-    BigDecimal lastDayReward = dayToRewardMap.get(rewardDayList.get(rewardDayList.size() - 2));
-    BigDecimal totalStakingBalance = getTotalStakingBalance();
-
-    BigDecimal yield = lastDayReward.divide(totalStakingBalance, MATH_CONTEXT);
-    yield = yield.multiply(new BigDecimal(365));
-
-    LOGGER.debug("");
-    LOGGER.debug("Last Day Reward:       " + lastDayReward);
-    LOGGER.debug("Total Staking Balance: " + totalStakingBalance);
-    LOGGER.debug("Yield:                 " + yield);
   }
 
   /**

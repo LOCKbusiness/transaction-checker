@@ -18,10 +18,13 @@ public class DUSDSheetDTO {
 
   private BigDecimal lockVault1Balance = BigDecimal.ZERO;
   private BigDecimal lockVault1Collateral = BigDecimal.ZERO;
+  private BigDecimal lockVault1Loan = BigDecimal.ZERO;
   private BigDecimal lockVault2Balance = BigDecimal.ZERO;
   private BigDecimal lockVault2Collateral = BigDecimal.ZERO;
+  private BigDecimal lockVault2Loan = BigDecimal.ZERO;
   private BigDecimal lockVault3Balance = BigDecimal.ZERO;
   private BigDecimal lockVault3Collateral = BigDecimal.ZERO;
+  private BigDecimal lockVault3Loan = BigDecimal.ZERO;
 
   private BigDecimal lockLMBalance1 = BigDecimal.ZERO;
   private BigDecimal lockLMPool1 = BigDecimal.ZERO;
@@ -105,6 +108,14 @@ public class DUSDSheetDTO {
     this.lockVault1Collateral = lockVault1Collateral;
   }
 
+  public BigDecimal getLockVault1Loan() {
+    return lockVault1Loan;
+  }
+
+  public void setLockVault1Loan(BigDecimal lockVault1Loan) {
+    this.lockVault1Loan = lockVault1Loan;
+  }
+
   public BigDecimal getLockVault2Balance() {
     return lockVault2Balance;
   }
@@ -121,6 +132,14 @@ public class DUSDSheetDTO {
     this.lockVault2Collateral = lockVault2Collateral;
   }
 
+  public BigDecimal getLockVault2Loan() {
+    return lockVault2Loan;
+  }
+
+  public void setLockVault2Loan(BigDecimal lockVault2Loan) {
+    this.lockVault2Loan = lockVault2Loan;
+  }
+
   public BigDecimal getLockVault3Balance() {
     return lockVault3Balance;
   }
@@ -135,6 +154,14 @@ public class DUSDSheetDTO {
 
   public void setLockVault3Collateral(BigDecimal lockVault3Collateral) {
     this.lockVault3Collateral = lockVault3Collateral;
+  }
+
+  public BigDecimal getLockVault3Loan() {
+    return lockVault3Loan;
+  }
+
+  public void setLockVault3Loan(BigDecimal lockVault3Loan) {
+    this.lockVault3Loan = lockVault3Loan;
   }
 
   public BigDecimal getLockLMBalance1() {

@@ -706,6 +706,16 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     // ...
     customerInterimBalance = customerInterimBalance.add(customerDeposits);
 
+    // ...
+    BigDecimal vault1Loan = vault1TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
+    BigDecimal vault2Loan = vault2TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
+    BigDecimal vault3Loan = vault3TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
+
+    customerInterimBalance = customerInterimBalance.add(vault1Loan);
+    customerInterimBalance = customerInterimBalance.add(vault2Loan);
+    customerInterimBalance = customerInterimBalance.add(vault3Loan);
+
+    // ...
     BigDecimal liquidityAmount = liquidityTokenToAmountMap.getOrDefault(token.toString(), BigDecimal.ZERO);
     lockInterimBalance = lockInterimBalance.add(liquidityAmount);
 
@@ -774,10 +784,13 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     dusdSheetDTO.setLockVault1Balance(vault1Amount);
     dusdSheetDTO.setLockVault1Collateral(vault1Collateral);
+    dusdSheetDTO.setLockVault1Loan(vault1Loan);
     dusdSheetDTO.setLockVault2Balance(vault2Amount);
     dusdSheetDTO.setLockVault2Collateral(vault2Collateral);
+    dusdSheetDTO.setLockVault2Loan(vault2Loan);
     dusdSheetDTO.setLockVault3Balance(vault3Amount);
     dusdSheetDTO.setLockVault3Collateral(vault3Collateral);
+    dusdSheetDTO.setLockVault3Loan(vault3Loan);
 
     dusdSheetDTO.setLockLMBalance1(dusdLMDUSDAmount);
     dusdSheetDTO.setLockLMPool1(dusdPoolDUSDAmount);
@@ -830,19 +843,13 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     customerInterimBalance = customerInterimBalance.add(customerDeposits);
 
     // ...
-    BigDecimal vault1Loan = BigDecimal.ZERO;
-    BigDecimal vault2Loan = BigDecimal.ZERO;
-    BigDecimal vault3Loan = BigDecimal.ZERO;
+    BigDecimal vault1Loan = vault1TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
+    BigDecimal vault2Loan = vault2TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
+    BigDecimal vault3Loan = vault3TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
 
-    if (TokenEnum.SPY == token) {
-      vault1Loan = vault1TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
-      vault2Loan = vault2TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
-      vault3Loan = vault3TokenToVaultLoanMap.getOrDefault(token.toString(), BigDecimal.ZERO);
-
-      customerInterimBalance = customerInterimBalance.add(vault1Loan);
-      customerInterimBalance = customerInterimBalance.add(vault2Loan);
-      customerInterimBalance = customerInterimBalance.add(vault3Loan);
-    }
+    customerInterimBalance = customerInterimBalance.add(vault1Loan);
+    customerInterimBalance = customerInterimBalance.add(vault2Loan);
+    customerInterimBalance = customerInterimBalance.add(vault3Loan);
 
     // ...
     BigDecimal liquidityAmount = liquidityTokenToAmountMap.getOrDefault(token.toString(), BigDecimal.ZERO);
@@ -1121,7 +1128,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
     LOGGER.trace("fillTokenToTotalSheetDTOMap()");
 
-    BigDecimal price = tokenToPriceMap.get(token);
+    BigDecimal price = tokenToPriceMap.getOrDefault(token, BigDecimal.ZERO);
     BigDecimal value = totalDifference.multiply(price, MATH_CONTEXT).setScale(SCALE, RoundingMode.HALF_UP);
 
     TotalSheetDTO totalSheetDTO = new TotalSheetDTO();
@@ -1157,7 +1164,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     String poolToken = "BTC-DFI";
     DefiPoolPairData poolPairData = dfiPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = btcLMTokenToAmountMap.get(poolToken);
+    BigDecimal poolAmount = btcLMTokenToAmountMap.getOrDefault(poolToken, BigDecimal.ZERO);
 
     return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
   }
@@ -1183,7 +1190,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     String poolToken = "ETH-DFI";
     DefiPoolPairData poolPairData = dfiPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = ethLMTokenToAmountMap.get(poolToken);
+    BigDecimal poolAmount = ethLMTokenToAmountMap.getOrDefault(poolToken, BigDecimal.ZERO);
 
     return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
   }
@@ -1212,7 +1219,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     String poolToken = "DUSD-DFI";
     DefiPoolPairData poolPairData = dfiPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = dusdLMTokenToAmountMap.get(poolToken);
+    BigDecimal poolAmount = dusdLMTokenToAmountMap.getOrDefault(poolToken, BigDecimal.ZERO);
 
     return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
   }
@@ -1241,7 +1248,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     String poolToken = "USDT-DUSD";
     DefiPoolPairData poolPairData = dusdPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = usdtLMTokenToAmountMap.get(poolToken);
+    BigDecimal poolAmount = usdtLMTokenToAmountMap.getOrDefault(poolToken, BigDecimal.ZERO);
 
     return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
   }
@@ -1270,7 +1277,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     String poolToken = "USDC-DUSD";
     DefiPoolPairData poolPairData = dusdPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = usdcLMTokenToAmountMap.get(poolToken);
+    BigDecimal poolAmount = usdcLMTokenToAmountMap.getOrDefault(poolToken, BigDecimal.ZERO);
 
     return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
   }
@@ -1299,7 +1306,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     String poolToken = "SPY-DUSD";
     DefiPoolPairData poolPairData = dusdPoolTokenToPoolPairDataMap.get(poolToken);
-    BigDecimal poolAmount = spyLMTokenToAmountMap.get(poolToken);
+    BigDecimal poolAmount = spyLMTokenToAmountMap.getOrDefault(poolToken, BigDecimal.ZERO);
 
     return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
   }
@@ -1692,8 +1699,11 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       cellDataList.add(new CellData().setRowIndex(5).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockRewardAmount()));
 
       // ...
+      cellDataList.add(new CellData().setRowIndex(7).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault1Loan()));
       cellDataList.add(new CellData().setRowIndex(7).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault1Balance()));
+      cellDataList.add(new CellData().setRowIndex(8).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault2Loan()));
       cellDataList.add(new CellData().setRowIndex(8).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault1Collateral()));
+      cellDataList.add(new CellData().setRowIndex(9).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault3Loan()));
       cellDataList.add(new CellData().setRowIndex(9).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault2Balance()));
       cellDataList.add(new CellData().setRowIndex(10).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault2Collateral()));
       cellDataList.add(new CellData().setRowIndex(11).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault3Balance()));

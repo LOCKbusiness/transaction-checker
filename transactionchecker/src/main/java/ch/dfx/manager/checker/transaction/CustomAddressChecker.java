@@ -23,14 +23,15 @@ public class CustomAddressChecker extends TransactionChecker {
   private static final Logger LOGGER = LogManager.getLogger(CustomAddressChecker.class);
 
   // ...
-  private interface CustomTransactionCheckerMethod {
-    boolean check(@Nonnull String hex) throws DfxException;
+  private interface CustomCheckerMethod {
+    boolean check(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException;
   }
 
-  private final Map<ApiTransactionTypeEnum, CustomTransactionCheckerMethod> customTransactionCheckerMethodMap;
+  private final Map<ApiTransactionTypeEnum, CustomCheckerMethod> customCheckerMethodMap;
 
   // ...
   private final MasternodeWhitelistChecker masternodeWhitelistChecker;
+  private final VaultWhitelistChecker vaultWhitelistChecker;
 
   /**
    * 
@@ -38,12 +39,14 @@ public class CustomAddressChecker extends TransactionChecker {
   public CustomAddressChecker(
       @Nonnull ApiAccessHandler apiAccessHandler,
       @Nonnull DefiDataProvider dataProvider,
-      @Nonnull MasternodeWhitelistChecker masternodeWhitelistChecker) {
+      @Nonnull MasternodeWhitelistChecker masternodeWhitelistChecker,
+      @Nonnull VaultWhitelistChecker vaultWhitelistChecker) {
     super(apiAccessHandler, dataProvider);
 
     this.masternodeWhitelistChecker = masternodeWhitelistChecker;
+    this.vaultWhitelistChecker = vaultWhitelistChecker;
 
-    this.customTransactionCheckerMethodMap = new EnumMap<>(ApiTransactionTypeEnum.class);
+    this.customCheckerMethodMap = new EnumMap<>(ApiTransactionTypeEnum.class);
 
     setup();
   }
@@ -54,13 +57,14 @@ public class CustomAddressChecker extends TransactionChecker {
   private void setup() {
     LOGGER.trace("setup()");
 
-    customTransactionCheckerMethodMap.put(ApiTransactionTypeEnum.CREATE_VAULT, (hex) -> doCheck(hex, "ownerAddress"));
-    customTransactionCheckerMethodMap.put(ApiTransactionTypeEnum.DEPOSIT_TO_VAULT, (hex) -> doCheck(hex, "from"));
-    customTransactionCheckerMethodMap.put(ApiTransactionTypeEnum.WITHDRAW_FROM_VAULT, (hex) -> doCheck(hex, "to"));
-    customTransactionCheckerMethodMap.put(ApiTransactionTypeEnum.TAKE_LOAN, (hex) -> doCheck(hex, "to"));
-    customTransactionCheckerMethodMap.put(ApiTransactionTypeEnum.PAYBACK_LOAN, (hex) -> doCheck(hex, "from"));
-    customTransactionCheckerMethodMap.put(ApiTransactionTypeEnum.POOL_ADD_LIQUIDITY, (hex) -> doCheck(hex, "shareaddress"));
-    customTransactionCheckerMethodMap.put(ApiTransactionTypeEnum.POOL_REMOVE_LIQUIDITY, (hex) -> doCheck(hex, "from"));
+    customCheckerMethodMap.put(ApiTransactionTypeEnum.CREATE_VAULT, (openTransactionDTO) -> doAddressCheck(openTransactionDTO, "ownerAddress"));
+    customCheckerMethodMap.put(ApiTransactionTypeEnum.DEPOSIT_TO_VAULT, (openTransactionDTO) -> doVaultCheck(openTransactionDTO, "from"));
+    customCheckerMethodMap.put(ApiTransactionTypeEnum.WITHDRAW_FROM_VAULT, (openTransactionDTO) -> doVaultCheck(openTransactionDTO, "to"));
+    customCheckerMethodMap.put(ApiTransactionTypeEnum.TAKE_LOAN, (openTransactionDTO) -> doVaultCheck(openTransactionDTO, "to"));
+    customCheckerMethodMap.put(ApiTransactionTypeEnum.PAYBACK_LOAN, (openTransactionDTO) -> doVaultCheck(openTransactionDTO, "from"));
+    customCheckerMethodMap.put(ApiTransactionTypeEnum.POOL_ADD_LIQUIDITY, (openTransactionDTO) -> doAddressCheck(openTransactionDTO, "shareaddress"));
+    customCheckerMethodMap.put(ApiTransactionTypeEnum.POOL_REMOVE_LIQUIDITY, (openTransactionDTO) -> doAddressCheck(openTransactionDTO, "from"));
+
   }
 
   /**
@@ -90,18 +94,12 @@ public class CustomAddressChecker extends TransactionChecker {
 
     try {
       ApiTransactionTypeEnum apiTransactionType = openTransactionDTO.getType();
-      CustomTransactionCheckerMethod customTransactionCheckerMethod = customTransactionCheckerMethodMap.get(apiTransactionType);
+      CustomCheckerMethod customTransactionCheckerMethod = customCheckerMethodMap.get(apiTransactionType);
 
       if (null == customTransactionCheckerMethod) {
         isValid = true;
       } else {
-        String hex = openTransactionDTO.getRawTx().getHex();
-        isValid = customTransactionCheckerMethod.check(hex);
-
-        if (!isValid) {
-          openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - custom address not in whitelist");
-          sendInvalidated(openTransactionDTO);
-        }
+        isValid = customTransactionCheckerMethod.check(openTransactionDTO);
       }
     } catch (Exception e) {
       LOGGER.error("doCheckCustomAddress", e);
@@ -114,16 +112,77 @@ public class CustomAddressChecker extends TransactionChecker {
   /**
    * 
    */
-  private boolean doCheck(
-      @Nonnull String hex,
+  private boolean doAddressCheck(
+      @Nonnull OpenTransactionDTO openTransactionDTO,
       @Nonnull String resultAddressDefinition) throws DfxException {
-    LOGGER.trace("doCheck()");
+    LOGGER.trace("doAddressCheck()");
 
+    String hex = openTransactionDTO.getRawTx().getHex();
     DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+
+    return doMasternodeWhitelistCheck(customData, openTransactionDTO, resultAddressDefinition);
+  }
+
+  /**
+   * 
+   */
+  private boolean doVaultCheck(
+      @Nonnull OpenTransactionDTO openTransactionDTO,
+      @Nonnull String resultAddressDefinition) throws DfxException {
+    LOGGER.trace("doVaultCheck()");
+
+    String hex = openTransactionDTO.getRawTx().getHex();
+    DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+
+    boolean isValid = doMasternodeWhitelistCheck(customData, openTransactionDTO, resultAddressDefinition);
+
+    if (isValid) {
+      isValid = doVaultIdCheck(customData, openTransactionDTO);
+    }
+
+    return isValid;
+  }
+
+  /**
+   * 
+   */
+  private boolean doMasternodeWhitelistCheck(
+      @Nonnull DefiCustomData customData,
+      @Nonnull OpenTransactionDTO openTransactionDTO,
+      @Nonnull String resultAddressDefinition) throws DfxException {
+    LOGGER.trace("doMasternodeWhitelistCheck()");
 
     Map<String, Object> resultMap = customData.getResults();
     String address = (String) resultMap.getOrDefault(resultAddressDefinition, "unknown");
 
-    return masternodeWhitelistChecker.checkMasternodeWhitelist(address);
+    boolean isValid = masternodeWhitelistChecker.checkMasternodeWhitelist(address);
+
+    if (!isValid) {
+      openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - invalid custom address");
+      sendInvalidated(openTransactionDTO);
+    }
+
+    return isValid;
+  }
+
+  /**
+   * 
+   */
+  private boolean doVaultIdCheck(
+      @Nonnull DefiCustomData customData,
+      @Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
+    LOGGER.trace("doVaultIdCheck()");
+
+    Map<String, Object> resultMap = customData.getResults();
+    String vaultId = (String) resultMap.getOrDefault("vaultId", "unknown");
+
+    boolean isValid = vaultWhitelistChecker.checkVaultWhitelist(vaultId);
+
+    if (!isValid) {
+      openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - invalid vault id");
+      sendInvalidated(openTransactionDTO);
+    }
+
+    return isValid;
   }
 }

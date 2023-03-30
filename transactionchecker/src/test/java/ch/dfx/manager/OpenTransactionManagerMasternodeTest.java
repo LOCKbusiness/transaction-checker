@@ -156,7 +156,7 @@ public class OpenTransactionManagerMasternodeTest {
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("masternodeAddressNotInWhitelistTest-signature");
-      invalidatedDTO.setReason("[Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - vout address not in whitelist");
+      invalidatedDTO.setReason("[Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - invalid vout address");
 
       when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(invalidatedDTO.getSignature());
       when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);

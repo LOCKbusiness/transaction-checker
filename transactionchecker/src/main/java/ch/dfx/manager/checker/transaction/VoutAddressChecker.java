@@ -73,7 +73,7 @@ public class VoutAddressChecker extends TransactionChecker {
       isValid = masternodeWhitelistChecker.checkMasternodeWhitelist(new ArrayList<>(voutAddressSet));
 
       if (!isValid) {
-        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - vout address not in whitelist");
+        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - invalid vout address");
         sendInvalidated(openTransactionDTO);
       }
     } catch (Exception e) {

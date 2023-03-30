@@ -120,6 +120,23 @@ CREATE TABLE IF NOT EXISTS testnet.masternode_whitelist (
 CREATE UNIQUE INDEX idx1_masternode_whitelist ON testnet.masternode_whitelist(wallet_id, idx, owner_address);
 CREATE UNIQUE INDEX idx2_masternode_whitelist ON testnet.masternode_whitelist(owner_address);
 
+-- =======================
+-- TESTNET.VAULT_WHITELIST
+-- =======================
+CREATE TABLE IF NOT EXISTS testnet.vault_whitelist (
+  id          VARCHAR(64) NOT NULL,
+  address     VARCHAR(64) NOT NULL,
+  min_ratio   DECIMAL(20,8) NOT NULL,
+  max_ratio   DECIMAL(20,8) NOT NULL,
+  state       VARCHAR(20) NULL,
+  create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  change_time TIMESTAMP WITH TIME ZONE
+              GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_vault_whitelist ON testnet.vault_whitelist(id);
+CREATE UNIQUE INDEX idx2_vault_whitelist ON testnet.vault_whitelist(id, address);
+
 -- ============================================================================
 -- SCHEMA: TESTNET_STAKING
 -- ============================================================================

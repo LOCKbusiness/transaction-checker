@@ -19,7 +19,7 @@ public enum TransactionCheckerConfigEnum implements ConfigEntry {
   TELEGRAM_AUTOMATIC_INFORMATION_BOT_TOKEN("telegram.automaticInformationBot.token"),
   TELEGRAM_AUTOMATIC_INFORMATION_BOT_CHAT_ID("telegram.automaticInformationBot.chatId"),
 
-  // Run Period für Scheduler ...
+  // Run Period fï¿½r Scheduler ...
   RUN_PERIOD_MESSAGE_EVENT("scheduler.run_period_message_event"),
   RUN_PERIOD_WATCHDOG("scheduler.run_period_watchdog"),
   RUN_PERIOD_DATABASE("scheduler.run_period_database"),

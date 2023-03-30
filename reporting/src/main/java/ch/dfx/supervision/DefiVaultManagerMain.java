@@ -75,15 +75,15 @@ public class DefiVaultManagerMain {
 
     // ...
     String vaultId1 = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT1_ID, "");
-    List<String> checkRatio1List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT1_CHECK_RATIO);
+    List<String> checkRatio1List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT1_CHECK_RATIO_LIST);
     DefiVaultManager vaultManager1 = new DefiVaultManager(messageEventProvider, vaultId1, checkRatio1List);
 
     String vaultId2 = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT2_ID, "");
-    List<String> checkRatio2List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT2_CHECK_RATIO);
+    List<String> checkRatio2List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT2_CHECK_RATIO_LIST);
     DefiVaultManager vaultManager2 = new DefiVaultManager(messageEventProvider, vaultId2, checkRatio2List);
 
     String vaultId3 = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_VAULT3_ID, "");
-    List<String> checkRatio3List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT3_CHECK_RATIO);
+    List<String> checkRatio3List = ConfigProvider.getInstance().getListValue(ReportingConfigEnum.YM_VAULT3_CHECK_RATIO_LIST);
     DefiVaultManager vaultManager3 = new DefiVaultManager(messageEventProvider, vaultId3, checkRatio3List);
 
     vaultManager1.checkCollateralizationRatio();

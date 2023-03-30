@@ -36,6 +36,7 @@ import ch.dfx.manager.checker.transaction.MasternodeWhitelistChecker;
 import ch.dfx.manager.checker.transaction.SignatureChecker;
 import ch.dfx.manager.checker.transaction.SizeChecker;
 import ch.dfx.manager.checker.transaction.TypeChecker;
+import ch.dfx.manager.checker.transaction.VaultWhitelistChecker;
 import ch.dfx.manager.checker.transaction.VoutAddressChecker;
 import ch.dfx.transactionserver.database.H2DBManager;
 
@@ -51,7 +52,6 @@ public class OpenTransactionManager {
   private final DefiMessageHandler messageHandler;
   private final WithdrawalManager withdrawalManager;
 
-  private final MasternodeWhitelistChecker masternodeWhitelistChecker;
   private final VoutAddressChecker voutAddressChecker;
   private final CustomAddressChecker customAddressChecker;
 
@@ -73,8 +73,9 @@ public class OpenTransactionManager {
     this.messageHandler = new DefiMessageHandler(dataProvider);
     this.withdrawalManager = new WithdrawalManager(network, databaseManager, dataProvider);
 
-    this.masternodeWhitelistChecker = new MasternodeWhitelistChecker(network, databaseManager);
-    this.customAddressChecker = new CustomAddressChecker(apiAccessHandler, dataProvider, masternodeWhitelistChecker);
+    MasternodeWhitelistChecker masternodeWhitelistChecker = new MasternodeWhitelistChecker(network, databaseManager);
+    VaultWhitelistChecker vaultWhitelistChecker = new VaultWhitelistChecker(network, databaseManager);
+    this.customAddressChecker = new CustomAddressChecker(apiAccessHandler, dataProvider, masternodeWhitelistChecker, vaultWhitelistChecker);
     this.voutAddressChecker = new VoutAddressChecker(apiAccessHandler, dataProvider, masternodeWhitelistChecker);
 
     this.typeChecker = new TypeChecker(apiAccessHandler, dataProvider);

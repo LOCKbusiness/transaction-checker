@@ -37,14 +37,26 @@ VALUES (14, 'df1qa06vpd0ts58223dchtet6e089m4czf4k604drn');
 -- SCHEMA: TESTNET
 -- ============================================================================
 
--- ==================
--- TESTNET.MASTERNODE
--- ==================
+-- ============================
+-- TESTNET.MASTERNODE_WHITELIST
+-- ============================
 INSERT INTO testnet.masternode_whitelist (wallet_id, idx, owner_address)
 VALUES (1, 1, 'tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z');
 
 INSERT INTO testnet.masternode_whitelist (wallet_id, idx, owner_address)
 VALUES (1, 2, 'tf1qqkzs9mrlwq0qy0dw74wpvyuup0gwhak7jppxcv');
+
+INSERT INTO testnet.masternode_whitelist (wallet_id, idx, owner_address)
+VALUES (1, 3, 'tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf');
+
+-- =======================
+-- TESTNET.VAULT_WHITELIST
+-- =======================
+INSERT INTO testnet.vault_whitelist (id, address, min_ratio, max_ratio, state)
+VALUES ('28e90bd7cb840b3988a81c8d855b3ad52739bde70bed3a7554267d25fbfda507', 'tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf', 169.94, 500.00, 'ACTIVE');
+
+INSERT INTO testnet.vault_whitelist (id, address, min_ratio, max_ratio, state)
+VALUES ('b96404aed18e96276ff4e36eb79232c64b704568e6487deb7a6b1b0d4ff61a97', 'tf1q8n5rly23k60eluu85r7yytya563r949nrnkkmf', 169.94, 500.00, 'ACTIVE');
 
 -- ============================================================================
 -- SCHEMA: TESTNET_STAKING

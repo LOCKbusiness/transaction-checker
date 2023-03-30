@@ -25,15 +25,15 @@ public enum ReportingConfigEnum implements ConfigEntry {
 
   YM_VAULT1_ADDRESS("yieldmachine.vault1.address"),
   YM_VAULT1_ID("yieldmachine.vault1.id"),
-  YM_VAULT1_CHECK_RATIO("yieldmachine.vault1.check_ratio"),
+  YM_VAULT1_CHECK_RATIO_LIST("yieldmachine.vault1.check_ratio"),
 
   YM_VAULT2_ADDRESS("yieldmachine.vault2.address"),
   YM_VAULT2_ID("yieldmachine.vault2.id"),
-  YM_VAULT2_CHECK_RATIO("yieldmachine.vault2.check_ratio"),
+  YM_VAULT2_CHECK_RATIO_LIST("yieldmachine.vault2.check_ratio"),
 
   YM_VAULT3_ADDRESS("yieldmachine.vault3.address"),
   YM_VAULT3_ID("yieldmachine.vault3.id"),
-  YM_VAULT3_CHECK_RATIO("yieldmachine.vault3.check_ratio"),
+  YM_VAULT3_CHECK_RATIO_LIST("yieldmachine.vault3.check_ratio"),
 
   YM_DUSD_LM_ADDRESS("yieldmachine.liquidity_mining.dusd_address"),
   YM_BTC_LM_ADDRESS("yieldmachine.liquidity_mining.btc_address"),

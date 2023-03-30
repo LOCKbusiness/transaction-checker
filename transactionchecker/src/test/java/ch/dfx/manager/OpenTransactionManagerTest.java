@@ -99,8 +99,27 @@ public class OpenTransactionManagerTest {
   }
 
   @Test
-  public void emptyDataTest() {
-    LOGGER.debug("emptyDataTest()");
+  public void emptyTransactionTest() {
+    LOGGER.debug("emptyTransactionTest()");
+
+    try {
+      TestUtils.setJSONTransactionFile(
+          "json/transaction/invalid/01-API-Empty-1.json");
+
+      transactionManager.execute();
+
+      TestUtils.setJSONTransactionFile(
+          "json/transaction/invalid/01-API-Empty-2.json");
+
+      transactionManager.execute();
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void emptyTransactionAndWithdrawalTest() {
+    LOGGER.debug("emptyTransactionAndWithdrawalTest()");
 
     try {
       TestUtils.setJSONTransactionAndWithdrawalFile(
@@ -298,6 +317,37 @@ public class OpenTransactionManagerTest {
           "Reserved Transaction Id", "56fc2de46c70274527a657e986e767fdff281fdaa826d96ccd35f78813ad5c4b", yieldmachineReservedDataMap.get("TRANSACTION_ID"));
       assertEquals("Reserved Customer Address", "df1qgz2xyzqwnsn5979syu6ng9wxlc4c2ac98m377f", yieldmachineReservedDataMap.get("CUSTOMER_ADDRESS"));
       assertEquals("Reserved Amount", new BigDecimal("500.00000000"), yieldmachineReservedDataMap.get("VOUT"));
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  /**
+   * 
+   */
+  @Test
+  public void invalidTypeTest() {
+    LOGGER.debug("invalidTypeTest()");
+
+    try {
+      TestUtils.setJSONTransactionFile(
+          "json/transaction/invalid/02-API-InvalidType.json");
+
+      // ...
+      OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
+      invalidatedDTO.setSignature("invalidTypeTest-signature");
+      invalidatedDTO.setReason("[Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - unknown type");
+
+      TestUtils.setDataProviderMock(invalidatedDTO.getSignature());
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
+
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", invalidatedDTO.toString(), jsonResponseList.get(0));
     } catch (Exception e) {
       fail("no exception expected: " + e.getMessage());
     }

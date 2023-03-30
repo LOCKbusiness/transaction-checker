@@ -3,8 +3,8 @@
   "type": "WithdrawFromVault",
   "valid": true,
   "results": {
-    "vaultId": "b96404aed18e96276ff4e36eb79232c64b704568e6487deb7a6b1b0d4ff61a97",
-    "to": "yyyyy",
+    "vaultId": "fffff4aed18e96276ff4e36eb79232c64b704568e6487deb7a6b1b0d4fffffff",
+    "to": "tf1q5mypk8mlcfxqlkh2ntnggk7e0v36e74davrr3z",
     "amount": "2616.35774451@15"
   }
 }

@@ -303,7 +303,9 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
       boolean isSimulateSend = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_SIMULATE_SEND, true);
 
-      if (!isSimulateSend) {
+      if (isSimulateSend) {
+        LOGGER.debug("Simulate sendOpenTransactionVerified(): openTransactionId=" + openTransactionId);
+      } else {
         doSendOpenTransactionVerified(openTransactionId, jsonOpenTransactionVerified);
       }
     } else {
@@ -360,7 +362,9 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
 
       boolean isSimulateSend = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_SIMULATE_SEND, true);
 
-      if (!isSimulateSend) {
+      if (isSimulateSend) {
+        LOGGER.debug("Simulate sendOpenTransactionInvalidated(): openTransactionId=" + openTransactionId);
+      } else {
         doSendOpenTransactionInvalidated(openTransactionId, jsonOpenTransactionInvalidated);
       }
     } else {

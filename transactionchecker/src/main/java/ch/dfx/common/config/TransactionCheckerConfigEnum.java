@@ -32,6 +32,7 @@ public enum TransactionCheckerConfigEnum implements ConfigEntry {
   LOCK_ADDRESS("lock.address"),
   LOCK_SIGNATURE("lock.signature"),
   LOCK_API_TEST_TOKEN("lock.api_test_token"),
+  LOCK_SIMULATE_SEND("lock.simulate_send"),
 
   // H2 Database ...
   H2_SYNC_LOOP("database.sync_loop"),

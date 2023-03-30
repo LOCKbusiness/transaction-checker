@@ -298,7 +298,14 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("sendOpenTransactionVerified()");
 
     if (null != signInDTO) {
-      doSendOpenTransactionVerified(openTransactionId, openTransactionVerifiedDTO);
+      String jsonOpenTransactionVerified = gson.toJson(openTransactionVerifiedDTO);
+      logJSON("verified", jsonOpenTransactionVerified);
+
+      boolean isSimulateSend = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_SIMULATE_SEND, true);
+
+      if (!isSimulateSend) {
+        doSendOpenTransactionVerified(openTransactionId, jsonOpenTransactionVerified);
+      }
     } else {
       LOGGER.error("[Verified] no SignIn Data found");
     }
@@ -309,7 +316,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    */
   private void doSendOpenTransactionVerified(
       @Nonnull String openTransactionId,
-      @Nonnull OpenTransactionVerifiedDTO openTransactionVerifiedDTO) {
+      @Nonnull String jsonOpenTransactionVerified) {
     LOGGER.trace("doSendOpenTransactionVerified()");
 
     try {
@@ -320,9 +327,6 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       HttpPut httpPut = new HttpPut(url);
       httpPut.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
       httpPut.addHeader("Device-Id", serverId);
-
-      String jsonOpenTransactionVerified = gson.toJson(openTransactionVerifiedDTO);
-      logJSON("verified", jsonOpenTransactionVerified);
 
       StringEntity entity = new StringEntity(jsonOpenTransactionVerified, ContentType.APPLICATION_JSON);
       httpPut.setEntity(entity);
@@ -351,7 +355,14 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
     LOGGER.trace("sendOpenTransactionInvalidated()");
 
     if (null != signInDTO) {
-      doSendOpenTransactionInvalidated(openTransactionId, openTransactionInvalidatedDTO);
+      String jsonOpenTransactionInvalidated = gson.toJson(openTransactionInvalidatedDTO);
+      logJSON("invalidated", jsonOpenTransactionInvalidated);
+
+      boolean isSimulateSend = ConfigProvider.getInstance().getValue(TransactionCheckerConfigEnum.LOCK_SIMULATE_SEND, true);
+
+      if (!isSimulateSend) {
+        doSendOpenTransactionInvalidated(openTransactionId, jsonOpenTransactionInvalidated);
+      }
     } else {
       LOGGER.error("[Invalidated] no SignIn Data found");
     }
@@ -362,7 +373,7 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
    */
   private void doSendOpenTransactionInvalidated(
       @Nonnull String openTransactionId,
-      @Nonnull OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO) {
+      @Nonnull String jsonOpenTransactionInvalidated) {
     LOGGER.trace("doSendOpenTransactionInvalidated()");
 
     try {
@@ -373,9 +384,6 @@ public class ApiAccessHandlerImpl implements ApiAccessHandler {
       HttpPut httpPut = new HttpPut(url);
       httpPut.addHeader("Authorization", "Bearer " + signInDTO.getAccessToken());
       httpPut.addHeader("Device-Id", serverId);
-
-      String jsonOpenTransactionInvalidated = gson.toJson(openTransactionInvalidatedDTO);
-      logJSON("invalidated", jsonOpenTransactionInvalidated);
 
       StringEntity entity = new StringEntity(jsonOpenTransactionInvalidated, ContentType.APPLICATION_JSON);
       httpPut.setEntity(entity);

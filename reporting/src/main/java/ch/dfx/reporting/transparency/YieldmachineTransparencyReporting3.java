@@ -639,6 +639,9 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     lockInterimBalance = lockInterimBalance.add(spyLMDFIAmount);
 
     // ...
+    BigDecimal lockInterimDifference = lockInterimBalance.subtract(customerInterimBalance);
+
+    // ...
     DFISheetDTO dfiSheetDTO = new DFISheetDTO();
     dfiSheetDTO.setSheetName(sheetName);
 
@@ -667,6 +670,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     dfiSheetDTO.setCustomerInterimBalance(customerInterimBalance);
     dfiSheetDTO.setLockInterimBalance(lockInterimBalance);
+    dfiSheetDTO.setLockInterimDifference(lockInterimDifference);
 
     dfiSheetDTO.setLockChangeBTCTransactionBalance(BigDecimal.ZERO);
     dfiSheetDTO.setLockChangeETHTransactionBalance(BigDecimal.ZERO);
@@ -773,6 +777,9 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     lockInterimBalance = lockInterimBalance.add(spyPoolDUSDAmount);
 
     // ...
+    BigDecimal lockInterimDifference = lockInterimBalance.subtract(customerInterimBalance);
+
+    // ...
     DUSDSheetDTO dusdSheetDTO = new DUSDSheetDTO();
     dusdSheetDTO.setSheetName(sheetName);
 
@@ -803,6 +810,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     dusdSheetDTO.setCustomerInterimBalance(customerInterimBalance);
     dusdSheetDTO.setLockInterimBalance(lockInterimBalance);
+    dusdSheetDTO.setLockInterimDifference(lockInterimDifference);
 
     dusdSheetDTO.setLockChangeUSDTTransactionBalance(BigDecimal.ZERO);
     dusdSheetDTO.setLockChangeUSDCTransactionBalance(BigDecimal.ZERO);
@@ -1666,15 +1674,17 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       cellDataList.add(new CellData().setRowIndex(24).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getCustomerInterimBalance()));
       cellDataList.add(new CellData().setRowIndex(24).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockInterimBalance()));
 
-      // ...
-      cellDataList.add(new CellData().setRowIndex(27).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getLockChangeBTCTransactionBalance()));
-      cellDataList.add(new CellData().setRowIndex(28).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getLockChangeETHTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(25).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockInterimDifference()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(30).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getCustomerTotalBalance()));
-      cellDataList.add(new CellData().setRowIndex(30).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockTotalBalance()));
+      cellDataList.add(new CellData().setRowIndex(28).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getLockChangeBTCTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(29).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getLockChangeETHTransactionBalance()));
 
-      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getTotalDifference()));
+      // ...
+      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getCustomerTotalBalance()));
+      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockTotalBalance()));
+
+      cellDataList.add(new CellData().setRowIndex(32).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getTotalDifference()));
 
       return cellDataList;
     }
@@ -1723,16 +1733,18 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       cellDataList.add(new CellData().setRowIndex(23).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getCustomerInterimBalance()));
       cellDataList.add(new CellData().setRowIndex(23).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockInterimBalance()));
 
-      // ...
-      cellDataList.add(new CellData().setRowIndex(26).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeUSDTTransactionBalance()));
-      cellDataList.add(new CellData().setRowIndex(27).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeUSDCTransactionBalance()));
-      cellDataList.add(new CellData().setRowIndex(28).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeSPYTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(24).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockInterimDifference()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(30).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getCustomerTotalBalance()));
-      cellDataList.add(new CellData().setRowIndex(30).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockTotalBalance()));
+      cellDataList.add(new CellData().setRowIndex(27).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeUSDTTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(28).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeUSDCTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(29).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeSPYTransactionBalance()));
 
-      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getTotalDifference()));
+      // ...
+      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getCustomerTotalBalance()));
+      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockTotalBalance()));
+
+      cellDataList.add(new CellData().setRowIndex(32).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getTotalDifference()));
 
       return cellDataList;
     }
@@ -1773,9 +1785,9 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       cellDataList.add(new CellData().setRowIndex(17).setCellIndex(2).setKeepStyle(true).setValue(tokenSheetDTO.getCustomerInterimBalance()));
       cellDataList.add(new CellData().setRowIndex(17).setCellIndex(5).setKeepStyle(true).setValue(tokenSheetDTO.getLockInterimBalance()));
 
-      // ...
       cellDataList.add(new CellData().setRowIndex(18).setCellIndex(5).setKeepStyle(true).setValue(tokenSheetDTO.getLockInterimDifference()));
 
+      // ...
       cellDataList.add(new CellData().setRowIndex(21).setCellIndex(5).setKeepStyle(true).setValue(tokenSheetDTO.getLockChangeTransactionBalance()));
       cellDataList.add(new CellData().setRowIndex(22).setCellIndex(5).setKeepStyle(true).setValue(tokenSheetDTO.getTotalDifference()));
 
@@ -1818,9 +1830,9 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       cellDataList.add(new CellData().setRowIndex(14).setCellIndex(2).setKeepStyle(true).setValue(tokenSheetDTO.getCustomerInterimBalance()));
       cellDataList.add(new CellData().setRowIndex(14).setCellIndex(5).setKeepStyle(true).setValue(tokenSheetDTO.getLockInterimBalance()));
 
-      // ...
       cellDataList.add(new CellData().setRowIndex(15).setCellIndex(5).setKeepStyle(true).setValue(tokenSheetDTO.getLockInterimDifference()));
 
+      // ...
       cellDataList.add(new CellData().setRowIndex(18).setCellIndex(5).setKeepStyle(true).setValue(tokenSheetDTO.getLockChangeTransactionBalance()));
       cellDataList.add(new CellData().setRowIndex(19).setCellIndex(5).setKeepStyle(true).setValue(tokenSheetDTO.getTotalDifference()));
 

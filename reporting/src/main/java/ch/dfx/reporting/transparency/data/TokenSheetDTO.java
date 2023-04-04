@@ -12,7 +12,6 @@ public class TokenSheetDTO {
 
   private int numberOfCustomers = 0;
   private BigDecimal customerDeposits = BigDecimal.ZERO;
-  private BigDecimal customerInterimBalance = BigDecimal.ZERO;
 
   private BigDecimal lockLiquidityAmount = BigDecimal.ZERO;
   private BigDecimal lockRewardAmount = BigDecimal.ZERO;
@@ -30,6 +29,7 @@ public class TokenSheetDTO {
   private BigDecimal lockLMBalance = BigDecimal.ZERO;
   private BigDecimal lockLMPool = BigDecimal.ZERO;
 
+  private BigDecimal customerInterimBalance = BigDecimal.ZERO;
   private BigDecimal lockInterimBalance = BigDecimal.ZERO;
   private BigDecimal lockInterimDifference = BigDecimal.ZERO;
   private BigDecimal lockChangeTransactionBalance = BigDecimal.ZERO;
@@ -64,14 +64,6 @@ public class TokenSheetDTO {
 
   public void setCustomerDeposits(BigDecimal customerDeposits) {
     this.customerDeposits = customerDeposits;
-  }
-
-  public BigDecimal getCustomerInterimBalance() {
-    return customerInterimBalance;
-  }
-
-  public void setCustomerInterimBalance(BigDecimal customerInterimBalance) {
-    this.customerInterimBalance = customerInterimBalance;
   }
 
   public BigDecimal getLockLiquidityAmount() {
@@ -176,6 +168,14 @@ public class TokenSheetDTO {
 
   public void setLockLMPool(BigDecimal lockLMPool) {
     this.lockLMPool = lockLMPool;
+  }
+
+  public BigDecimal getCustomerInterimBalance() {
+    return customerInterimBalance;
+  }
+
+  public void setCustomerInterimBalance(BigDecimal customerInterimBalance) {
+    this.customerInterimBalance = customerInterimBalance;
   }
 
   public BigDecimal getLockInterimBalance() {

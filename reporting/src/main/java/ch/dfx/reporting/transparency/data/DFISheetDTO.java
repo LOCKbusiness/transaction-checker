@@ -36,6 +36,7 @@ public class DFISheetDTO {
 
   private BigDecimal customerInterimBalance = BigDecimal.ZERO;
   private BigDecimal lockInterimBalance = BigDecimal.ZERO;
+  private BigDecimal lockInterimDifference = BigDecimal.ZERO;
 
   private BigDecimal lockChangeBTCTransactionBalance = BigDecimal.ZERO;
   private BigDecimal lockChangeETHTransactionBalance = BigDecimal.ZERO;
@@ -224,6 +225,14 @@ public class DFISheetDTO {
 
   public void setLockInterimBalance(BigDecimal lockInterimBalance) {
     this.lockInterimBalance = lockInterimBalance;
+  }
+
+  public BigDecimal getLockInterimDifference() {
+    return lockInterimDifference;
+  }
+
+  public void setLockInterimDifference(BigDecimal lockInterimDifference) {
+    this.lockInterimDifference = lockInterimDifference;
   }
 
   public BigDecimal getLockChangeBTCTransactionBalance() {

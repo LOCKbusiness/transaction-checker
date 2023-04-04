@@ -37,6 +37,7 @@ public class DUSDSheetDTO {
 
   private BigDecimal customerInterimBalance = BigDecimal.ZERO;
   private BigDecimal lockInterimBalance = BigDecimal.ZERO;
+  private BigDecimal lockInterimDifference = BigDecimal.ZERO;
 
   private BigDecimal lockChangeUSDTTransactionBalance = BigDecimal.ZERO;
   private BigDecimal lockChangeUSDCTransactionBalance = BigDecimal.ZERO;
@@ -242,6 +243,14 @@ public class DUSDSheetDTO {
 
   public void setLockInterimBalance(BigDecimal lockInterimBalance) {
     this.lockInterimBalance = lockInterimBalance;
+  }
+
+  public BigDecimal getLockInterimDifference() {
+    return lockInterimDifference;
+  }
+
+  public void setLockInterimDifference(BigDecimal lockInterimDifference) {
+    this.lockInterimDifference = lockInterimDifference;
   }
 
   public BigDecimal getLockChangeUSDTTransactionBalance() {

@@ -332,11 +332,12 @@ public class OpenTransactionManagerTest {
     try {
       TestUtils.setJSONTransactionFile(
           "json/transaction/invalid/02-API-InvalidType.json");
+      TestUtils.setJSONChainTransactionFile("json/withdrawal/01-chaindata-transaction.json");
 
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("invalidTypeTest-signature");
-      invalidatedDTO.setReason("[Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - unknown type");
+      invalidatedDTO.setReason("[Transaction] ID: 0dc885313b263a4d207046524e8c4a422b2490b56a87ef177e4b94bed8c77140 - type mismatch");
 
       TestUtils.setDataProviderMock(invalidatedDTO.getSignature());
 
@@ -444,8 +445,8 @@ public class OpenTransactionManagerTest {
   }
 
   @Test
-  public void invalidWithdrawalSignatureTest2() {
-    LOGGER.debug("invalidWithdrawalSignatureTest2()");
+  public void invalidRawTransactionTest1() {
+    LOGGER.debug("invalidRawTransactionTest1()");
 
     try {
       TestUtils.setJSONTransactionAndWithdrawalFile(
@@ -456,7 +457,7 @@ public class OpenTransactionManagerTest {
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("invalidWithdrawalSignatureTest2-signature");
-      invalidatedDTO.setReason("[Withdrawal] ID: 105 - sign message mismatch");
+      invalidatedDTO.setReason("[Transaction] ID: 440a351c87bb030c774c4b822504bc954188dde6321b05bb5b52af357098f688 - invalid raw transaction");
 
       TestUtils.setDataProviderMock(invalidatedDTO.getSignature());
 
@@ -474,8 +475,8 @@ public class OpenTransactionManagerTest {
   }
 
   @Test
-  public void invalidWithdrawalSignatureTest3() {
-    LOGGER.debug("invalidWithdrawalSignatureTest3()");
+  public void invalidRawTransactionTest2() {
+    LOGGER.debug("invalidRawTransactionTest2()");
 
     try {
       TestUtils.setJSONTransactionAndWithdrawalFile(
@@ -486,7 +487,7 @@ public class OpenTransactionManagerTest {
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("invalidWithdrawalSignatureTest3-signature");
-      invalidatedDTO.setReason("[Withdrawal] ID: 106 - sign message mismatch");
+      invalidatedDTO.setReason("[Transaction] ID: 440a351c87bb030c774c4b822504bc954188dde6321b05bb5b52af357098f688 - invalid raw transaction");
 
       TestUtils.setDataProviderMock(invalidatedDTO.getSignature());
 
@@ -504,8 +505,8 @@ public class OpenTransactionManagerTest {
   }
 
   @Test
-  public void invalidWithdrawalSignatureTest4() {
-    LOGGER.debug("invalidWithdrawalSignatureTest4()");
+  public void invalidRawTransactionTest3() {
+    LOGGER.debug("invalidRawTransactionTest3()");
 
     try {
       TestUtils.setJSONTransactionAndWithdrawalFile(
@@ -516,7 +517,8 @@ public class OpenTransactionManagerTest {
       // ...
       OpenTransactionInvalidatedDTO invalidatedDTO = new OpenTransactionInvalidatedDTO();
       invalidatedDTO.setSignature("invalidWithdrawalSignatureTest4-signature");
-      invalidatedDTO.setReason("[Withdrawal] ID: 110 - sign message mismatch");
+      invalidatedDTO
+          .setReason("[Transaction] ID: 440a351c87bb030c774c4b822504bc954188dde6321b05bb5b52af357098f688 - invalid raw transaction");
 
       TestUtils.setDataProviderMock(invalidatedDTO.getSignature());
 

@@ -1,10 +1,11 @@
 package ch.dfx.api.data.transaction;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
+import ch.dfx.defichain.data.custom.DefiCustomData;
+import ch.dfx.defichain.data.transaction.DefiTransactionData;
 
 /**
  * 
@@ -18,6 +19,9 @@ public class OpenTransactionDTO {
 
   private OpenTransactionRawTxDTO rawTx = null;
   private OpenTransactionPayloadDTO payload = null;
+
+  private DefiTransactionData transactionData = null;
+  private DefiCustomData transactionCustomData = null;
 
   private String invalidatedReason = null;
 
@@ -74,6 +78,22 @@ public class OpenTransactionDTO {
 
   public void setPayload(OpenTransactionPayloadDTO payload) {
     this.payload = payload;
+  }
+
+  public DefiTransactionData getTransactionData() {
+    return transactionData;
+  }
+
+  public void setTransactionData(DefiTransactionData transactionData) {
+    this.transactionData = transactionData;
+  }
+
+  public DefiCustomData getTransactionCustomData() {
+    return transactionCustomData;
+  }
+
+  public void setTransactionCustomData(DefiCustomData transactionCustomData) {
+    this.transactionCustomData = transactionCustomData;
   }
 
   public String getInvalidatedReason() {

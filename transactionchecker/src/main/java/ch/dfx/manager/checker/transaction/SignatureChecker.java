@@ -9,10 +9,10 @@ import org.apache.logging.log4j.Logger;
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
-import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.config.ConfigProvider;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.defichain.handler.DefiMessageHandler;
 
 /**
  * 
@@ -25,8 +25,8 @@ public class SignatureChecker extends TransactionChecker {
    */
   public SignatureChecker(
       @Nonnull ApiAccessHandler apiAccessHandler,
-      @Nonnull DefiDataProvider dataProvider) {
-    super(apiAccessHandler, dataProvider);
+      @Nonnull DefiMessageHandler messageHandler) {
+    super(apiAccessHandler, messageHandler);
   }
 
   /**

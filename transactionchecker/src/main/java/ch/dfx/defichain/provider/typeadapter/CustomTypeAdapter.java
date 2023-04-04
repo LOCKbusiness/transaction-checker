@@ -37,6 +37,10 @@ public class CustomTypeAdapter implements JsonDeserializer<ResultDataA> {
       JsonObject jsonObject = (JsonObject) json;
       JsonElement jsonResultElement = jsonObject.get("result");
 
+      if (jsonResultElement.isJsonNull()) {
+        jsonResultElement = jsonObject.get("error");
+      }
+
       if (jsonResultElement.isJsonObject()) {
         resultData = context.deserialize(json, DefiCustomResultData.class);
       } else if (jsonResultElement.isJsonPrimitive()) {

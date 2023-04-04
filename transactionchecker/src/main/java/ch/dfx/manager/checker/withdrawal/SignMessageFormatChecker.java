@@ -17,7 +17,6 @@ import ch.dfx.api.data.join.TransactionWithdrawalDTO;
 import ch.dfx.api.data.join.TransactionWithdrawalDTOList;
 import ch.dfx.api.data.join.TransactionWithdrawalStateEnum;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
-import ch.dfx.api.data.transaction.OpenTransactionRawTxDTO;
 import ch.dfx.api.data.withdrawal.PendingWithdrawalDTO;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
@@ -76,11 +75,7 @@ public class SignMessageFormatChecker {
     try {
       OpenTransactionDTO openTransactionDTO = transactionWithdrawalDTO.getOpenTransactionDTO();
 
-      OpenTransactionRawTxDTO openTransactionRawTxDTO = openTransactionDTO.getRawTx();
-      String hex = openTransactionRawTxDTO.getHex();
-
-      // ...
-      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
+      DefiTransactionData transactionData = openTransactionDTO.getTransactionData();
 
       // ...
       String openTransactionId = openTransactionDTO.getId();
@@ -116,7 +111,8 @@ public class SignMessageFormatChecker {
       if ("Coin".equals(assetType)) {
         transactionOutAmount = getDFITransactionOutAmount(transactionData, signMessageAddress);
       } else {
-        DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+        DefiCustomData customData = openTransactionDTO.getTransactionCustomData();
+
         transactionOutAmount = getCustomTransactionOutAmount(customData, signMessageAddress);
       }
 

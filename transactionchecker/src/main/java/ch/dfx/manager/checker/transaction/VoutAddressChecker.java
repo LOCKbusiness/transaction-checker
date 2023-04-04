@@ -16,7 +16,7 @@ import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
-import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.defichain.handler.DefiMessageHandler;
 
 /**
  * 
@@ -32,9 +32,9 @@ public class VoutAddressChecker extends TransactionChecker {
    */
   public VoutAddressChecker(
       @Nonnull ApiAccessHandler apiAccessHandler,
-      @Nonnull DefiDataProvider dataProvider,
+      @Nonnull DefiMessageHandler messageHandler,
       @Nonnull MasternodeWhitelistChecker masternodeWhitelistChecker) {
-    super(apiAccessHandler, dataProvider);
+    super(apiAccessHandler, messageHandler);
 
     this.masternodeWhitelistChecker = masternodeWhitelistChecker;
   }
@@ -65,8 +65,7 @@ public class VoutAddressChecker extends TransactionChecker {
     boolean isValid;
 
     try {
-      String hex = openTransactionDTO.getRawTx().getHex();
-      DefiTransactionData transactionData = dataProvider.decodeRawTransaction(hex);
+      DefiTransactionData transactionData = openTransactionDTO.getTransactionData();
 
       Set<String> voutAddressSet = getVoutAddressSet(transactionData);
 

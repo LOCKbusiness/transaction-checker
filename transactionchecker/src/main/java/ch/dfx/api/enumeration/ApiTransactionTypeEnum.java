@@ -1,7 +1,11 @@
 package ch.dfx.api.enumeration;
 
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -69,6 +73,38 @@ public enum ApiTransactionTypeEnum {
     return apiTransactionType;
   }
 
+  // https://github.com/DeFiCh/ain /src/masternodes/mn_checks.h ...
+  private static final Map<ApiTransactionTypeEnum, Set<String>> apiTransactionTypeToCustomTransactionTypeMap;
+
+  static {
+    apiTransactionTypeToCustomTransactionTypeMap = new EnumMap<>(ApiTransactionTypeEnum.class);
+
+    apiTransactionTypeToCustomTransactionTypeMap.put(CREATE_MASTERNODE, new HashSet<>(Arrays.asList("C")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(RESIGN_MASTERNODE, new HashSet<>(Arrays.asList("R")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(UPDATE_MASTERNODE, new HashSet<>(Arrays.asList("m")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(VOTE_MASTERNODE, new HashSet<>(Arrays.asList("O")));
+
+    apiTransactionTypeToCustomTransactionTypeMap.put(SEND_FROM_LIQ, new HashSet<>(Arrays.asList("0")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(SEND_TO_LIQ, new HashSet<>(Arrays.asList("0")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(UTXO_MERGE, new HashSet<>(Arrays.asList("0")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(UTXO_SPLIT, new HashSet<>(Arrays.asList("0")));
+
+    apiTransactionTypeToCustomTransactionTypeMap.put(ACCOUNT_TO_ACCOUNT, new HashSet<>(Arrays.asList("B", "a")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(UTXO_TO_ACCOUNT, new HashSet<>(Arrays.asList("U")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(COMPOSITE_SWAP, new HashSet<>(Arrays.asList("s", "i")));
+
+    apiTransactionTypeToCustomTransactionTypeMap.put(WITHDRAWAL, new HashSet<>(Arrays.asList("0", "B", "a")));
+
+    apiTransactionTypeToCustomTransactionTypeMap.put(CREATE_VAULT, new HashSet<>(Arrays.asList("V")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(DEPOSIT_TO_VAULT, new HashSet<>(Arrays.asList("S")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(WITHDRAW_FROM_VAULT, new HashSet<>(Arrays.asList("J")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(TAKE_LOAN, new HashSet<>(Arrays.asList("X")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(PAYBACK_LOAN, new HashSet<>(Arrays.asList("H", "k")));
+
+    apiTransactionTypeToCustomTransactionTypeMap.put(POOL_ADD_LIQUIDITY, new HashSet<>(Arrays.asList("l")));
+    apiTransactionTypeToCustomTransactionTypeMap.put(POOL_REMOVE_LIQUIDITY, new HashSet<>(Arrays.asList("r")));
+  }
+
   /**
    * 
    */
@@ -91,5 +127,13 @@ public enum ApiTransactionTypeEnum {
    */
   public OpenTransactionTypeEnum getOpenTransactionType() {
     return openTransactionType;
+  }
+
+  /**
+   * 
+   */
+  public boolean checkCustomType(@Nonnull String customType) {
+    Set<String> customTypeSet = apiTransactionTypeToCustomTransactionTypeMap.getOrDefault(this, new HashSet<>());
+    return customTypeSet.contains(customType);
   }
 }

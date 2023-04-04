@@ -16,7 +16,7 @@ import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
-import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.defichain.handler.DefiMessageHandler;
 import ch.dfx.transactionserver.database.DatabaseUtils;
 import ch.dfx.transactionserver.database.H2DBManager;
 
@@ -41,9 +41,9 @@ public class DuplicateChecker extends TransactionChecker {
   public DuplicateChecker(
       @Nonnull NetworkEnum network,
       @Nonnull ApiAccessHandler apiAccessHandler,
-      @Nonnull DefiDataProvider dataProvider,
+      @Nonnull DefiMessageHandler messageHandler,
       @Nonnull H2DBManager databaseManager) {
-    super(apiAccessHandler, dataProvider);
+    super(apiAccessHandler, messageHandler);
 
     this.network = network;
     this.databaseManager = databaseManager;

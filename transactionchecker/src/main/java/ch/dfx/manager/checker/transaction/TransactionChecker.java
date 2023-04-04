@@ -8,12 +8,10 @@ import org.apache.logging.log4j.Logger;
 
 import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
-import ch.dfx.api.data.transaction.OpenTransactionInvalidatedDTO;
 import ch.dfx.api.data.transaction.OpenTransactionPayloadDTO;
-import ch.dfx.api.data.transaction.OpenTransactionVerifiedDTO;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.handler.DefiMessageHandler;
-import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.manager.ManagerUtils;
 
 /**
  * 
@@ -23,7 +21,6 @@ public abstract class TransactionChecker {
 
   // ...
   private final ApiAccessHandler apiAccessHandler;
-  protected final DefiDataProvider dataProvider;
   protected final DefiMessageHandler messageHandler;
 
   /**
@@ -31,26 +28,9 @@ public abstract class TransactionChecker {
    */
   public TransactionChecker(
       @Nonnull ApiAccessHandler apiAccessHandler,
-      @Nonnull DefiDataProvider dataProvider) {
+      @Nonnull DefiMessageHandler messageHandler) {
     this.apiAccessHandler = apiAccessHandler;
-    this.dataProvider = dataProvider;
-
-    this.messageHandler = new DefiMessageHandler(dataProvider);
-  }
-
-  /**
-   * 
-   */
-  public void sendVerified(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
-    LOGGER.trace("sendVerified()");
-
-    String openTransactionHex = openTransactionDTO.getRawTx().getHex();
-    String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
-
-    OpenTransactionVerifiedDTO openTransactionVerifiedDTO = new OpenTransactionVerifiedDTO();
-    openTransactionVerifiedDTO.setSignature(openTransactionCheckerSignature);
-
-    apiAccessHandler.sendOpenTransactionVerified(openTransactionDTO.getId(), openTransactionVerifiedDTO);
+    this.messageHandler = messageHandler;
   }
 
   /**
@@ -59,14 +39,7 @@ public abstract class TransactionChecker {
   public void sendInvalidated(@Nonnull OpenTransactionDTO openTransactionDTO) throws DfxException {
     LOGGER.trace("sendInvalidated()");
 
-    String openTransactionHex = openTransactionDTO.getRawTx().getHex();
-    String openTransactionCheckerSignature = messageHandler.signMessage(openTransactionHex);
-
-    OpenTransactionInvalidatedDTO openTransactionInvalidatedDTO = new OpenTransactionInvalidatedDTO();
-    openTransactionInvalidatedDTO.setSignature(openTransactionCheckerSignature);
-    openTransactionInvalidatedDTO.setReason(openTransactionDTO.getInvalidatedReason());
-
-    apiAccessHandler.sendOpenTransactionInvalidated(openTransactionDTO.getId(), openTransactionInvalidatedDTO);
+    ManagerUtils.sendInvalidated(messageHandler, apiAccessHandler, openTransactionDTO);
   }
 
   /**

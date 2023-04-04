@@ -7,6 +7,7 @@ import ch.dfx.defichain.data.ResultDataA;
  * 
  */
 public class DefiCustomResultWrapperData extends ResultDataA {
+
   /**
    * 
    */

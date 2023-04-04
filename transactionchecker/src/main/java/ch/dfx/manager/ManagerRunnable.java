@@ -119,7 +119,7 @@ public class ManagerRunnable implements SchedulerProviderRunnable {
   private void checkErrorCounter() {
     LOGGER.trace("checkErrorCounter()");
 
-    if (2 < openTransactionErrorCounter) {
+    if (5 < openTransactionErrorCounter) {
       LOGGER.error("Too many errors, will exit now");
       SchedulerProvider.getInstance().exit(-1);
     }

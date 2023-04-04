@@ -14,7 +14,7 @@ import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.custom.DefiCustomData;
-import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.defichain.handler.DefiMessageHandler;
 
 /**
  *
@@ -38,10 +38,10 @@ public class CustomAddressChecker extends TransactionChecker {
    */
   public CustomAddressChecker(
       @Nonnull ApiAccessHandler apiAccessHandler,
-      @Nonnull DefiDataProvider dataProvider,
+      @Nonnull DefiMessageHandler messageHandler,
       @Nonnull MasternodeWhitelistChecker masternodeWhitelistChecker,
       @Nonnull VaultWhitelistChecker vaultWhitelistChecker) {
-    super(apiAccessHandler, dataProvider);
+    super(apiAccessHandler, messageHandler);
 
     this.masternodeWhitelistChecker = masternodeWhitelistChecker;
     this.vaultWhitelistChecker = vaultWhitelistChecker;
@@ -117,8 +117,7 @@ public class CustomAddressChecker extends TransactionChecker {
       @Nonnull String resultAddressDefinition) throws DfxException {
     LOGGER.trace("doAddressCheck()");
 
-    String hex = openTransactionDTO.getRawTx().getHex();
-    DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+    DefiCustomData customData = openTransactionDTO.getTransactionCustomData();
 
     return doMasternodeWhitelistCheck(customData, openTransactionDTO, resultAddressDefinition);
   }
@@ -131,8 +130,7 @@ public class CustomAddressChecker extends TransactionChecker {
       @Nonnull String resultAddressDefinition) throws DfxException {
     LOGGER.trace("doVaultCheck()");
 
-    String hex = openTransactionDTO.getRawTx().getHex();
-    DefiCustomData customData = dataProvider.decodeCustomTransaction(hex);
+    DefiCustomData customData = openTransactionDTO.getTransactionCustomData();
 
     boolean isValid = doMasternodeWhitelistCheck(customData, openTransactionDTO, resultAddressDefinition);
 

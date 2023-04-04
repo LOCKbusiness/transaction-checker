@@ -24,11 +24,15 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.bootstrap.HttpServer;
 import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.h2.tools.RunScript;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -42,6 +46,7 @@ import ch.dfx.common.provider.TokenProvider;
 import ch.dfx.defichain.data.custom.DefiCustomData;
 import ch.dfx.defichain.data.transaction.DefiTransactionData;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.defichain.provider.DefiDataProviderImpl;
 import ch.dfx.httpserver.handler.APISignInHandler;
 import ch.dfx.httpserver.handler.APITransactionRequestHandler;
 import ch.dfx.httpserver.handler.APIWithdrawalRequestHandler;
@@ -108,6 +113,7 @@ public class TestUtils {
       gson = new GsonBuilder().setPrettyPrinting().create();
 
       // ...
+      setupDataProvider();
       setupDatabase();
 
       if (withHttpServer) {
@@ -354,6 +360,27 @@ public class TestUtils {
     } catch (Exception e) {
       LOGGER.error("sqlDelete", e);
     }
+  }
+
+  /**
+   * 
+   */
+  private static void setupDataProvider() throws Exception {
+    LOGGER.debug("setupDataProvider()");
+
+    HttpClient httpClient = mock(HttpClient.class);
+    HttpPost httpPost = mock(HttpPost.class);
+    DefiDataProvider dataProvider = new DefiDataProviderImpl(httpClient, httpPost);
+
+    Answer<Byte> getCustomTypeAnswer = new Answer<Byte>() {
+      @Override
+      public Byte answer(InvocationOnMock invocation) throws Throwable {
+        String scriptPubKeyHexString = invocation.getArgument(0, String.class);
+        return dataProvider.getCustomType(scriptPubKeyHexString);
+      }
+    };
+
+    when(dataProviderMock.getCustomType(anyString())).thenAnswer(getCustomTypeAnswer);
   }
 
   /**

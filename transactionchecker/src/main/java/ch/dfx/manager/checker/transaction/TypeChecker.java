@@ -9,7 +9,10 @@ import ch.dfx.api.ApiAccessHandler;
 import ch.dfx.api.data.transaction.OpenTransactionDTO;
 import ch.dfx.api.data.transaction.OpenTransactionDTOList;
 import ch.dfx.api.enumeration.ApiTransactionTypeEnum;
+import ch.dfx.defichain.data.transaction.DefiTransactionData;
+import ch.dfx.defichain.handler.DefiMessageHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.manager.ManagerUtils;
 
 /**
  * 
@@ -17,13 +20,19 @@ import ch.dfx.defichain.provider.DefiDataProvider;
 public class TypeChecker extends TransactionChecker {
   private static final Logger LOGGER = LogManager.getLogger(TypeChecker.class);
 
+  // ...
+  private final DefiDataProvider dataProvider;
+
   /**
    * 
    */
   public TypeChecker(
       @Nonnull ApiAccessHandler apiAccessHandler,
+      @Nonnull DefiMessageHandler messageHandler,
       @Nonnull DefiDataProvider dataProvider) {
-    super(apiAccessHandler, dataProvider);
+    super(apiAccessHandler, messageHandler);
+
+    this.dataProvider = dataProvider;
   }
 
   /**
@@ -52,10 +61,21 @@ public class TypeChecker extends TransactionChecker {
     boolean isValid;
 
     try {
-      isValid = ApiTransactionTypeEnum.UNKNOWN != openTransactionDTO.getType();
+      ApiTransactionTypeEnum apiTransactionType = openTransactionDTO.getType();
+
+      DefiTransactionData transactionData = openTransactionDTO.getTransactionData();
+
+      byte customType = ManagerUtils.getCustomType(dataProvider, transactionData);
+      String customTypeCode = "0";
+
+      if (0x00 != customType) {
+        customTypeCode = String.valueOf((char) customType);
+      }
+
+      isValid = apiTransactionType.checkCustomType(customTypeCode);
 
       if (!isValid) {
-        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - unknown type");
+        openTransactionDTO.setInvalidatedReason("[Transaction] ID: " + openTransactionDTO.getId() + " - type mismatch");
         sendInvalidated(openTransactionDTO);
       }
     } catch (Exception e) {

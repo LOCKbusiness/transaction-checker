@@ -31,6 +31,7 @@ import com.google.gson.GsonBuilder;
 
 import ch.dfx.common.config.ConfigProvider;
 import ch.dfx.common.config.TransactionCheckerConfigEnum;
+import ch.dfx.common.errorhandling.DefiChainException;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.ResultDataA;
 import ch.dfx.defichain.data.ResultErrorData;
@@ -676,7 +677,7 @@ public class DefiDataProviderImpl implements DefiDataProvider {
     ResultErrorData resultErrorData = resultData.getError();
 
     if (null != resultErrorData) {
-      throw new DfxException("ERROR " + resultErrorData.getCode() + ":\n" + resultErrorData.getMessage());
+      throw new DefiChainException(resultErrorData);
     }
   }
 

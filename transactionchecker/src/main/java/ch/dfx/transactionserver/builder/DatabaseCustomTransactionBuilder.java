@@ -29,6 +29,7 @@ import ch.dfx.defichain.data.transaction.DefiTransactionScriptPubKeyData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVinData;
 import ch.dfx.defichain.data.transaction.DefiTransactionVoutData;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.manager.ManagerUtils;
 import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.TransactionCustomAccountToAccountInDTO;
 import ch.dfx.transactionserver.data.TransactionCustomAccountToAccountOutDTO;
@@ -150,7 +151,7 @@ public class DatabaseCustomTransactionBuilder {
         dataProvider.isAppliedCustomTransaction(transactionId, (long) blockNumber);
 
     if (BooleanUtils.isTrue(isAppliedCustomTransaction)) {
-      byte customType = getCustomType(transactionData);
+      byte customType = ManagerUtils.getCustomType(dataProvider, transactionData);
 
       if (0x00 != customType) {
         String typeCode = String.valueOf((char) customType);
@@ -169,26 +170,6 @@ public class DatabaseCustomTransactionBuilder {
         }
       }
     }
-  }
-
-  /**
-   * Return: 0x00 = No Custom Type
-   */
-  private byte getCustomType(@Nonnull DefiTransactionData transactionData) throws DfxException {
-    byte customType = 0x00;
-
-    for (DefiTransactionVoutData transactionVoutData : transactionData.getVout()) {
-      DefiTransactionScriptPubKeyData transactionVoutScriptPubKeyData = transactionVoutData.getScriptPubKey();
-      String scriptPubKeyHex = transactionVoutScriptPubKeyData.getHex();
-
-      customType = dataProvider.getCustomType(scriptPubKeyHex);
-
-      if (0x00 != customType) {
-        break;
-      }
-    }
-
-    return customType;
   }
 
   /**

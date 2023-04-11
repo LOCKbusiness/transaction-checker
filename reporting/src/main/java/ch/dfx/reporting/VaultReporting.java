@@ -12,7 +12,6 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
@@ -86,11 +85,6 @@ public class VaultReporting extends Reporting {
       @Nonnull String fileName,
       @Nonnull String sheet) throws DfxException {
     LOGGER.debug("report()");
-
-    Objects.requireNonNull(token, "null 'token' not allowed");
-    Objects.requireNonNull(rootPath, "null 'rootPath' not allowed");
-    Objects.requireNonNull(fileName, "null 'fileName' not allowed");
-    Objects.requireNonNull(sheet, "null 'sheet' not allowed");
 
     long startTime = System.currentTimeMillis();
 

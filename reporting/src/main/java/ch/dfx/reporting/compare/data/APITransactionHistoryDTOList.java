@@ -1,4 +1,4 @@
-package ch.dfx.tools.compare.data;
+package ch.dfx.reporting.compare.data;
 
 import java.util.ArrayList;
 
@@ -7,13 +7,13 @@ import ch.dfx.TransactionCheckerUtils;
 /**
  * 
  */
-public class HistoryDTOList extends ArrayList<HistoryDTO> {
+public class APITransactionHistoryDTOList extends ArrayList<APITransactionHistoryDTO> {
   private static final long serialVersionUID = 6723453285362653554L;
 
   /**
    * 
    */
-  public HistoryDTOList() {
+  public APITransactionHistoryDTOList() {
   }
 
   @Override

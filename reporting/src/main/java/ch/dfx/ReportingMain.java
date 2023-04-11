@@ -95,12 +95,15 @@ public class ReportingMain {
     MessageEventBus.getInstance().register(messageEventCollector);
 
     // ...
-    int runPeriodReport = ConfigProvider.getInstance().getValue(ReportingConfigEnum.RUN_PERIOD_REPORT, 600);
+    int runPeriodReport = ConfigProvider.getInstance().getValue(ReportingConfigEnum.RUN_PERIOD_REPORT, 3600);
     int runPeriodDefiManager = ConfigProvider.getInstance().getValue(ReportingConfigEnum.RUN_PERIOD_DEFIMANAGER, 60);
+    int runPeriodApiCompare = ConfigProvider.getInstance().getValue(ReportingConfigEnum.RUN_PERIOD_API_COMPARE, 86400);
 
-    LOGGER.debug("run period report: " + runPeriodReport);
+    LOGGER.debug("run period report:       " + runPeriodReport);
     LOGGER.debug("run period defi manager: " + runPeriodDefiManager);
+    LOGGER.debug("run period api compare:  " + runPeriodApiCompare);
 
+    // ...
     if (60 <= runPeriodReport) {
       ReportingRunnable reporting = new ReportingRunnable(network, databaseManager);
 
@@ -111,9 +114,21 @@ public class ReportingMain {
       SchedulerProvider.getInstance().add(reporting, delayToNextHour, runPeriodReport, TimeUnit.SECONDS);
     }
 
+    // ...
     if (30 <= runPeriodDefiManager) {
       DefiManagerRunnable defiManagerRunnable = new DefiManagerRunnable(messageEventProvider);
       SchedulerProvider.getInstance().add(defiManagerRunnable, 30, runPeriodDefiManager, TimeUnit.SECONDS);
     }
+
+    // ...
+//    if (3600 <= runPeriodApiCompare) {
+//      APICompareRunnable apiCompareRunnable = new APICompareRunnable(network, databaseManager);
+//
+//      Date now = new Date();
+//      Date nextDay = DateUtils.ceiling(now, Calendar.DAY_OF_MONTH);
+//      int delayToNextDay = (int) (nextDay.getTime() - now.getTime()) / 1000;
+//
+//      SchedulerProvider.getInstance().add(apiCompareRunnable, delayToNextDay, runPeriodApiCompare, TimeUnit.SECONDS);
+//    }
   }
 }

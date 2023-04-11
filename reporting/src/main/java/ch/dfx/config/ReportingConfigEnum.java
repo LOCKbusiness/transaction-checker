@@ -15,9 +15,13 @@ public enum ReportingConfigEnum implements ConfigEntry {
   TELEGRAM_AUTOMATIC_VAULT_INFORMATION_TOKEN("telegram.automaticVaultInformationBot.token"),
   TELEGRAM_AUTOMATIC_VAULT_INFORMATION_CHAT_ID("telegram.automaticVaultInformationBot.chatId"),
 
-  // Run Period f�r Scheduler ...
+  // Run Period for Scheduler ...
   RUN_PERIOD_REPORT("scheduler.run_period_report"),
   RUN_PERIOD_DEFIMANAGER("scheduler.run_period_defimanager"),
+  RUN_PERIOD_API_COMPARE("scheduler.run_period_api_compare"),
+
+  // LOCK API ...
+  LOCK_API_URL("lock.api_url"),
 
   // Yield Machine
   YM_LIQUIDITY_ADDRESS("yieldmachine.liquidity_address"),
@@ -82,6 +86,13 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DIAGRAM_SHEET("google.transparency_report.yieldmachine.diagram_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_AMOUNT_SHEET("google.transparency_report.yieldmachine.history_amount_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_PRICE_SHEET("google.transparency_report.yieldmachine.history_price_sheet"),
+
+  // Balance Compare Reporting ...
+  GOOGLE_BALANCE_COMPARE_REPORT_STAKING_FILENAME("google.balance_compare_report.staking.filename"),
+  GOOGLE_BALANCE_COMPARE_REPORT_STAKING_DIFF_TX_SHEET("google.balance_compare_report.staking.diff_tx_sheet"),
+
+  GOOGLE_BALANCE_COMPARE_REPORT_YIELDMACHINE_FILENAME("google.balance_compare_report.yieldmachine.filename"),
+  GOOGLE_BALANCE_COMPARE_REPORT_YIELDMACHINE_DIFF_TX_SHEET("google.balance_compare_report.yieldmachine.diff_tx_sheet"),
 
   // Rendite ...
   GOOGLE_YIELD_REPORT_YIELDMACHINE_FILENAME("google.yield_report.filename"),

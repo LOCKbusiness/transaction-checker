@@ -79,7 +79,7 @@ public class DefiManagerRunnable implements SchedulerProviderRunnable {
     } finally {
       isProcessing = false;
 
-      LOGGER.debug("[DefiManagerRunnable] runtime: " + (System.currentTimeMillis() - startTime));
+      LOGGER.debug("runtime: " + (System.currentTimeMillis() - startTime));
     }
   }
 

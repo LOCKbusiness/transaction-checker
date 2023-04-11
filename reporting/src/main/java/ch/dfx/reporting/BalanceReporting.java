@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
@@ -47,7 +46,7 @@ public class BalanceReporting extends Reporting {
 
   // ...
   private final List<String> logInfoList;
-  private final BalanceReportingTypeEnum balanceReportingType;
+  private final BalanceReportingTypeEnum reportingType;
 
   /**
    * 
@@ -57,11 +56,11 @@ public class BalanceReporting extends Reporting {
       @Nonnull DatabaseBlockHelper databaseBlockHelper,
       @Nonnull DatabaseBalanceHelper databaseBalanceHelper,
       @Nonnull List<String> logInfoList,
-      @Nonnull BalanceReportingTypeEnum balanceReportingType) {
+      @Nonnull BalanceReportingTypeEnum reportingType) {
     super(network, databaseBlockHelper, databaseBalanceHelper);
 
     this.logInfoList = logInfoList;
-    this.balanceReportingType = balanceReportingType;
+    this.reportingType = reportingType;
   }
 
   /**
@@ -73,23 +72,19 @@ public class BalanceReporting extends Reporting {
       @Nonnull String rootPath,
       @Nonnull String fileName,
       @Nonnull String sheet) throws DfxException {
-    LOGGER.debug("report()");
-
-    Objects.requireNonNull(rootPath, "null 'rootPath' not allowed");
-    Objects.requireNonNull(fileName, "null 'fileName' not allowed");
-    Objects.requireNonNull(sheet, "null 'sheet' not allowed");
+    LOGGER.debug("report(): reportingType=" + reportingType);
 
     long startTime = System.currentTimeMillis();
 
     try {
-      if (BalanceReportingTypeEnum.STAKING == balanceReportingType) {
+      if (BalanceReportingTypeEnum.STAKING == reportingType) {
         RowDataList stakingCustomerRowDataList = createStakingCustomerRowDataList();
-        logInfoList.add("Addresses: " + stakingCustomerRowDataList.size() + " (" + balanceReportingType + ")");
+        logInfoList.add("Addresses: " + stakingCustomerRowDataList.size() + " (" + reportingType + ")");
 
         stakingBalanceReport(reportingTimestamp, rootPath, fileName, sheet, stakingCustomerRowDataList);
       } else {
         RowDataList yieldmachineCustomerRowDataList = createYieldmachineRowDataList();
-        logInfoList.add("Addresses: " + yieldmachineCustomerRowDataList.size() + " (" + balanceReportingType + ")");
+        logInfoList.add("Addresses: " + yieldmachineCustomerRowDataList.size() + " (" + reportingType + ")");
 
         yieldmachineBalanceReport(reportingTimestamp, rootPath, fileName, sheet, yieldmachineCustomerRowDataList);
       }

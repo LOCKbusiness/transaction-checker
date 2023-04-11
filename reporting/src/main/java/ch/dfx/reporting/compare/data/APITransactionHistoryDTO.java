@@ -1,4 +1,4 @@
-package ch.dfx.tools.compare.data;
+package ch.dfx.reporting.compare.data;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -8,7 +8,7 @@ import ch.dfx.TransactionCheckerUtils;
 /**
  * 
  */
-public class HistoryDTO {
+public class APITransactionHistoryDTO {
   private String type = null;
 
   private BigDecimal inputAmount = null;
@@ -24,18 +24,36 @@ public class HistoryDTO {
   private BigDecimal amountInChf = null;
   private BigDecimal amountInUsd = null;
 
-  private String payoutTarget = null;
   private String txId = null;
-
   private Date date = null;
 
+  private String source = null;
+  private String target = null;
+  private String targetAddress = null;
+
   private String status = null;
-  private String stakingStrategy = null;
 
   /**
    * 
    */
-  public HistoryDTO() {
+  public static APITransactionHistoryDTO createUnknownAPITransactionHistoryDTO() {
+    APITransactionHistoryDTO apiTransactionHistoryDTO = new APITransactionHistoryDTO();
+
+    apiTransactionHistoryDTO.setType("Unknown");
+    apiTransactionHistoryDTO.setTxId("");
+
+    apiTransactionHistoryDTO.setInputAsset("");
+    apiTransactionHistoryDTO.setInputAmount(BigDecimal.ZERO);
+    apiTransactionHistoryDTO.setOutputAsset("");
+    apiTransactionHistoryDTO.setOutputAmount(BigDecimal.ZERO);
+
+    return apiTransactionHistoryDTO;
+  }
+
+  /**
+   * 
+   */
+  public APITransactionHistoryDTO() {
   }
 
   public String getType() {
@@ -118,14 +136,6 @@ public class HistoryDTO {
     this.amountInUsd = amountInUsd;
   }
 
-  public String getPayoutTarget() {
-    return payoutTarget;
-  }
-
-  public void setPayoutTarget(String payoutTarget) {
-    this.payoutTarget = payoutTarget;
-  }
-
   public String getTxId() {
     return txId;
   }
@@ -142,20 +152,36 @@ public class HistoryDTO {
     this.date = date;
   }
 
+  public String getSource() {
+    return source;
+  }
+
+  public void setSource(String source) {
+    this.source = source;
+  }
+
+  public String getTarget() {
+    return target;
+  }
+
+  public void setTarget(String target) {
+    this.target = target;
+  }
+
+  public String getTargetAddress() {
+    return targetAddress;
+  }
+
+  public void setTargetAddress(String targetAddress) {
+    this.targetAddress = targetAddress;
+  }
+
   public String getStatus() {
     return status;
   }
 
   public void setStatus(String status) {
     this.status = status;
-  }
-
-  public String getStakingStrategy() {
-    return stakingStrategy;
-  }
-
-  public void setStakingStrategy(String stakingStrategy) {
-    this.stakingStrategy = stakingStrategy;
   }
 
   @Override

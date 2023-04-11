@@ -18,6 +18,7 @@ import ch.dfx.common.logging.MessageEventBus;
 import ch.dfx.common.logging.MessageEventCollector;
 import ch.dfx.common.logging.MessageEventProvider;
 import ch.dfx.config.ReportingConfigEnum;
+import ch.dfx.reporting.compare.APICompareRunnable;
 import ch.dfx.supervision.DefiManagerRunnable;
 import ch.dfx.transactionserver.database.H2DBManager;
 import ch.dfx.transactionserver.database.H2DBManagerImpl;
@@ -121,14 +122,14 @@ public class ReportingMain {
     }
 
     // ...
-//    if (3600 <= runPeriodApiCompare) {
-//      APICompareRunnable apiCompareRunnable = new APICompareRunnable(network, databaseManager);
-//
-//      Date now = new Date();
-//      Date nextDay = DateUtils.ceiling(now, Calendar.DAY_OF_MONTH);
-//      int delayToNextDay = (int) (nextDay.getTime() - now.getTime()) / 1000;
-//
-//      SchedulerProvider.getInstance().add(apiCompareRunnable, delayToNextDay, runPeriodApiCompare, TimeUnit.SECONDS);
-//    }
+    if (3600 <= runPeriodApiCompare) {
+      APICompareRunnable apiCompareRunnable = new APICompareRunnable(network, databaseManager);
+
+      Date now = new Date();
+      Date nextDay = DateUtils.ceiling(now, Calendar.DAY_OF_MONTH);
+      int delayToNextDay = (int) (nextDay.getTime() - now.getTime()) / 1000;
+
+      SchedulerProvider.getInstance().add(apiCompareRunnable, delayToNextDay, runPeriodApiCompare, TimeUnit.SECONDS);
+    }
   }
 }

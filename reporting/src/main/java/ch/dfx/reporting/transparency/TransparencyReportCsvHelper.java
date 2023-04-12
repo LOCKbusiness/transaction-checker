@@ -26,6 +26,7 @@ import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.reporting.data.YieldPoolSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryAmountSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryInterimDifferenceSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryPriceSheetDTO;
 
 /**
@@ -47,6 +48,7 @@ public class TransparencyReportCsvHelper {
   private static final DecimalFormat US_DECIMAL_FORMAT = new DecimalFormat("##,##0.00000000");
 
   private static final String HISTORY_AMOUNT_CSV_FILENAME = "TransparencyReportHistoryAmount.csv";
+  private static final String HISTORY_INTERIM_DIFFERENCE_CSV_FILENAME = "TransparencyReportHistoryInterimDifference.csv";
   private static final String HISTORY_PRICE_CSV_FILENAME = "TransparencyReportHistoryPrice.csv";
 
   private static final File DATA_PATH = Path.of("data", "yieldmachine").toFile();
@@ -62,10 +64,12 @@ public class TransparencyReportCsvHelper {
    */
   public void writeToCSV(
       @Nonnull HistoryAmountSheetDTO historyAmountSheetDTO,
+      @Nonnull HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO,
       @Nonnull HistoryPriceSheetDTO historyPriceSheetDTO) throws DfxException {
     LOGGER.debug("writeToCSV()");
 
     writeHistoryAmountSheetDTOToCSV(historyAmountSheetDTO);
+    writeHistoryInterimDifferenceSheetDTOToCSV(historyInterimDifferenceSheetDTO);
     writeHistoryPriceSheetDTOToCSV(historyPriceSheetDTO);
   }
 
@@ -90,6 +94,30 @@ public class TransparencyReportCsvHelper {
       writer.append("\n");
     } catch (Exception e) {
       throw new DfxException("writeHistoryAmountSheetDTOToCSV", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void writeHistoryInterimDifferenceSheetDTOToCSV(@Nonnull HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO) throws DfxException {
+    LOGGER.debug("writeHistoryInterimDifferenceSheetDTOToCSV()");
+
+    File historyInterimDifferenceFile = new File(DATA_PATH, HISTORY_INTERIM_DIFFERENCE_CSV_FILENAME);
+
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(historyInterimDifferenceFile, true))) {
+      writer.append(DATE_FORMAT.format(historyInterimDifferenceSheetDTO.getTimestamp()));
+
+      for (TokenEnum token : TokenEnum.values()) {
+        // TODO: currently without EUROC, coming later ...
+        if (TokenEnum.EUROC != token) {
+          writer.append(";").append(US_DECIMAL_FORMAT.format(historyInterimDifferenceSheetDTO.getInterimDifference(token)));
+        }
+      }
+
+      writer.append("\n");
+    } catch (Exception e) {
+      throw new DfxException("writeHistoryInterimDifferenceSheetDTOToCSV", e);
     }
   }
 
@@ -192,6 +220,50 @@ public class TransparencyReportCsvHelper {
       return historyAmountSheetDTOList;
     } catch (Exception e) {
       throw new DfxException("readHistoryAmountSheetDTOFromCSV", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public List<HistoryInterimDifferenceSheetDTO> readHistoryInterimDifferenceSheetDTOFromCSV(@Nonnull Set<Integer> historyHourSet) throws DfxException {
+    LOGGER.debug("readHistoryInterimDifferenceSheetDTOFromCSV()");
+
+    File historyInterimDifferenceFile = new File(DATA_PATH, HISTORY_INTERIM_DIFFERENCE_CSV_FILENAME);
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(historyInterimDifferenceFile))) {
+      List<HistoryInterimDifferenceSheetDTO> historyInterimDifferenceSheetDTOList = new ArrayList<>();
+
+      // Skip header ...
+      reader.readLine();
+
+      String line = null;
+
+      while (null != (line = reader.readLine())) {
+        String[] entryArray = line.split(";");
+
+        Timestamp timestamp = Timestamp.valueOf(entryArray[0]);
+
+        if (historyHourSet.isEmpty()
+            || historyHourSet.contains(timestamp.toLocalDateTime().getHour())) {
+          HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = new HistoryInterimDifferenceSheetDTO(timestamp);
+
+          int i = 1;
+
+          for (TokenEnum token : TokenEnum.values()) {
+            // TODO: currently without EUROC, coming later ...
+            if (TokenEnum.EUROC != token) {
+              historyInterimDifferenceSheetDTO.put(token, BigDecimal.valueOf(US_DECIMAL_FORMAT.parse(entryArray[i++]).doubleValue()));
+            }
+          }
+
+          historyInterimDifferenceSheetDTOList.add(historyInterimDifferenceSheetDTO);
+        }
+      }
+
+      return historyInterimDifferenceSheetDTOList;
+    } catch (Exception e) {
+      throw new DfxException("readHistoryInterimDifferenceSheetDTOFromCSV", e);
     }
   }
 

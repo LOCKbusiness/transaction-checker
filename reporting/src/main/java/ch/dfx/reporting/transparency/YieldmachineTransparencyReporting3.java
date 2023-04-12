@@ -40,6 +40,7 @@ import ch.dfx.reporting.Reporting;
 import ch.dfx.reporting.transparency.data.DFISheetDTO;
 import ch.dfx.reporting.transparency.data.DUSDSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryAmountSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryInterimDifferenceSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryPriceSheetDTO;
 import ch.dfx.reporting.transparency.data.ReportDTO;
 import ch.dfx.reporting.transparency.data.TokenSheetDTO;
@@ -63,6 +64,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     CUSTOMER,
     DIAGRAM,
     HISTORY_AMOUNT,
+    HISTORY_INTERIM_DIFFERENCE,
     HISTORY_PRICE
   }
 
@@ -185,8 +187,9 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
       // ...
       HistoryAmountSheetDTO historyAmountSheetDTO = createHistoryAmountSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
+      HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = createHistoryInterimDifferenceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
       HistoryPriceSheetDTO historyPriceSheetDTO = createHistoryPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-      transparencyReportCsvHelper.writeToCSV(historyAmountSheetDTO, historyPriceSheetDTO);
+      transparencyReportCsvHelper.writeToCSV(historyAmountSheetDTO, historyInterimDifferenceSheetDTO, historyPriceSheetDTO);
 
       // ...
       int hour = reportingTimestamp.toLocalDateTime().getHour();
@@ -205,7 +208,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
             reportingTimestamp,
             rootPath, fileNameExtern, sheetIdToSheetNameMap,
             tokenToReportDTOMap, tokenToTransactionSheetDTOMap, tokenToTotalSheetDTOMap, depositAddressToStakingDTOMap,
-            historyHourSet);
+            historyHourSet,
+            false);
       }
 
       // ...
@@ -213,7 +217,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
           reportingTimestamp,
           rootPath, fileNameIntern, sheetIdToSheetNameMap,
           tokenToReportDTOMap, tokenToTransactionSheetDTOMap, tokenToTotalSheetDTOMap, depositAddressToStakingDTOMap,
-          new HashSet<>());
+          new HashSet<>(),
+          true);
 
       // ...
       if (-1 != BigDecimal.ZERO.compareTo(totalBalance)) {
@@ -1085,9 +1090,10 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     ReportDTO reportDTO = tokenToReportDTOMap.get(token);
     DFISheetDTO dfiSheetDTO = reportDTO.getDfiSheetDTO();
 
+    BigDecimal interimDifference = dfiSheetDTO.getLockInterimDifference();
     BigDecimal totalDifference = dfiSheetDTO.getTotalDifference();
 
-    fillTokenToTotalSheetDTOMap(token, totalDifference, tokenToPriceMap, tokenToTotalSheetDTOMap);
+    fillTokenToTotalSheetDTOMap(token, interimDifference, totalDifference, tokenToPriceMap, tokenToTotalSheetDTOMap);
   }
 
   /**
@@ -1103,9 +1109,10 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     ReportDTO reportDTO = tokenToReportDTOMap.get(token);
     DUSDSheetDTO dusdSheetDTO = reportDTO.getDusdSheetDTO();
 
+    BigDecimal interimDifference = dusdSheetDTO.getLockInterimDifference();
     BigDecimal totalDifference = dusdSheetDTO.getTotalDifference();
 
-    fillTokenToTotalSheetDTOMap(token, totalDifference, tokenToPriceMap, tokenToTotalSheetDTOMap);
+    fillTokenToTotalSheetDTOMap(token, interimDifference, totalDifference, tokenToPriceMap, tokenToTotalSheetDTOMap);
   }
 
   /**
@@ -1121,9 +1128,10 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     ReportDTO reportDTO = tokenToReportDTOMap.get(token);
     TokenSheetDTO tokenSheetDTO = reportDTO.getTokenSheetDTO();
 
+    BigDecimal interimDifference = tokenSheetDTO.getLockInterimDifference();
     BigDecimal totalDifference = tokenSheetDTO.getTotalDifference();
 
-    fillTokenToTotalSheetDTOMap(token, totalDifference, tokenToPriceMap, tokenToTotalSheetDTOMap);
+    fillTokenToTotalSheetDTOMap(token, interimDifference, totalDifference, tokenToPriceMap, tokenToTotalSheetDTOMap);
   }
 
   /**
@@ -1131,6 +1139,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
    */
   private void fillTokenToTotalSheetDTOMap(
       @Nonnull TokenEnum token,
+      @Nonnull BigDecimal interimDifference,
       @Nonnull BigDecimal totalDifference,
       @Nonnull Map<TokenEnum, BigDecimal> tokenToPriceMap,
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
@@ -1141,6 +1150,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     TotalSheetDTO totalSheetDTO = new TotalSheetDTO();
 
+    totalSheetDTO.setInterimDifference(interimDifference);
     totalSheetDTO.setAmount(totalDifference);
     totalSheetDTO.setPrice(price);
     totalSheetDTO.setValue(value);
@@ -1349,7 +1359,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       @Nonnull Map<TokenEnum, TransactionSheetDTO> tokenToTransactionSheetDTOMap,
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap,
       @Nonnull Multimap<Integer, StakingDTO> depositAddressToStakingDTOMap,
-      @Nonnull Set<Integer> historyHourSet) throws DfxException {
+      @Nonnull Set<Integer> historyHourSet,
+      boolean isInternal) throws DfxException {
     LOGGER.debug("writeReport()");
 
     openExcel(rootPath, fileName);
@@ -1361,6 +1372,10 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     writeHistoryAmountSheet(sheetIdToSheetNameMap, historyHourSet);
     writeHistoryPriceSheet(sheetIdToSheetNameMap, historyHourSet);
+
+    if (isInternal) {
+      writeHistoryInterimDifferenceSheet(sheetIdToSheetNameMap, historyHourSet);
+    }
 
     closeExcel();
   }
@@ -1526,7 +1541,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<HistoryAmountSheetDTO> historyAmountSheetDTOList = transparencyReportCsvHelper.readHistoryAmountSheetDTOFromCSV(historyHourSet);
+    List<HistoryAmountSheetDTO> historyAmountSheetDTOList =
+        transparencyReportCsvHelper.readHistoryAmountSheetDTOFromCSV(historyHourSet);
 
     for (HistoryAmountSheetDTO historyAmountSheetDTO : historyAmountSheetDTOList) {
       CellDataList historyAmountCellDataList = cellListCreator.createHistoryAmountCellDataList(historyAmountSheetDTO);
@@ -1545,6 +1561,33 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   /**
    * 
    */
+  private void writeHistoryInterimDifferenceSheet(
+      @Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap,
+      @Nonnull Set<Integer> historyHourSet) throws DfxException {
+    LOGGER.trace("writeHistoryInterimDifferenceSheet()");
+
+    RowDataList rowDataList = new RowDataList(1);
+
+    List<HistoryInterimDifferenceSheetDTO> historyInterimDifferenceSheetDTOList =
+        transparencyReportCsvHelper.readHistoryInterimDifferenceSheetDTOFromCSV(historyHourSet);
+
+    for (HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO : historyInterimDifferenceSheetDTOList) {
+      CellDataList historyInterimDifferenceCellDataList = cellListCreator.createHistoryInterimDifferenceCellDataList(historyInterimDifferenceSheetDTO);
+
+      RowData rowData = new RowData().addCellDataList(historyInterimDifferenceCellDataList);
+      rowDataList.add(rowData);
+    }
+
+    String historyInterimDifferenceSheetName = sheetIdToSheetNameMap.get(SheetEnum.HISTORY_INTERIM_DIFFERENCE);
+    setSheet(historyInterimDifferenceSheetName);
+
+    cleanExcel(1);
+    writeExcel(rowDataList);
+  }
+
+  /**
+   * 
+   */
   private void writeHistoryPriceSheet(
       @Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap,
       @Nonnull Set<Integer> historyHourSet) throws DfxException {
@@ -1552,7 +1595,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<HistoryPriceSheetDTO> historyPriceSheetDTOList = transparencyReportCsvHelper.readHistoryPriceSheetDTOFromCSV(historyHourSet);
+    List<HistoryPriceSheetDTO> historyPriceSheetDTOList =
+        transparencyReportCsvHelper.readHistoryPriceSheetDTOFromCSV(historyHourSet);
 
     for (HistoryPriceSheetDTO historyPriceSheetDTO : historyPriceSheetDTOList) {
       CellDataList historyPriceCellDataList = cellListCreator.createHistoryPriceCellDataList(historyPriceSheetDTO);
@@ -1587,6 +1631,27 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     }
 
     return historyAmountSheetDTO;
+  }
+
+  /**
+   * 
+   */
+  private HistoryInterimDifferenceSheetDTO createHistoryInterimDifferenceSheetDTO(
+      @Nonnull Timestamp reportingTimestamp,
+      @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
+    LOGGER.debug("createHistoryInterimDifferenceSheetDTO()");
+
+    HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = new HistoryInterimDifferenceSheetDTO(reportingTimestamp);
+
+    for (TokenEnum token : TokenEnum.values()) {
+      // TODO: currently without EUROC, coming later ...
+      if (TokenEnum.EUROC != token) {
+        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+        historyInterimDifferenceSheetDTO.put(token, totalSheetDTO.getInterimDifference());
+      }
+    }
+
+    return historyInterimDifferenceSheetDTO;
   }
 
   /**
@@ -1947,6 +2012,29 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
         // TODO: currently without EUROC, coming later ...
         if (TokenEnum.EUROC != token) {
           cellDataList.add(new CellData().setCellIndex(i++).setValue(historyAmountSheetDTO.getAmount(token)));
+        }
+      }
+
+      return cellDataList;
+    }
+
+    /**
+     * 
+     */
+    private CellDataList createHistoryInterimDifferenceCellDataList(@Nonnull HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO) {
+      LOGGER.trace("createHistoryInterimDifferenceCellDataList()");
+
+      // ...
+      CellDataList cellDataList = new CellDataList();
+
+      cellDataList.add(new CellData().setCellIndex(0).setValue(historyInterimDifferenceSheetDTO.getTimestamp()));
+
+      int i = 1;
+
+      for (TokenEnum token : TokenEnum.values()) {
+        // TODO: currently without EUROC, coming later ...
+        if (TokenEnum.EUROC != token) {
+          cellDataList.add(new CellData().setCellIndex(i++).setValue(historyInterimDifferenceSheetDTO.getInterimDifference(token)));
         }
       }
 

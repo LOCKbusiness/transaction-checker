@@ -309,6 +309,8 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 
       String diagramSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DIAGRAM_SHEET);
       String historyAmountSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_AMOUNT_SHEET);
+      String historyInterimDifferenceSheet =
+          ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_INTERIM_DIFFERENCE_SHEET);
       String historyPriceSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_PRICE_SHEET);
 
       String dfiTotalSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DFI_TOTAL_SHEET);
@@ -326,6 +328,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.CUSTOMER, customerSheet);
       sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.DIAGRAM, diagramSheet);
       sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.HISTORY_AMOUNT, historyAmountSheet);
+      sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.HISTORY_INTERIM_DIFFERENCE, historyInterimDifferenceSheet);
       sheetIdToSheetNameMap.put(YieldmachineTransparencyReporting3.SheetEnum.HISTORY_PRICE, historyPriceSheet);
 
       boolean isSheetNameNull = sheetIdToSheetNameMap.values().stream().anyMatch(sheetName -> null == sheetName);

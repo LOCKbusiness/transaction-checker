@@ -8,6 +8,8 @@ import ch.dfx.TransactionCheckerUtils;
  * 
  */
 public class TotalSheetDTO {
+  private BigDecimal interimDifference = BigDecimal.ZERO;
+
   private BigDecimal amount = BigDecimal.ZERO;
   private BigDecimal price = BigDecimal.ZERO;
   private BigDecimal value = BigDecimal.ZERO;
@@ -16,6 +18,14 @@ public class TotalSheetDTO {
    * 
    */
   public TotalSheetDTO() {
+  }
+
+  public BigDecimal getInterimDifference() {
+    return interimDifference;
+  }
+
+  public void setInterimDifference(BigDecimal interimDifference) {
+    this.interimDifference = interimDifference;
   }
 
   public BigDecimal getAmount() {

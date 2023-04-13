@@ -26,6 +26,7 @@ import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.reporting.data.YieldPoolSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryAmountSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryAssetPriceSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryInterimDifferenceSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryPriceSheetDTO;
 
@@ -49,6 +50,7 @@ public class TransparencyReportCsvHelper {
 
   private static final String HISTORY_AMOUNT_CSV_FILENAME = "TransparencyReportHistoryAmount.csv";
   private static final String HISTORY_INTERIM_DIFFERENCE_CSV_FILENAME = "TransparencyReportHistoryInterimDifference.csv";
+  private static final String HISTORY_ASSET_PRICE_CSV_FILENAME = "TransparencyReportHistoryAssetPrice.csv";
   private static final String HISTORY_PRICE_CSV_FILENAME = "TransparencyReportHistoryPrice.csv";
 
   private static final File DATA_PATH = Path.of("data", "yieldmachine").toFile();
@@ -65,11 +67,13 @@ public class TransparencyReportCsvHelper {
   public void writeToCSV(
       @Nonnull HistoryAmountSheetDTO historyAmountSheetDTO,
       @Nonnull HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO,
+      @Nonnull HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO,
       @Nonnull HistoryPriceSheetDTO historyPriceSheetDTO) throws DfxException {
     LOGGER.debug("writeToCSV()");
 
     writeHistoryAmountSheetDTOToCSV(historyAmountSheetDTO);
     writeHistoryInterimDifferenceSheetDTOToCSV(historyInterimDifferenceSheetDTO);
+    writeHistoryAssetPriceSheetDTOToCSV(historyAssetPriceSheetDTO);
     writeHistoryPriceSheetDTOToCSV(historyPriceSheetDTO);
   }
 
@@ -118,6 +122,30 @@ public class TransparencyReportCsvHelper {
       writer.append("\n");
     } catch (Exception e) {
       throw new DfxException("writeHistoryInterimDifferenceSheetDTOToCSV", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void writeHistoryAssetPriceSheetDTOToCSV(@Nonnull HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO) throws DfxException {
+    LOGGER.debug("writeHistoryAssetPriceSheetDTOToCSV()");
+
+    File historyAssetPriceFile = new File(DATA_PATH, HISTORY_ASSET_PRICE_CSV_FILENAME);
+
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(historyAssetPriceFile, true))) {
+      writer.append(DATE_FORMAT.format(historyAssetPriceSheetDTO.getTimestamp()));
+
+      for (TokenEnum token : TokenEnum.values()) {
+        // TODO: currently without EUROC, coming later ...
+        if (TokenEnum.EUROC != token) {
+          writer.append(";").append(US_DECIMAL_FORMAT.format(historyAssetPriceSheetDTO.getPrice(token)));
+        }
+      }
+
+      writer.append("\n");
+    } catch (Exception e) {
+      throw new DfxException("writeHistoryAssetPriceSheetDTOToCSV", e);
     }
   }
 
@@ -264,6 +292,50 @@ public class TransparencyReportCsvHelper {
       return historyInterimDifferenceSheetDTOList;
     } catch (Exception e) {
       throw new DfxException("readHistoryInterimDifferenceSheetDTOFromCSV", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public List<HistoryAssetPriceSheetDTO> readHistoryAssetPriceSheetDTOFromCSV(@Nonnull Set<Integer> historyHourSet) throws DfxException {
+    LOGGER.debug("readHistoryAssetPriceSheetDTOFromCSV()");
+
+    File historyAssetPriceFile = new File(DATA_PATH, HISTORY_ASSET_PRICE_CSV_FILENAME);
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(historyAssetPriceFile))) {
+      List<HistoryAssetPriceSheetDTO> historyAssetPriceSheetDTOList = new ArrayList<>();
+
+      // Skip header ...
+      reader.readLine();
+
+      String line = null;
+
+      while (null != (line = reader.readLine())) {
+        String[] entryArray = line.split(";");
+
+        Timestamp timestamp = Timestamp.valueOf(entryArray[0]);
+
+        if (historyHourSet.isEmpty()
+            || historyHourSet.contains(timestamp.toLocalDateTime().getHour())) {
+          HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = new HistoryAssetPriceSheetDTO(timestamp);
+
+          int i = 1;
+
+          for (TokenEnum token : TokenEnum.values()) {
+            // TODO: currently without EUROC, coming later ...
+            if (TokenEnum.EUROC != token) {
+              historyAssetPriceSheetDTO.put(token, BigDecimal.valueOf(US_DECIMAL_FORMAT.parse(entryArray[i++]).doubleValue()));
+            }
+          }
+
+          historyAssetPriceSheetDTOList.add(historyAssetPriceSheetDTO);
+        }
+      }
+
+      return historyAssetPriceSheetDTOList;
+    } catch (Exception e) {
+      throw new DfxException("readHistoryAssetPriceSheetDTOFromCSV", e);
     }
   }
 

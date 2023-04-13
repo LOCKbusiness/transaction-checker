@@ -86,6 +86,7 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DIAGRAM_SHEET("google.transparency_report.yieldmachine.diagram_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_AMOUNT_SHEET("google.transparency_report.yieldmachine.history_amount_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_INTERIM_DIFFERENCE_SHEET("google.transparency_report.yieldmachine.history_interim_difference_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_ASSET_PRICE_SHEET("google.transparency_report.yieldmachine.history_asset_price_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_PRICE_SHEET("google.transparency_report.yieldmachine.history_price_sheet"),
 
   // Balance Compare Reporting ...

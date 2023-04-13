@@ -40,6 +40,7 @@ import ch.dfx.reporting.Reporting;
 import ch.dfx.reporting.transparency.data.DFISheetDTO;
 import ch.dfx.reporting.transparency.data.DUSDSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryAmountSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryAssetPriceSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryInterimDifferenceSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryPriceSheetDTO;
 import ch.dfx.reporting.transparency.data.ReportDTO;
@@ -65,6 +66,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     DIAGRAM,
     HISTORY_AMOUNT,
     HISTORY_INTERIM_DIFFERENCE,
+    HISTORY_ASSET_PRICE,
     HISTORY_PRICE
   }
 
@@ -188,8 +190,10 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       // ...
       HistoryAmountSheetDTO historyAmountSheetDTO = createHistoryAmountSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
       HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = createHistoryInterimDifferenceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
+      HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = createHistoryAssetPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
       HistoryPriceSheetDTO historyPriceSheetDTO = createHistoryPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-      transparencyReportCsvHelper.writeToCSV(historyAmountSheetDTO, historyInterimDifferenceSheetDTO, historyPriceSheetDTO);
+
+      transparencyReportCsvHelper.writeToCSV(historyAmountSheetDTO, historyInterimDifferenceSheetDTO, historyAssetPriceSheetDTO, historyPriceSheetDTO);
 
       // ...
       int hour = reportingTimestamp.toLocalDateTime().getHour();
@@ -1375,6 +1379,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     if (isInternal) {
       writeHistoryInterimDifferenceSheet(sheetIdToSheetNameMap, historyHourSet);
+      writeHistoryAssetPriceSheet(sheetIdToSheetNameMap, historyHourSet);
     }
 
     closeExcel();
@@ -1588,6 +1593,33 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   /**
    * 
    */
+  private void writeHistoryAssetPriceSheet(
+      @Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap,
+      @Nonnull Set<Integer> historyHourSet) throws DfxException {
+    LOGGER.trace("writeHistoryAssetPriceSheet()");
+
+    RowDataList rowDataList = new RowDataList(1);
+
+    List<HistoryAssetPriceSheetDTO> historyAssetPriceSheetDTOList =
+        transparencyReportCsvHelper.readHistoryAssetPriceSheetDTOFromCSV(historyHourSet);
+
+    for (HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO : historyAssetPriceSheetDTOList) {
+      CellDataList historyAssetPriceCellDataList = cellListCreator.createHistoryAssetPriceCellDataList(historyAssetPriceSheetDTO);
+
+      RowData rowData = new RowData().addCellDataList(historyAssetPriceCellDataList);
+      rowDataList.add(rowData);
+    }
+
+    String historyPriceSheetName = sheetIdToSheetNameMap.get(SheetEnum.HISTORY_ASSET_PRICE);
+    setSheet(historyPriceSheetName);
+
+    cleanExcel(1);
+    writeExcel(rowDataList);
+  }
+
+  /**
+   * 
+   */
   private void writeHistoryPriceSheet(
       @Nonnull Map<SheetEnum, String> sheetIdToSheetNameMap,
       @Nonnull Set<Integer> historyHourSet) throws DfxException {
@@ -1652,6 +1684,27 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     }
 
     return historyInterimDifferenceSheetDTO;
+  }
+
+  /**
+   * 
+   */
+  private HistoryAssetPriceSheetDTO createHistoryAssetPriceSheetDTO(
+      @Nonnull Timestamp reportingTimestamp,
+      @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
+    LOGGER.debug("createHistoryAssetPriceSheetDTO()");
+
+    HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = new HistoryAssetPriceSheetDTO(reportingTimestamp);
+
+    for (TokenEnum token : TokenEnum.values()) {
+      // TODO: currently without EUROC, coming later ...
+      if (TokenEnum.EUROC != token) {
+        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+        historyAssetPriceSheetDTO.put(token, totalSheetDTO.getPrice());
+      }
+    }
+
+    return historyAssetPriceSheetDTO;
   }
 
   /**
@@ -2035,6 +2088,30 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
         // TODO: currently without EUROC, coming later ...
         if (TokenEnum.EUROC != token) {
           cellDataList.add(new CellData().setCellIndex(i++).setValue(historyInterimDifferenceSheetDTO.getInterimDifference(token)));
+        }
+      }
+
+      return cellDataList;
+    }
+
+    /**
+     * 
+     */
+    private CellDataList createHistoryAssetPriceCellDataList(@Nonnull HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO) {
+      LOGGER.trace("createHistoryAssetPriceCellDataList()");
+
+      // ...
+      CellDataList cellDataList = new CellDataList();
+
+      cellDataList.add(new CellData().setCellIndex(0).setValue(historyAssetPriceSheetDTO.getTimestamp()));
+
+      int i = 1;
+
+      for (TokenEnum token : TokenEnum.values()) {
+        // TODO: currently without EUROC, coming later ...
+        if (TokenEnum.EUROC != token) {
+          BigDecimal price = historyAssetPriceSheetDTO.getPrice(token);
+          cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
         }
       }
 

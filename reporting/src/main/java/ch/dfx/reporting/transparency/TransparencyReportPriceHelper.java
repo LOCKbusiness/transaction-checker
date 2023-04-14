@@ -21,6 +21,8 @@ public class TransparencyReportPriceHelper {
   // ...
   private final DefiDataProvider dataProvider;
 
+  private long blockCount = 0;
+
   /**
    * 
    */
@@ -28,11 +30,17 @@ public class TransparencyReportPriceHelper {
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
   }
 
+  public long getBlockCount() {
+    return blockCount;
+  }
+
   /**
    * 
    */
   public Map<TokenEnum, BigDecimal> createTokenToPriceMap() throws DfxException {
     LOGGER.debug("createTokenToPriceMap()");
+
+    blockCount = dataProvider.getBlockCount();
 
     // ...
     Map<TokenEnum, BigDecimal> tokenToPriceMap = new EnumMap<>(TokenEnum.class);

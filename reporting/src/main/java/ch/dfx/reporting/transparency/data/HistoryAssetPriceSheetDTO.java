@@ -15,6 +15,7 @@ import ch.dfx.common.enumeration.TokenEnum;
  */
 public class HistoryAssetPriceSheetDTO {
   private final Timestamp timestamp;
+  private long blockNumber = 0;
 
   private final Map<TokenEnum, BigDecimal> tokenToAssetPriceMap;
 
@@ -29,6 +30,14 @@ public class HistoryAssetPriceSheetDTO {
 
   public Timestamp getTimestamp() {
     return timestamp;
+  }
+
+  public void setBlockNumber(long blockNumber) {
+    this.blockNumber = blockNumber;
+  }
+
+  public long getBlockNumber() {
+    return blockNumber;
   }
 
   public BigDecimal getPrice(@Nonnull TokenEnum token) {

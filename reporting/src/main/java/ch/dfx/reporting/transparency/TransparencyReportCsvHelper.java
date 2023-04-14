@@ -135,6 +135,7 @@ public class TransparencyReportCsvHelper {
 
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(historyAssetPriceFile, true))) {
       writer.append(DATE_FORMAT.format(historyAssetPriceSheetDTO.getTimestamp()));
+      writer.append(";").append(Long.toString(historyAssetPriceSheetDTO.getBlockNumber()));
 
       for (TokenEnum token : TokenEnum.values()) {
         // TODO: currently without EUROC, coming later ...
@@ -319,8 +320,9 @@ public class TransparencyReportCsvHelper {
         if (historyHourSet.isEmpty()
             || historyHourSet.contains(timestamp.toLocalDateTime().getHour())) {
           HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = new HistoryAssetPriceSheetDTO(timestamp);
+          historyAssetPriceSheetDTO.setBlockNumber(Long.parseLong(entryArray[1]));
 
-          int i = 1;
+          int i = 2;
 
           for (TokenEnum token : TokenEnum.values()) {
             // TODO: currently without EUROC, coming later ...

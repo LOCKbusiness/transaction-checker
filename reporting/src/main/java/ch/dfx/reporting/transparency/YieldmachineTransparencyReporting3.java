@@ -186,11 +186,12 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
       // ...
       Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap = createTokenToTotalSheetDTOMap(tokenToReportDTOMap);
+      long blockCount = transparencyReportPriceHelper.getBlockCount();
 
       // ...
       HistoryAmountSheetDTO historyAmountSheetDTO = createHistoryAmountSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
       HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = createHistoryInterimDifferenceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-      HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = createHistoryAssetPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
+      HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = createHistoryAssetPriceSheetDTO(reportingTimestamp, blockCount, tokenToTotalSheetDTOMap);
       HistoryPriceSheetDTO historyPriceSheetDTO = createHistoryPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
 
       transparencyReportCsvHelper.writeToCSV(historyAmountSheetDTO, historyInterimDifferenceSheetDTO, historyAssetPriceSheetDTO, historyPriceSheetDTO);
@@ -1691,6 +1692,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
    */
   private HistoryAssetPriceSheetDTO createHistoryAssetPriceSheetDTO(
       @Nonnull Timestamp reportingTimestamp,
+      long blockNumber,
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
     LOGGER.debug("createHistoryAssetPriceSheetDTO()");
 
@@ -1703,6 +1705,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
         historyAssetPriceSheetDTO.put(token, totalSheetDTO.getPrice());
       }
     }
+
+    historyAssetPriceSheetDTO.setBlockNumber(blockNumber);
 
     return historyAssetPriceSheetDTO;
   }
@@ -2114,6 +2118,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
           cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
         }
       }
+
+      cellDataList.add(new CellData().setCellIndex(i++).setValue(historyAssetPriceSheetDTO.getBlockNumber()));
 
       return cellDataList;
     }

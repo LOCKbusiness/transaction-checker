@@ -1,16 +1,10 @@
 package ch.dfx.httpserver.handler;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.logging.log4j.LogManager;
@@ -19,8 +13,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.config.ConfigProvider;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
 
 /**
  * 
@@ -99,47 +93,5 @@ public abstract class APIRequestHandler {
     }
 
     return isAuthorized;
-  }
-
-  /**
-   * 
-   */
-  protected File[] readJSONFilesx(String type) {
-    LOGGER.debug("readJSONFiles() ...");
-
-    // ...
-    File httpServerDataPath = Paths.get("data", "httpserver", "get").toFile();
-    LOGGER.debug("HTTP Server Data Path: " + httpServerDataPath.getAbsolutePath());
-
-    // ...
-    return httpServerDataPath.listFiles(
-        new FilenameFilter() {
-          @Override
-          public boolean accept(File dir, String name) {
-            String checkName = name.toLowerCase();
-
-            return checkName.startsWith(type) && checkName.endsWith(".json");
-          }
-        });
-  }
-
-  /**
-   * 
-   */
-  protected void writeJSONFilex(String jsonString) throws IOException {
-    LOGGER.debug("writeJSONFile() ...");
-
-    File httpServerDataPath = Paths.get("data", "httpserver", "put").toFile();
-    LOGGER.debug("HTTP Server Data Path: " + httpServerDataPath.getAbsolutePath());
-
-    String fileName =
-        new StringBuilder()
-            .append(DATE_FORMAT.format(new Date()))
-            .append("-").append(StringUtils.leftPad(Integer.toString(counter++), 5, "0"))
-            .append(".json")
-            .toString();
-
-    File jsonFile = new File(httpServerDataPath, fileName);
-    Files.writeString(jsonFile.toPath(), jsonString);
   }
 }

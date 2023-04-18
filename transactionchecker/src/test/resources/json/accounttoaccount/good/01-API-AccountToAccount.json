@@ -1,0 +1,36 @@
+[
+  {
+    "id": "832b121aad86af15bd5844515500e854c2968232458faace96fdff7f9ae245bd",
+    "issuerSignature": "INrHlkJ01bj7NgRLaZXZllQSlHSAGwBGOLQbQAS1MbSvDpixlM2q4u3nzbr3dL7nX0eKCgcsPWnje/qd54bU8gU\u003d",
+    "rawTx": {
+      "id": "832b121aad86af15bd5844515500e854c2968232458faace96fdff7f9ae245bd",
+      "hex": "04000000000101d4ef4fdd4ab8e565e247009b1b15483a217ee0b3eb68d5dbd1533f273aba46090100000000ffffffff020000000000000000526a4c4f446654786101160014ec1b7f1503091aa77d61eec53005466dc1ab6ed90100000000d18291980200000001160014897719304e9d417209867a2c99347a63a28eeaf10100000000d18291980200000000e42c000000000000160014ec1b7f1503091aa77d61eec53005466dc1ab6ed9000114ec1b7f1503091aa77d61eec53005466dc1ab6ed900000000",
+      "scriptHex": "0014ec1b7f1503091aa77d61eec53005466dc1ab6ed9",
+      "prevouts": [
+        {
+          "txid": "0946ba3a273f53d1dbd568ebb3e07e213a48151b9b0047e265e5b84add4fefd4",
+          "vout": 1,
+          "value": "0.00011695",
+          "script": {
+            "stack": [
+              {
+                "type": "OP_0",
+                "code": 0
+              },
+              {
+                "type": "OP_PUSHDATA",
+                "hex": "ec1b7f1503091aa77d61eec53005466dc1ab6ed9"
+              }
+            ]
+          },
+          "tokenId": 0
+        }
+      ]
+    },
+    "payload": {
+      "type": "AccountToAccount",
+      "ownerWallet": "cold-wallet-a",
+      "accountIndex": 999
+    }
+  }
+]

@@ -3,7 +3,9 @@ package ch.dfx.manager.checker.transaction;
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -40,17 +42,17 @@ public class VaultWhitelistChecker {
   /**
    * 
    */
-  public boolean checkVaultWhitelist(@Nonnull String vaultId) {
-    LOGGER.trace("checkVaultWhitelist()");
+  public boolean checkVaultIdWhitelist(@Nonnull String vaultId) {
+    LOGGER.trace("checkVaultIdWhitelist()");
 
-    return checkVaultWhitelist(Arrays.asList(vaultId));
+    return checkVaultIdWhitelist(Arrays.asList(vaultId));
   }
 
   /**
    * 
    */
-  public boolean checkVaultWhitelist(@Nonnull List<String> vaultIdList) {
-    LOGGER.trace("checkVaultWhitelist()");
+  public boolean checkVaultIdWhitelist(@Nonnull List<String> vaultIdList) {
+    LOGGER.trace("checkVaultIdWhitelist()");
 
     // ...
     boolean isValid;
@@ -68,14 +70,15 @@ public class VaultWhitelistChecker {
       databaseBlockHelper.openStatements(connection);
 
       // ...
+      Set<String> vaultIdCheckSet = new HashSet<>();
+      List<VaultWhitelistDTO> vaultWhitelistDTOList = databaseBlockHelper.getVaultWhitelistDTOList();
+      vaultWhitelistDTOList.forEach(dto -> vaultIdCheckSet.add(dto.getVaultId()));
+
+      // ...
       for (int i = 0; i < vaultIdList.size(); i++) {
         String vaultId = vaultIdList.get(i);
 
-        VaultWhitelistDTO vaultWhitelistDTO =
-            databaseBlockHelper.getVaultWhitelistDTOByVaultId(vaultId);
-
-        if (null != vaultWhitelistDTO
-            && vaultId.equals(vaultWhitelistDTO.getVaultId())) {
+        if (vaultIdCheckSet.contains(vaultId)) {
           bitSet.set(i);
         }
       }
@@ -85,7 +88,65 @@ public class VaultWhitelistChecker {
       // ...
       databaseBlockHelper.closeStatements();
     } catch (Exception e) {
-      LOGGER.error("checkVaultWhitelist", e);
+      LOGGER.error("checkVaultIdWhitelist", e);
+      isValid = false;
+    } finally {
+      databaseManager.closeConnection(connection);
+    }
+
+    return isValid;
+  }
+
+  /**
+   * 
+   */
+  public boolean checkVaultAddressWhitelist(@Nonnull String vaultAddress) {
+    LOGGER.trace("checkVaultAddressWhitelist()");
+
+    return checkVaultAddressWhitelist(Arrays.asList(vaultAddress));
+  }
+
+  /**
+   * 
+   */
+  public boolean checkVaultAddressWhitelist(@Nonnull List<String> vaultAddressList) {
+    LOGGER.trace("checkVaultAddressWhitelist()");
+
+    // ...
+    boolean isValid;
+
+    // ...
+    BitSet bitSet = new BitSet(vaultAddressList.size());
+    bitSet.clear();
+
+    // ...
+    Connection connection = null;
+
+    try {
+      connection = databaseManager.openConnection();
+
+      databaseBlockHelper.openStatements(connection);
+
+      // ...
+      Set<String> vaultAddressCheckSet = new HashSet<>();
+      List<VaultWhitelistDTO> vaultWhitelistDTOList = databaseBlockHelper.getVaultWhitelistDTOList();
+      vaultWhitelistDTOList.forEach(dto -> vaultAddressCheckSet.add(dto.getAddress()));
+
+      // ...
+      for (int i = 0; i < vaultAddressList.size(); i++) {
+        String vaultAddress = vaultAddressList.get(i);
+
+        if (vaultAddressCheckSet.contains(vaultAddress)) {
+          bitSet.set(i);
+        }
+      }
+
+      isValid = bitSet.cardinality() == vaultAddressList.size();
+
+      // ...
+      databaseBlockHelper.closeStatements();
+    } catch (Exception e) {
+      LOGGER.error("checkVaultAddressWhitelist", e);
       isValid = false;
     } finally {
       databaseManager.closeConnection(connection);

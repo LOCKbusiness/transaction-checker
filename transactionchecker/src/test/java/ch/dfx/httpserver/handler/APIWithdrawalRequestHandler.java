@@ -73,8 +73,6 @@ public class APIWithdrawalRequestHandler extends APIRequestHandler implements Ht
 
     PendingWithdrawalDTOList pendingWithdrawalDTOList = new PendingWithdrawalDTOList();
 
-    // File[] jsonFileArray = readJSONFiles("withdrawal");
-
     File[] jsonFileArray = getJSONFileArray();
 
     if (null != jsonFileArray) {

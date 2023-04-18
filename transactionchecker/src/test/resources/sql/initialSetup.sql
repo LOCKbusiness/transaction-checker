@@ -137,6 +137,21 @@ CREATE TABLE IF NOT EXISTS testnet.vault_whitelist (
 CREATE UNIQUE INDEX idx1_vault_whitelist ON testnet.vault_whitelist(id);
 CREATE UNIQUE INDEX idx2_vault_whitelist ON testnet.vault_whitelist(id, address);
 
+-- =======================
+-- TESTNET.ADDRESS_WHITELIST
+-- =======================
+CREATE TABLE IF NOT EXISTS testnet.address_whitelist (
+  type        VARCHAR(20) NOT NULL,
+  address     VARCHAR(64) NOT NULL,
+  remark      VARCHAR(128) NOT NULL,
+  create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  change_time TIMESTAMP WITH TIME ZONE
+              GENERATED ALWAYS AS CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx1_address_whitelist ON testnet.address_whitelist(type, address);
+CREATE UNIQUE INDEX idx2_address_whitelist ON testnet.address_whitelist(address);
+
 -- ============================================================================
 -- SCHEMA: TESTNET_STAKING
 -- ============================================================================

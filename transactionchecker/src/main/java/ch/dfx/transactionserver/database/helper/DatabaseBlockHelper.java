@@ -22,6 +22,7 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.transactionserver.data.AddressDTO;
 import ch.dfx.transactionserver.data.AddressTransactionInDTO;
 import ch.dfx.transactionserver.data.AddressTransactionOutDTO;
+import ch.dfx.transactionserver.data.AddressWhitelistDTO;
 import ch.dfx.transactionserver.data.BlockDTO;
 import ch.dfx.transactionserver.data.MasternodeWhitelistDTO;
 import ch.dfx.transactionserver.data.TransactionCustomAccountToAccountInDTO;
@@ -69,7 +70,8 @@ public class DatabaseBlockHelper {
   private PreparedStatement masternodeWhitelistByOwnerAddressSelectStatement = null;
 
   private PreparedStatement vaultWhitelistSelectStatement = null;
-  private PreparedStatement vaultWhitelistByVaultIdSelectStatement = null;
+
+  private PreparedStatement addressWhitelistSelectStatement = null;
 
   // ...
   private final NetworkEnum network;
@@ -190,14 +192,13 @@ public class DatabaseBlockHelper {
       masternodeWhitelistByOwnerAddressSelectStatement =
           connection.prepareStatement(DatabaseUtils.replaceSchema(network, masternodeWhitelistByOwnerAddressSelectSql));
 
-      // Vault ...
+      // Vault Whitelist ...
       String vaultWhitelistSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".vault_whitelist";
       vaultWhitelistSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, vaultWhitelistSelectSql));
 
-      String vaultWhitelistByVaultIdSelectSql =
-          vaultWhitelistSelectSql
-              + " WHERE id=?";
-      vaultWhitelistByVaultIdSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, vaultWhitelistByVaultIdSelectSql));
+      // Address Whitelist ...
+      String addressWhitelistSelectSql = "SELECT * FROM " + TOKEN_NETWORK_SCHEMA + ".address_whitelist";
+      addressWhitelistSelectStatement = connection.prepareStatement(DatabaseUtils.replaceSchema(network, addressWhitelistSelectSql));
     } catch (Exception e) {
       throw new DfxException("openStatements", e);
     }
@@ -239,6 +240,8 @@ public class DatabaseBlockHelper {
       masternodeWhitelistByOwnerAddressSelectStatement.close();
 
       vaultWhitelistSelectStatement.close();
+
+      addressWhitelistSelectStatement.close();
     } catch (Exception e) {
       throw new DfxException("closeStatements", e);
     }
@@ -886,14 +889,23 @@ public class DatabaseBlockHelper {
       ResultSet resultSet = vaultWhitelistSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        vaultWhitelistDTOList.add(createVaultWhitelistDTO(resultSet));
+        VaultWhitelistDTO vaultWhitelistDTO =
+            new VaultWhitelistDTO(
+                resultSet.getString("id"),
+                resultSet.getString("address"));
+
+        vaultWhitelistDTO.setMinRatio(resultSet.getBigDecimal("min_ratio"));
+        vaultWhitelistDTO.setMaxRatio(resultSet.getBigDecimal("max_ratio"));
+        vaultWhitelistDTO.setState(resultSet.getString("state"));
+
+        vaultWhitelistDTO.keepInternalState();
+
+        vaultWhitelistDTOList.add(vaultWhitelistDTO);
       }
 
       resultSet.close();
 
       return vaultWhitelistDTOList;
-    } catch (DfxException e) {
-      throw e;
     } catch (Exception e) {
       throw new DfxException("getVaultWhitelistDTOList", e);
     }
@@ -902,51 +914,32 @@ public class DatabaseBlockHelper {
   /**
    * 
    */
-  public @Nullable VaultWhitelistDTO getVaultWhitelistDTOByVaultId(@Nonnull String vaultId) throws DfxException {
-    LOGGER.trace("getVaultWhitelistDTOByVaultId()");
+  public List<AddressWhitelistDTO> getAddressWhitelistDTOList() throws DfxException {
+    LOGGER.trace("getAddressWhitelistDTOList()");
 
     try {
-      VaultWhitelistDTO vaultWhitelistDTO = null;
+      List<AddressWhitelistDTO> addressWhitelistDTOList = new ArrayList<>();
 
-      vaultWhitelistByVaultIdSelectStatement.setString(1, vaultId);
-
-      ResultSet resultSet = vaultWhitelistByVaultIdSelectStatement.executeQuery();
+      ResultSet resultSet = addressWhitelistSelectStatement.executeQuery();
 
       while (resultSet.next()) {
-        vaultWhitelistDTO = createVaultWhitelistDTO(resultSet);
+        AddressWhitelistDTO addressWhitelistDTO =
+            new AddressWhitelistDTO(
+                resultSet.getString("type"),
+                resultSet.getString("address"));
+
+        addressWhitelistDTO.setRemark(resultSet.getString("remark"));
+
+        addressWhitelistDTO.keepInternalState();
+
+        addressWhitelistDTOList.add(addressWhitelistDTO);
       }
 
       resultSet.close();
 
-      return vaultWhitelistDTO;
-    } catch (DfxException e) {
-      throw e;
+      return addressWhitelistDTOList;
     } catch (Exception e) {
-      throw new DfxException("getVaultWhitelistDTOByVaultId", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  private VaultWhitelistDTO createVaultWhitelistDTO(@Nonnull ResultSet resultSet) throws DfxException {
-    LOGGER.trace("createVaultWhitelistDTO()");
-
-    try {
-      VaultWhitelistDTO vaultWhitelistDTO =
-          new VaultWhitelistDTO(
-              resultSet.getString("id"),
-              resultSet.getString("address"));
-
-      vaultWhitelistDTO.setMinRatio(resultSet.getBigDecimal("min_ratio"));
-      vaultWhitelistDTO.setMaxRatio(resultSet.getBigDecimal("max_ratio"));
-      vaultWhitelistDTO.setState(resultSet.getString("state"));
-
-      vaultWhitelistDTO.keepInternalState();
-
-      return vaultWhitelistDTO;
-    } catch (Exception e) {
-      throw new DfxException("createVaultWhitelistDTO", e);
+      throw new DfxException("getAddressWhitelistDTOList", e);
     }
   }
 

@@ -1,0 +1,10 @@
+{
+  "txid": "1f156840565e73b60f6ff1726c0d8adf47364565138e25b27615b89db6e79528",
+  "type": "Vote",
+  "valid": true,
+  "results": {
+    "proposalId": "49f0617b7b1d1361e76d6fbbe7814c138f56f4dd44672539777fb3c9df8a48ec",
+    "masternodeId": "ff5ddf85ec5310b225d6961939c4845f87fa370e3422a1515ee55f72e3f10584",
+    "vote": "YES"
+  }
+}

@@ -145,6 +145,36 @@ public class OpenTransactionManagerMasternodeTest {
   }
 
   @Test
+  public void validVoteMasternodeTest() {
+    LOGGER.debug("validVoteMasternodeTest()");
+
+    try {
+      TestUtils.setJSONTransactionFile("json/masternode/good/03-API-VoteMasternode.json");
+      TestUtils.setJSONChainTransactionFile("json/masternode/good/03-DC-Transaction.json");
+      TestUtils.setJSONChainCustomTransactionFile("json/masternode/good/03-DC-CustomTransaction.json");
+
+      // ...
+      // ...
+      OpenTransactionVerifiedDTO verifiedDTO = new OpenTransactionVerifiedDTO();
+      verifiedDTO.setSignature("validVoteMasternodeTest-signature");
+
+      when(dataProviderMock.signMessage(anyString(), anyString(), anyString())).thenReturn(verifiedDTO.getSignature());
+      when(dataProviderMock.verifyMessage(anyString(), anyString(), anyString())).thenReturn(true);
+
+      // ...
+      transactionManager.execute();
+
+      // ...
+      List<String> jsonResponseList = TestUtils.apiTransactionRequestHandler.getJSONResponseList();
+
+      assertEquals("JSON Response List Size", 1, jsonResponseList.size());
+      assertEquals("JSON Response", verifiedDTO.toString(), jsonResponseList.get(0));
+    } catch (Exception e) {
+      fail("no exception expected: " + e.getMessage());
+    }
+  }
+
+  @Test
   public void masternodeAddressNotInWhitelistTest() {
     LOGGER.debug("masternodeAddressNotInWhitelistTest()");
 

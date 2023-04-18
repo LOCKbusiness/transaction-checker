@@ -24,9 +24,10 @@ import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.handler.DefiMessageHandler;
 import ch.dfx.defichain.provider.DefiDataProvider;
+import ch.dfx.manager.checker.transaction.AccountToAccountAddressChecker;
+import ch.dfx.manager.checker.transaction.AddressWhitelistChecker;
 import ch.dfx.manager.checker.transaction.CustomAddressChecker;
 import ch.dfx.manager.checker.transaction.DuplicateChecker;
-import ch.dfx.manager.checker.transaction.MasternodeWhitelistChecker;
 import ch.dfx.manager.checker.transaction.SignatureChecker;
 import ch.dfx.manager.checker.transaction.SizeChecker;
 import ch.dfx.manager.checker.transaction.TypeChecker;
@@ -54,6 +55,7 @@ public class OpenTransactionManager {
 
   private final VoutAddressChecker voutAddressChecker;
   private final CustomAddressChecker customAddressChecker;
+  private final AccountToAccountAddressChecker accountToAccountAddressChecker;
 
   private final TypeChecker typeChecker;
   private final SizeChecker sizeChecker;
@@ -77,10 +79,11 @@ public class OpenTransactionManager {
     this.openTransactionDTOFiller = new OpenTransactionDTOFiller(apiAccessHandler, messageHandler, dataProvider);
     this.pendingWithdrawalDTOFiller = new PendingWithdrawalDTOFiller();
 
-    MasternodeWhitelistChecker masternodeWhitelistChecker = new MasternodeWhitelistChecker(network, databaseManager);
+    AddressWhitelistChecker addressWhitelistChecker = new AddressWhitelistChecker(network, databaseManager);
     VaultWhitelistChecker vaultWhitelistChecker = new VaultWhitelistChecker(network, databaseManager);
-    this.customAddressChecker = new CustomAddressChecker(apiAccessHandler, messageHandler, masternodeWhitelistChecker, vaultWhitelistChecker);
-    this.voutAddressChecker = new VoutAddressChecker(apiAccessHandler, messageHandler, masternodeWhitelistChecker);
+    this.customAddressChecker = new CustomAddressChecker(apiAccessHandler, messageHandler, addressWhitelistChecker, vaultWhitelistChecker);
+    this.voutAddressChecker = new VoutAddressChecker(apiAccessHandler, messageHandler, addressWhitelistChecker);
+    this.accountToAccountAddressChecker = new AccountToAccountAddressChecker(apiAccessHandler, messageHandler, addressWhitelistChecker);
 
     this.typeChecker = new TypeChecker(apiAccessHandler, messageHandler, dataProvider);
     this.sizeChecker = new SizeChecker(apiAccessHandler, messageHandler);
@@ -145,6 +148,7 @@ public class OpenTransactionManager {
    * UTXO
    * MASTERNODE
    * YIELD_MACHINE
+   * ACCOUNT_TO_ACCOUNT
    * WITHDRAWAL
    */
   private void processOpenTransactionAndWithdrawal(
@@ -156,24 +160,30 @@ public class OpenTransactionManager {
     OpenTransactionDTOList utxoOpenTransactionDTOList = new OpenTransactionDTOList();
     OpenTransactionDTOList masternodeOpenTransactionDTOList = new OpenTransactionDTOList();
     OpenTransactionDTOList yieldMachineOpenTransactionDTOList = new OpenTransactionDTOList();
+    OpenTransactionDTOList accountToAccountOpenTransactionDTOList = new OpenTransactionDTOList();
     OpenTransactionDTOList withdrawalOpenTransactionDTOList = new OpenTransactionDTOList();
 
     for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
       OpenTransactionTypeEnum openTransactionType = openTransactionDTO.getType().getOpenTransactionType();
 
       switch (openTransactionType) {
-        case UTXO: {
-          utxoOpenTransactionDTOList.add(openTransactionDTO);
-          break;
-        }
-
         case MASTERNODE: {
           masternodeOpenTransactionDTOList.add(openTransactionDTO);
           break;
         }
 
+        case UTXO: {
+          utxoOpenTransactionDTOList.add(openTransactionDTO);
+          break;
+        }
+
         case YIELD_MACHINE: {
           yieldMachineOpenTransactionDTOList.add(openTransactionDTO);
+          break;
+        }
+
+        case ACCOUNT_TO_ACCOUNT: {
+          accountToAccountOpenTransactionDTOList.add(openTransactionDTO);
           break;
         }
 
@@ -188,27 +198,15 @@ public class OpenTransactionManager {
     }
 
     // ...
-    processOpenUtxoTransaction(utxoOpenTransactionDTOList);
     processOpenMasternodeTransaction(masternodeOpenTransactionDTOList);
+    processOpenUtxoTransaction(utxoOpenTransactionDTOList);
     processOpenYieldMachineTransaction(yieldMachineOpenTransactionDTOList);
+    processOpenAccountToAccountTransaction(accountToAccountOpenTransactionDTOList);
     processOpenWithdrawalTransaction(withdrawalOpenTransactionDTOList, apiPendingWithdrawalDTOList);
   }
 
   /**
-   * 
-   */
-  private void processOpenUtxoTransaction(@Nonnull OpenTransactionDTOList utxoOpenTransactionDTOList) throws DfxException {
-    LOGGER.trace("processOpenUtxoTransaction()");
-
-    OpenTransactionDTOList workOpenTransactionDTOList = voutAddressChecker.checkVoutAddress(utxoOpenTransactionDTOList);
-
-    for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
-      ManagerUtils.sendVerified(messageHandler, apiAccessHandler, openTransactionDTO);
-    }
-  }
-
-  /**
-   * 
+   * Check 1: Check Vout Address
    */
   private void processOpenMasternodeTransaction(@Nonnull OpenTransactionDTOList masternodeOpenTransactionDTOList) throws DfxException {
     LOGGER.trace("processOpenMasternodeTransaction()");
@@ -222,10 +220,22 @@ public class OpenTransactionManager {
 
   /**
    * Check 1: Check Vout Address
+   */
+  private void processOpenUtxoTransaction(@Nonnull OpenTransactionDTOList utxoOpenTransactionDTOList) throws DfxException {
+    LOGGER.trace("processOpenUtxoTransaction()");
+
+    OpenTransactionDTOList workOpenTransactionDTOList = voutAddressChecker.checkVoutAddress(utxoOpenTransactionDTOList);
+
+    for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
+      ManagerUtils.sendVerified(messageHandler, apiAccessHandler, openTransactionDTO);
+    }
+  }
+
+  /**
+   * Check 1: Check Vout Address
    * Check 2: Check Custom Address
    */
-  private void processOpenYieldMachineTransaction(
-      @Nonnull OpenTransactionDTOList yieldMachineOpenTransactionDTOList) throws DfxException {
+  private void processOpenYieldMachineTransaction(@Nonnull OpenTransactionDTOList yieldMachineOpenTransactionDTOList) throws DfxException {
     LOGGER.trace("processOpenYieldMachineTransaction()");
 
     // Check 1: Check Vout Address ...
@@ -233,6 +243,25 @@ public class OpenTransactionManager {
 
     // Check 2: Check Custom Address ...
     workOpenTransactionDTOList = customAddressChecker.checkCustomAddress(workOpenTransactionDTOList);
+
+    // ...
+    for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {
+      ManagerUtils.sendVerified(messageHandler, apiAccessHandler, openTransactionDTO);
+    }
+  }
+
+  /**
+   * Check 1: Check Vout Address
+   * Check 2: Check Custom Address
+   */
+  private void processOpenAccountToAccountTransaction(@Nonnull OpenTransactionDTOList accountToAccountOpenTransactionDTOList) throws DfxException {
+    LOGGER.trace("processOpenAccountToAccountTransaction()");
+
+    // Check 1: Check Vout Address ...
+    OpenTransactionDTOList workOpenTransactionDTOList = accountToAccountAddressChecker.checkVoutAddress(accountToAccountOpenTransactionDTOList);
+
+    // Check 2: Check Custom Address ...
+    workOpenTransactionDTOList = accountToAccountAddressChecker.checkCustomAddress(workOpenTransactionDTOList);
 
     // ...
     for (OpenTransactionDTO openTransactionDTO : workOpenTransactionDTOList) {

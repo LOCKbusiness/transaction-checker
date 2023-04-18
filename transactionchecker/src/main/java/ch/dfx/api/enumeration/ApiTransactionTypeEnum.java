@@ -33,13 +33,6 @@ public enum ApiTransactionTypeEnum {
   UTXO_MERGE("UtxoMerge", OpenTransactionTypeEnum.UTXO),
   UTXO_SPLIT("UtxoSplit", OpenTransactionTypeEnum.UTXO),
 
-  ACCOUNT_TO_ACCOUNT("AccountToAccount", OpenTransactionTypeEnum.UTXO),
-  UTXO_TO_ACCOUNT("UtxoToAccount", OpenTransactionTypeEnum.UTXO),
-  COMPOSITE_SWAP("CompositeSwap", OpenTransactionTypeEnum.UTXO),
-
-  // Withdrawal ...
-  WITHDRAWAL("Withdrawal", OpenTransactionTypeEnum.WITHDRAWAL),
-
   // Yield Machine ...
   CREATE_VAULT("CreateVault", OpenTransactionTypeEnum.YIELD_MACHINE),
   DEPOSIT_TO_VAULT("DepositToVault", OpenTransactionTypeEnum.YIELD_MACHINE),
@@ -47,7 +40,14 @@ public enum ApiTransactionTypeEnum {
   TAKE_LOAN("TakeLoan", OpenTransactionTypeEnum.YIELD_MACHINE),
   PAYBACK_LOAN("PaybackLoan", OpenTransactionTypeEnum.YIELD_MACHINE),
   POOL_ADD_LIQUIDITY("PoolAddLiquidity", OpenTransactionTypeEnum.YIELD_MACHINE),
-  POOL_REMOVE_LIQUIDITY("PoolRemoveLiquidity", OpenTransactionTypeEnum.YIELD_MACHINE);
+  POOL_REMOVE_LIQUIDITY("PoolRemoveLiquidity", OpenTransactionTypeEnum.YIELD_MACHINE),
+  COMPOSITE_SWAP("CompositeSwap", OpenTransactionTypeEnum.YIELD_MACHINE),
+
+  // Account To Account ...
+  ACCOUNT_TO_ACCOUNT("AccountToAccount", OpenTransactionTypeEnum.ACCOUNT_TO_ACCOUNT),
+
+  // Withdrawal ...
+  WITHDRAWAL("Withdrawal", OpenTransactionTypeEnum.WITHDRAWAL);
 
   // ...
   private final String typeAsString;
@@ -90,8 +90,6 @@ public enum ApiTransactionTypeEnum {
     apiTransactionTypeToCustomTransactionTypeMap.put(UTXO_SPLIT, new HashSet<>(Arrays.asList("0")));
 
     apiTransactionTypeToCustomTransactionTypeMap.put(ACCOUNT_TO_ACCOUNT, new HashSet<>(Arrays.asList("B", "a")));
-    apiTransactionTypeToCustomTransactionTypeMap.put(UTXO_TO_ACCOUNT, new HashSet<>(Arrays.asList("U")));
-    apiTransactionTypeToCustomTransactionTypeMap.put(COMPOSITE_SWAP, new HashSet<>(Arrays.asList("s", "i")));
 
     apiTransactionTypeToCustomTransactionTypeMap.put(WITHDRAWAL, new HashSet<>(Arrays.asList("0", "B", "a")));
 
@@ -103,6 +101,8 @@ public enum ApiTransactionTypeEnum {
 
     apiTransactionTypeToCustomTransactionTypeMap.put(POOL_ADD_LIQUIDITY, new HashSet<>(Arrays.asList("l")));
     apiTransactionTypeToCustomTransactionTypeMap.put(POOL_REMOVE_LIQUIDITY, new HashSet<>(Arrays.asList("r")));
+
+    apiTransactionTypeToCustomTransactionTypeMap.put(COMPOSITE_SWAP, new HashSet<>(Arrays.asList("s", "i")));
   }
 
   /**

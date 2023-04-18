@@ -1,0 +1,36 @@
+[
+  {
+    "id": "1f156840565e73b60f6ff1726c0d8adf47364565138e25b27615b89db6e79528",
+    "issuerSignature": "IAXqv8c7+hxOGNauEwVOvTKAeEebtYVQHzd1m33KDxq7RXQO1p+a02r/bphUuB3N1qxtfqjNbB+zZKqe2LrY7cQ\u003d",
+    "rawTx": {
+      "id": "1f156840565e73b60f6ff1726c0d8adf47364565138e25b27615b89db6e79528",
+      "hex": "0400000000010177b141b91c2e217cb82f2a95436bb39518727fb24488f6d8d7e926e4910e28360000000000ffffffff010000000000000000486a46446654784fec488adfc9b37f7739256744ddf4568f134c81e7bb6f6de761131d7b7b61f0498405f1e3725fe55e51a122340e37fa875f84c4391996d625b21053ec85df5dff01000114ce6fe2ce9cf42df8d486c6252d9851b587fdfdaa00000000",
+      "scriptHex": "0014ce6fe2ce9cf42df8d486c6252d9851b587fdfdaa",
+      "prevouts": [
+        {
+          "txid": "36280e91e426e9d7d8f68844b27f721895b36b43952a2fb87c212e1cb941b177",
+          "vout": 0,
+          "value": "0.00000297",
+          "script": {
+            "stack": [
+              {
+                "type": "OP_0",
+                "code": 0
+              },
+              {
+                "type": "OP_PUSHDATA",
+                "hex": "ce6fe2ce9cf42df8d486c6252d9851b587fdfdaa"
+              }
+            ]
+          },
+          "tokenId": 0
+        }
+      ]
+    },
+    "payload": {
+      "type": "VoteMasternode",
+      "ownerWallet": "cold-wallet-a",
+      "accountIndex": 151
+    }
+  }
+]

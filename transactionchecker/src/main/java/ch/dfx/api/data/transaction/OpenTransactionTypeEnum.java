@@ -8,6 +8,7 @@ public enum OpenTransactionTypeEnum {
 
   MASTERNODE,
   UTXO,
-  WITHDRAWAL,
-  YIELD_MACHINE
+  YIELD_MACHINE,
+  ACCOUNT_TO_ACCOUNT,
+  WITHDRAWAL;
 }

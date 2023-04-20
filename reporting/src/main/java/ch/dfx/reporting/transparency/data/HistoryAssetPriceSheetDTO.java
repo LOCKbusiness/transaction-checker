@@ -1,20 +1,17 @@
 package ch.dfx.reporting.transparency.data;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.EnumMap;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.enumeration.TokenEnum;
 
 /**
  * 
  */
-public class HistoryAssetPriceSheetDTO {
-  private final Timestamp timestamp;
+public class HistoryAssetPriceSheetDTO extends HistorySheetDTO {
   private long blockNumber = 0;
 
   private final Map<TokenEnum, BigDecimal> tokenToAssetPriceMap;
@@ -22,14 +19,8 @@ public class HistoryAssetPriceSheetDTO {
   /**
    * 
    */
-  public HistoryAssetPriceSheetDTO(@Nonnull Timestamp timestamp) {
-    this.timestamp = timestamp;
-
+  public HistoryAssetPriceSheetDTO() {
     this.tokenToAssetPriceMap = new EnumMap<>(TokenEnum.class);
-  }
-
-  public Timestamp getTimestamp() {
-    return timestamp;
   }
 
   public void setBlockNumber(long blockNumber) {
@@ -48,10 +39,5 @@ public class HistoryAssetPriceSheetDTO {
       @Nonnull TokenEnum token,
       @Nonnull BigDecimal price) {
     tokenToAssetPriceMap.put(token, price);
-  }
-
-  @Override
-  public String toString() {
-    return TransactionCheckerUtils.toJson(this);
   }
 }

@@ -23,16 +23,17 @@ public class DFISheetDTO {
   private BigDecimal lockVault3Balance = BigDecimal.ZERO;
   private BigDecimal lockVault3Collateral = BigDecimal.ZERO;
 
-  private BigDecimal lockLMBalance1 = BigDecimal.ZERO;
-  private BigDecimal lockLMPool1 = BigDecimal.ZERO;
-  private BigDecimal lockLMBalance2 = BigDecimal.ZERO;
-  private BigDecimal lockLMPool2 = BigDecimal.ZERO;
-  private BigDecimal lockLMBalance3 = BigDecimal.ZERO;
-  private BigDecimal lockLMPool3 = BigDecimal.ZERO;
+  private BigDecimal lock_LM_BTC_DFI_Balance = BigDecimal.ZERO;
+  private BigDecimal lock_LM_BTC_DFI_Pool = BigDecimal.ZERO;
+  private BigDecimal lock_LM_ETH_DFI_Balance = BigDecimal.ZERO;
+  private BigDecimal lock_LM_ETH_DFI_Pool = BigDecimal.ZERO;
+  private BigDecimal lock_LM_DUSD_DFI_Balance = BigDecimal.ZERO;
+  private BigDecimal lock_LM_DUSD_DFI_Pool = BigDecimal.ZERO;
 
-  private BigDecimal lockLMBalance4 = BigDecimal.ZERO;
-  private BigDecimal lockLMBalance5 = BigDecimal.ZERO;
-  private BigDecimal lockLMBalance6 = BigDecimal.ZERO;
+  private BigDecimal lock_LM_USDT_DFI_Balance = BigDecimal.ZERO;
+  private BigDecimal lock_LM_USDC_DFI_Balance = BigDecimal.ZERO;
+  private BigDecimal lock_LM_EUROC_DFI_Balance = BigDecimal.ZERO;
+  private BigDecimal lock_LM_SPY_DFI_Balance = BigDecimal.ZERO;
 
   private BigDecimal customerInterimBalance = BigDecimal.ZERO;
   private BigDecimal lockInterimBalance = BigDecimal.ZERO;
@@ -139,76 +140,84 @@ public class DFISheetDTO {
     this.lockVault3Collateral = lockVault3Collateral;
   }
 
-  public BigDecimal getLockLMBalance1() {
-    return lockLMBalance1;
+  public BigDecimal getLock_LM_BTC_DFI_Balance() {
+    return lock_LM_BTC_DFI_Balance;
   }
 
-  public void setLockLMBalance1(BigDecimal lockLMBalance1) {
-    this.lockLMBalance1 = lockLMBalance1;
+  public void setLock_LM_BTC_DFI_Balance(BigDecimal lock_LM_BTC_DFI_Balance) {
+    this.lock_LM_BTC_DFI_Balance = lock_LM_BTC_DFI_Balance;
   }
 
-  public BigDecimal getLockLMPool1() {
-    return lockLMPool1;
+  public BigDecimal getLock_LM_BTC_DFI_Pool() {
+    return lock_LM_BTC_DFI_Pool;
   }
 
-  public void setLockLMPool1(BigDecimal lockLMPool1) {
-    this.lockLMPool1 = lockLMPool1;
+  public void setLock_LM_BTC_DFI_Pool(BigDecimal lock_LM_BTC_DFI_Pool) {
+    this.lock_LM_BTC_DFI_Pool = lock_LM_BTC_DFI_Pool;
   }
 
-  public BigDecimal getLockLMBalance2() {
-    return lockLMBalance2;
+  public BigDecimal getLock_LM_ETH_DFI_Balance() {
+    return lock_LM_ETH_DFI_Balance;
   }
 
-  public void setLockLMBalance2(BigDecimal lockLMBalance2) {
-    this.lockLMBalance2 = lockLMBalance2;
+  public void setLock_LM_ETH_DFI_Balance(BigDecimal lock_LM_ETH_DFI_Balance) {
+    this.lock_LM_ETH_DFI_Balance = lock_LM_ETH_DFI_Balance;
   }
 
-  public BigDecimal getLockLMPool2() {
-    return lockLMPool2;
+  public BigDecimal getLock_LM_ETH_DFI_Pool() {
+    return lock_LM_ETH_DFI_Pool;
   }
 
-  public void setLockLMPool2(BigDecimal lockLMPool2) {
-    this.lockLMPool2 = lockLMPool2;
+  public void setLock_LM_ETH_DFI_Pool(BigDecimal lock_LM_ETH_DFI_Pool) {
+    this.lock_LM_ETH_DFI_Pool = lock_LM_ETH_DFI_Pool;
   }
 
-  public BigDecimal getLockLMBalance3() {
-    return lockLMBalance3;
+  public BigDecimal getLock_LM_DUSD_DFI_Balance() {
+    return lock_LM_DUSD_DFI_Balance;
   }
 
-  public void setLockLMBalance3(BigDecimal lockLMBalance3) {
-    this.lockLMBalance3 = lockLMBalance3;
+  public void setLock_LM_DUSD_DFI_Balance(BigDecimal lock_LM_DUSD_DFI_Balance) {
+    this.lock_LM_DUSD_DFI_Balance = lock_LM_DUSD_DFI_Balance;
   }
 
-  public BigDecimal getLockLMPool3() {
-    return lockLMPool3;
+  public BigDecimal getLock_LM_DUSD_DFI_Pool() {
+    return lock_LM_DUSD_DFI_Pool;
   }
 
-  public void setLockLMPool3(BigDecimal lockLMPool3) {
-    this.lockLMPool3 = lockLMPool3;
+  public void setLock_LM_DUSD_DFI_Pool(BigDecimal lock_LM_DUSD_DFI_Pool) {
+    this.lock_LM_DUSD_DFI_Pool = lock_LM_DUSD_DFI_Pool;
   }
 
-  public BigDecimal getLockLMBalance4() {
-    return lockLMBalance4;
+  public BigDecimal getLock_LM_USDT_DFI_Balance() {
+    return lock_LM_USDT_DFI_Balance;
   }
 
-  public void setLockLMBalance4(BigDecimal lockLMBalance4) {
-    this.lockLMBalance4 = lockLMBalance4;
+  public void setLock_LM_USDT_DFI_Balance(BigDecimal lock_LM_USDT_DFI_Balance) {
+    this.lock_LM_USDT_DFI_Balance = lock_LM_USDT_DFI_Balance;
   }
 
-  public BigDecimal getLockLMBalance5() {
-    return lockLMBalance5;
+  public BigDecimal getLock_LM_USDC_DFI_Balance() {
+    return lock_LM_USDC_DFI_Balance;
   }
 
-  public void setLockLMBalance5(BigDecimal lockLMBalance5) {
-    this.lockLMBalance5 = lockLMBalance5;
+  public void setLock_LM_USDC_DFI_Balance(BigDecimal lock_LM_USDC_DFI_Balance) {
+    this.lock_LM_USDC_DFI_Balance = lock_LM_USDC_DFI_Balance;
   }
 
-  public BigDecimal getLockLMBalance6() {
-    return lockLMBalance6;
+  public BigDecimal getLock_LM_EUROC_DFI_Balance() {
+    return lock_LM_EUROC_DFI_Balance;
   }
 
-  public void setLockLMBalance6(BigDecimal lockLMBalance6) {
-    this.lockLMBalance6 = lockLMBalance6;
+  public void setLock_LM_EUROC_DFI_Balance(BigDecimal lock_LM_EUROC_DFI_Balance) {
+    this.lock_LM_EUROC_DFI_Balance = lock_LM_EUROC_DFI_Balance;
+  }
+
+  public BigDecimal getLock_LM_SPY_DFI_Balance() {
+    return lock_LM_SPY_DFI_Balance;
+  }
+
+  public void setLock_LM_SPY_DFI_Balance(BigDecimal lock_LM_SPY_DFI_Balance) {
+    this.lock_LM_SPY_DFI_Balance = lock_LM_SPY_DFI_Balance;
   }
 
   public BigDecimal getCustomerInterimBalance() {

@@ -24,10 +24,6 @@ import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.config.ReportingConfigEnum;
 import ch.dfx.defichain.data.pool.DefiPoolPairData;
 import ch.dfx.defichain.provider.DefiDataProvider;
-import ch.dfx.excel.data.CellData;
-import ch.dfx.excel.data.CellDataList;
-import ch.dfx.excel.data.RowData;
-import ch.dfx.excel.data.RowDataList;
 import ch.dfx.reporting.data.YieldPoolSheetDTO;
 import ch.dfx.reporting.transparency.TransparencyReportCsvHelper;
 import ch.dfx.reporting.transparency.TransparencyReportPriceHelper;
@@ -223,37 +219,37 @@ public class YieldmachineYieldReporting extends Reporting {
       @Nonnull String fileName) throws DfxException {
     LOGGER.debug("writeReport()");
 
-    // ...
-    Map<TokenEnum, BigDecimal> tokenToPriceMap = transparencyReportPriceHelper.createTokenToPriceMap();
-
-    // ...
-    openExcel(rootPath, fileName);
-
-    // ...
-    PoolTokenPairData usdtPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.USDT);
-    YieldPoolSheetDTO usdtYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, usdtPoolTokenPairData, tokenToPriceMap);
-    transparencyReportCsvHelper.writeToCSV(usdtYieldPoolSheetDTO);
-
-    setSheet(usdtPoolTokenPairData.getPoolTokenId());
-    writeYieldSheet(usdtPoolTokenPairData.getPoolTokenId());
-
-    // ...
-    PoolTokenPairData usdcPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.USDC);
-    YieldPoolSheetDTO usdcYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, usdcPoolTokenPairData, tokenToPriceMap);
-    transparencyReportCsvHelper.writeToCSV(usdcYieldPoolSheetDTO);
-
-    setSheet(usdcPoolTokenPairData.getPoolTokenId());
-    writeYieldSheet(usdcPoolTokenPairData.getPoolTokenId());
-
-    // ...
-    PoolTokenPairData spyPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.SPY);
-    YieldPoolSheetDTO spyYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, spyPoolTokenPairData, tokenToPriceMap);
-    transparencyReportCsvHelper.writeToCSV(spyYieldPoolSheetDTO);
-
-    setSheet(spyPoolTokenPairData.getPoolTokenId());
-    writeYieldSheet(spyPoolTokenPairData.getPoolTokenId());
-
-    closeExcel();
+//    // ...
+//    Map<TokenEnum, BigDecimal> tokenToPriceMap = transparencyReportPriceHelper.createTokenToPriceMap();
+//
+//    // ...
+//    openExcel(rootPath, fileName);
+//
+//    // ...
+//    PoolTokenPairData usdtPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.USDT);
+//    YieldPoolSheetDTO usdtYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, usdtPoolTokenPairData, tokenToPriceMap);
+//    transparencyReportCsvHelper.writeToCSV(usdtYieldPoolSheetDTO);
+//
+//    setSheet(usdtPoolTokenPairData.getPoolTokenId());
+//    writeYieldSheet(usdtPoolTokenPairData.getPoolTokenId());
+//
+//    // ...
+//    PoolTokenPairData usdcPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.USDC);
+//    YieldPoolSheetDTO usdcYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, usdcPoolTokenPairData, tokenToPriceMap);
+//    transparencyReportCsvHelper.writeToCSV(usdcYieldPoolSheetDTO);
+//
+//    setSheet(usdcPoolTokenPairData.getPoolTokenId());
+//    writeYieldSheet(usdcPoolTokenPairData.getPoolTokenId());
+//
+//    // ...
+//    PoolTokenPairData spyPoolTokenPairData = getDUSDPoolTokenPairData(TokenEnum.SPY);
+//    YieldPoolSheetDTO spyYieldPoolSheetDTO = createYieldPoolSheetDTO(reportingTimestamp, spyPoolTokenPairData, tokenToPriceMap);
+//    transparencyReportCsvHelper.writeToCSV(spyYieldPoolSheetDTO);
+//
+//    setSheet(spyPoolTokenPairData.getPoolTokenId());
+//    writeYieldSheet(spyPoolTokenPairData.getPoolTokenId());
+//
+//    closeExcel();
   }
 
   /**
@@ -301,40 +297,40 @@ public class YieldmachineYieldReporting extends Reporting {
   private void writeYieldSheet(@Nonnull String poolTokenId) throws DfxException {
     LOGGER.debug("writeYieldSheet(): poolTokenId=" + poolTokenId);
 
-    RowDataList rowDataList = new RowDataList(1);
-
-    List<YieldPoolSheetDTO> yieldPoolSheetDTOList = transparencyReportCsvHelper.readYieldPoolSheetDTOFromCSV(poolTokenId);
-
-    for (YieldPoolSheetDTO yieldPoolSheetDTO : yieldPoolSheetDTOList) {
-      CellDataList cellDataList = new CellDataList();
-
-      cellDataList.add(new CellData().setCellIndex(0).setValue(yieldPoolSheetDTO.getTimestamp()));
-
-      cellDataList.add(new CellData().setCellIndex(1).setValue(yieldPoolSheetDTO.getTokenAAmount()));
-      cellDataList.add(new CellData().setCellIndex(2).setValue(yieldPoolSheetDTO.getTokenAPrice()));
-      cellDataList.add(new CellData().setCellIndex(3).setValue(yieldPoolSheetDTO.getTokenBAmount()));
-      cellDataList.add(new CellData().setCellIndex(4).setValue(yieldPoolSheetDTO.getTokenBPrice()));
-      cellDataList.add(new CellData().setCellIndex(5).setValue(yieldPoolSheetDTO.getBalanceAmount()));
-      cellDataList.add(new CellData().setCellIndex(6).setValue(yieldPoolSheetDTO.getBalancePrice()));
-
-      cellDataList.add(new CellData().setCellIndex(7).setValue(yieldPoolSheetDTO.getHourDifference()));
-      cellDataList.add(new CellData().setCellIndex(8).setValue(yieldPoolSheetDTO.getHourInterval()));
-      cellDataList.add(new CellData().setCellIndex(9).setValue(yieldPoolSheetDTO.getHourYield()));
-
-      BigDecimal dayDifference = yieldPoolSheetDTO.getDayDifference();
-
-      if (0 != BigDecimal.ZERO.compareTo(dayDifference)) {
-        cellDataList.add(new CellData().setCellIndex(10).setValue(yieldPoolSheetDTO.getDayDifference()));
-        cellDataList.add(new CellData().setCellIndex(11).setValue(yieldPoolSheetDTO.getDayInterval()));
-        cellDataList.add(new CellData().setCellIndex(12).setValue(yieldPoolSheetDTO.getDayYield()));
-      }
-
-      RowData rowData = new RowData().addCellDataList(cellDataList);
-      rowDataList.add(rowData);
-    }
-
-    cleanExcel(1);
-    writeExcel(rowDataList);
+//    RowDataList rowDataList = new RowDataList(1);
+//
+//    List<YieldPoolSheetDTO> yieldPoolSheetDTOList = transparencyReportCsvHelper.readYieldPoolSheetDTOFromCSV(poolTokenId);
+//
+//    for (YieldPoolSheetDTO yieldPoolSheetDTO : yieldPoolSheetDTOList) {
+//      CellDataList cellDataList = new CellDataList();
+//
+//      cellDataList.add(new CellData().setCellIndex(0).setValue(yieldPoolSheetDTO.getTimestamp()));
+//
+//      cellDataList.add(new CellData().setCellIndex(1).setValue(yieldPoolSheetDTO.getTokenAAmount()));
+//      cellDataList.add(new CellData().setCellIndex(2).setValue(yieldPoolSheetDTO.getTokenAPrice()));
+//      cellDataList.add(new CellData().setCellIndex(3).setValue(yieldPoolSheetDTO.getTokenBAmount()));
+//      cellDataList.add(new CellData().setCellIndex(4).setValue(yieldPoolSheetDTO.getTokenBPrice()));
+//      cellDataList.add(new CellData().setCellIndex(5).setValue(yieldPoolSheetDTO.getBalanceAmount()));
+//      cellDataList.add(new CellData().setCellIndex(6).setValue(yieldPoolSheetDTO.getBalancePrice()));
+//
+//      cellDataList.add(new CellData().setCellIndex(7).setValue(yieldPoolSheetDTO.getHourDifference()));
+//      cellDataList.add(new CellData().setCellIndex(8).setValue(yieldPoolSheetDTO.getHourInterval()));
+//      cellDataList.add(new CellData().setCellIndex(9).setValue(yieldPoolSheetDTO.getHourYield()));
+//
+//      BigDecimal dayDifference = yieldPoolSheetDTO.getDayDifference();
+//
+//      if (0 != BigDecimal.ZERO.compareTo(dayDifference)) {
+//        cellDataList.add(new CellData().setCellIndex(10).setValue(yieldPoolSheetDTO.getDayDifference()));
+//        cellDataList.add(new CellData().setCellIndex(11).setValue(yieldPoolSheetDTO.getDayInterval()));
+//        cellDataList.add(new CellData().setCellIndex(12).setValue(yieldPoolSheetDTO.getDayYield()));
+//      }
+//
+//      RowData rowData = new RowData().addCellDataList(cellDataList);
+//      rowDataList.add(rowData);
+//    }
+//
+//    cleanExcel(1);
+//    writeExcel(rowDataList);
   }
 
   /**

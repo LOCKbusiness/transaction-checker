@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -40,9 +41,13 @@ import ch.dfx.reporting.Reporting;
 import ch.dfx.reporting.transparency.data.DFISheetDTO;
 import ch.dfx.reporting.transparency.data.DUSDSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryAmountSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryAmountSheetDTOList;
 import ch.dfx.reporting.transparency.data.HistoryAssetPriceSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryAssetPriceSheetDTOList;
 import ch.dfx.reporting.transparency.data.HistoryInterimDifferenceSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryInterimDifferenceSheetDTOList;
 import ch.dfx.reporting.transparency.data.HistoryPriceSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryPriceSheetDTOList;
 import ch.dfx.reporting.transparency.data.ReportDTO;
 import ch.dfx.reporting.transparency.data.TokenSheetDTO;
 import ch.dfx.reporting.transparency.data.TotalSheetDTO;
@@ -74,13 +79,15 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   private static final MathContext MATH_CONTEXT = MathContext.DECIMAL64;
   private static final int SCALE = 8;
 
+  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
   private static final BigDecimal SIGN_CHANGER = new BigDecimal(-1);
 
   // ...
   private final DefiDataProvider dataProvider;
 
   private final TransparencyReportPriceHelper transparencyReportPriceHelper;
-  private final TransparencyReportCsvHelper transparencyReportCsvHelper;
+  private final TransparencyReportFileHelper transparencyReportFileHelper;
 
   private final CellListCreator cellListCreator;
   private final BalanceReporting balanceReporting;
@@ -106,6 +113,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   private Map<String, BigDecimal> ethLMTokenToAmountMap = null;
   private Map<String, BigDecimal> usdtLMTokenToAmountMap = null;
   private Map<String, BigDecimal> usdcLMTokenToAmountMap = null;
+  private Map<String, BigDecimal> eurocLMTokenToAmountMap = null;
   private Map<String, BigDecimal> spyLMTokenToAmountMap = null;
 
   private Map<String, DefiPoolPairData> dfiPoolTokenToPoolPairDataMap = null;
@@ -123,7 +131,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     this.dataProvider = TransactionCheckerUtils.createDefiDataProvider();
 
     this.transparencyReportPriceHelper = new TransparencyReportPriceHelper();
-    this.transparencyReportCsvHelper = new TransparencyReportCsvHelper();
+    this.transparencyReportFileHelper = new TransparencyReportFileHelper();
 
     this.cellListCreator = new CellListCreator();
 
@@ -179,6 +187,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       syncSheetData(TokenEnum.ETH, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
       syncSheetData(TokenEnum.USDT, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
       syncSheetData(TokenEnum.USDC, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
+      syncSheetData(TokenEnum.EUROC, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
       syncSheetData(TokenEnum.SPY, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
 
       syncDFISheetData(tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
@@ -190,11 +199,16 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
       // ...
       HistoryAmountSheetDTO historyAmountSheetDTO = createHistoryAmountSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-      HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = createHistoryInterimDifferenceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-      HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = createHistoryAssetPriceSheetDTO(reportingTimestamp, blockCount, tokenToTotalSheetDTOMap);
-      HistoryPriceSheetDTO historyPriceSheetDTO = createHistoryPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
+      transparencyReportFileHelper.writeHistoryAmountSheetDTOToJSON(historyAmountSheetDTO);
 
-      transparencyReportCsvHelper.writeToCSV(historyAmountSheetDTO, historyInterimDifferenceSheetDTO, historyAssetPriceSheetDTO, historyPriceSheetDTO);
+      HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = createHistoryInterimDifferenceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
+      transparencyReportFileHelper.writeHistoryInterimDifferenceSheetDTOToJSON(historyInterimDifferenceSheetDTO);
+
+      HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = createHistoryAssetPriceSheetDTO(reportingTimestamp, blockCount, tokenToTotalSheetDTOMap);
+      transparencyReportFileHelper.writeHistoryAssetPriceSheetDTOToJSON(historyAssetPriceSheetDTO);
+
+      HistoryPriceSheetDTO historyPriceSheetDTO = createHistoryPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
+      transparencyReportFileHelper.writeHistoryPriceSheetDTOToJSON(historyPriceSheetDTO);
 
       // ...
       int hour = reportingTimestamp.toLocalDateTime().getHour();
@@ -346,19 +360,22 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     TransactionSheetDTO usdtTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.USDT);
     TransactionSheetDTO usdcTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.USDC);
+    TransactionSheetDTO eurocTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.EUROC);
     TransactionSheetDTO spyTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.SPY);
 
     BigDecimal usdtDUSDInput = usdtTransactionSheetDTO.getInput();
     BigDecimal usdcDUSDInput = usdcTransactionSheetDTO.getInput();
+    BigDecimal eurocDUSDInput = eurocTransactionSheetDTO.getInput();
     BigDecimal spyDUSDInput = spyTransactionSheetDTO.getInput();
 
     dusdSheetDTO.setLockChangeUSDTTransactionBalance(usdtDUSDInput);
     dusdSheetDTO.setLockChangeUSDCTransactionBalance(usdcDUSDInput);
+    dusdSheetDTO.setLockChangeEUROCTransactionBalance(eurocDUSDInput);
     dusdSheetDTO.setLockChangeSPYTransactionBalance(spyDUSDInput);
 
     // ...
     BigDecimal customerInterimBalance = dusdSheetDTO.getCustomerInterimBalance();
-    BigDecimal totalDUSDInput = usdtDUSDInput.add(usdcDUSDInput).add(spyDUSDInput);
+    BigDecimal totalDUSDInput = usdtDUSDInput.add(usdcDUSDInput).add(eurocDUSDInput).add(spyDUSDInput);
 
     BigDecimal customerTotalBalance = customerInterimBalance.add(totalDUSDInput);
 
@@ -476,6 +493,11 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       usdcLMTokenToAmountMap = getTokenToAmountMap(usdcLMAddress);
     }
 
+    if (null == eurocLMTokenToAmountMap) {
+      String eurocLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_EUROC_LM_ADDRESS, "");
+      eurocLMTokenToAmountMap = getTokenToAmountMap(eurocLMAddress);
+    }
+
     if (null == spyLMTokenToAmountMap) {
       String spyLMAddress = ConfigProvider.getInstance().getValue(ReportingConfigEnum.YM_SPY_LM_ADDRESS, "");
       spyLMTokenToAmountMap = getTokenToAmountMap(spyLMAddress);
@@ -510,6 +532,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       List<String> dusdPoolTokenList = new ArrayList<>();
       dusdPoolTokenList.add("USDT-DUSD");
       dusdPoolTokenList.add("USDC-DUSD");
+      dusdPoolTokenList.add("EUROC-DUSD");
       dusdPoolTokenList.add("SPY-DUSD");
 
       for (String dusdPoolToken : dusdPoolTokenList) {
@@ -644,6 +667,11 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     lockInterimBalance = lockInterimBalance.add(usdcLMDFIAmount);
 
     // ...
+    BigDecimal eurocLMDFIAmount = eurocLMTokenToAmountMap.getOrDefault(token.toString(), BigDecimal.ZERO);
+
+    lockInterimBalance = lockInterimBalance.add(eurocLMDFIAmount);
+
+    // ...
     BigDecimal spyLMDFIAmount = spyLMTokenToAmountMap.getOrDefault(token.toString(), BigDecimal.ZERO);
 
     lockInterimBalance = lockInterimBalance.add(spyLMDFIAmount);
@@ -668,15 +696,16 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     dfiSheetDTO.setLockVault3Balance(vault3Amount);
     dfiSheetDTO.setLockVault3Collateral(vault3Collateral);
 
-    dfiSheetDTO.setLockLMBalance1(btcLMDFIAmount);
-    dfiSheetDTO.setLockLMPool1(btcPoolDFIAmount);
-    dfiSheetDTO.setLockLMBalance2(ethLMDFIAmount);
-    dfiSheetDTO.setLockLMPool2(ethPoolDFIAmount);
-    dfiSheetDTO.setLockLMBalance3(dusdLMDFIAmount);
-    dfiSheetDTO.setLockLMPool3(dusdPoolDFIAmount);
-    dfiSheetDTO.setLockLMBalance4(usdtLMDFIAmount);
-    dfiSheetDTO.setLockLMBalance5(usdcLMDFIAmount);
-    dfiSheetDTO.setLockLMBalance6(spyLMDFIAmount);
+    dfiSheetDTO.setLock_LM_BTC_DFI_Balance(btcLMDFIAmount);
+    dfiSheetDTO.setLock_LM_BTC_DFI_Pool(btcPoolDFIAmount);
+    dfiSheetDTO.setLock_LM_ETH_DFI_Pool(ethLMDFIAmount);
+    dfiSheetDTO.setLock_LM_ETH_DFI_Pool(ethPoolDFIAmount);
+    dfiSheetDTO.setLock_LM_DUSD_DFI_Balance(dusdLMDFIAmount);
+    dfiSheetDTO.setLock_LM_DUSD_DFI_Pool(dusdPoolDFIAmount);
+    dfiSheetDTO.setLock_LM_USDT_DFI_Balance(usdtLMDFIAmount);
+    dfiSheetDTO.setLock_LM_USDC_DFI_Balance(usdcLMDFIAmount);
+    dfiSheetDTO.setLock_LM_EUROC_DFI_Balance(eurocLMDFIAmount);
+    dfiSheetDTO.setLock_LM_SPY_DFI_Balance(spyLMDFIAmount);
 
     dfiSheetDTO.setCustomerInterimBalance(customerInterimBalance);
     dfiSheetDTO.setLockInterimBalance(lockInterimBalance);
@@ -780,6 +809,13 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     lockInterimBalance = lockInterimBalance.add(usdcPoolDUSDAmount);
 
     // ...
+    BigDecimal eurocLMDUSDAmount = eurocLMTokenToAmountMap.getOrDefault(token.toString(), BigDecimal.ZERO);
+    BigDecimal eurocPoolDUSDAmount = getEUROCPoolDUSDAmount();
+
+    lockInterimBalance = lockInterimBalance.add(eurocLMDUSDAmount);
+    lockInterimBalance = lockInterimBalance.add(eurocPoolDUSDAmount);
+
+    // ...
     BigDecimal spyLMDUSDAmount = spyLMTokenToAmountMap.getOrDefault(token.toString(), BigDecimal.ZERO);
     BigDecimal spyPoolDUSDAmount = getSPYPoolDUSDAmount();
 
@@ -809,14 +845,16 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     dusdSheetDTO.setLockVault3Collateral(vault3Collateral);
     dusdSheetDTO.setLockVault3Loan(vault3Loan);
 
-    dusdSheetDTO.setLockLMBalance1(dusdLMDUSDAmount);
-    dusdSheetDTO.setLockLMPool1(dusdPoolDUSDAmount);
-    dusdSheetDTO.setLockLMBalance2(usdtLMDUSDAmount);
-    dusdSheetDTO.setLockLMPool2(usdtPoolDUSDAmount);
-    dusdSheetDTO.setLockLMBalance3(usdcLMDUSDAmount);
-    dusdSheetDTO.setLockLMPool3(usdcPoolDUSDAmount);
-    dusdSheetDTO.setLockLMBalance4(spyLMDUSDAmount);
-    dusdSheetDTO.setLockLMPool4(spyPoolDUSDAmount);
+    dusdSheetDTO.setLock_LM_DUSD_DFI_Balance(dusdLMDUSDAmount);
+    dusdSheetDTO.setLock_LM_DUSD_DFI_Pool(dusdPoolDUSDAmount);
+    dusdSheetDTO.setLock_LM_USDT_DUSD_Balance(usdtLMDUSDAmount);
+    dusdSheetDTO.setLock_LM_USDT_DUSD_Pool(usdtPoolDUSDAmount);
+    dusdSheetDTO.setLock_LM_USDC_DUSD_Balance(usdcLMDUSDAmount);
+    dusdSheetDTO.setLock_LM_USDC_DUSD_Pool(usdcPoolDUSDAmount);
+    dusdSheetDTO.setLock_LM_EUROC_DUSD_Balance(eurocLMDUSDAmount);
+    dusdSheetDTO.setLock_LM_EUROC_DUSD_Pool(eurocPoolDUSDAmount);
+    dusdSheetDTO.setLock_LM_SPY_DUSD_Balance(spyLMDUSDAmount);
+    dusdSheetDTO.setLock_LM_SPY_DUSD_Pool(spyPoolDUSDAmount);
 
     dusdSheetDTO.setCustomerInterimBalance(customerInterimBalance);
     dusdSheetDTO.setLockInterimBalance(lockInterimBalance);
@@ -824,6 +862,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     dusdSheetDTO.setLockChangeUSDTTransactionBalance(BigDecimal.ZERO);
     dusdSheetDTO.setLockChangeUSDCTransactionBalance(BigDecimal.ZERO);
+    dusdSheetDTO.setLockChangeEUROCTransactionBalance(BigDecimal.ZERO);
     dusdSheetDTO.setLockChangeSPYTransactionBalance(BigDecimal.ZERO);
 
     dusdSheetDTO.setCustomerTotalBalance(BigDecimal.ZERO);
@@ -932,6 +971,12 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
       lockInterimBalance = lockInterimBalance.add(lmAmount);
       lockInterimBalance = lockInterimBalance.add(poolAmount);
+    } else if (TokenEnum.EUROC == token) {
+      lmAmount = eurocLMTokenToAmountMap.getOrDefault("EUROC", BigDecimal.ZERO);
+      poolAmount = getEUROCPoolEUROCAmount();
+
+      lockInterimBalance = lockInterimBalance.add(lmAmount);
+      lockInterimBalance = lockInterimBalance.add(poolAmount);
     } else if (TokenEnum.SPY == token) {
       lmAmount = spyLMTokenToAmountMap.getOrDefault("SPY", BigDecimal.ZERO);
       poolAmount = getSPYPoolSPYAmount();
@@ -987,6 +1032,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     DefiPoolPairData ethDFIPoolPairData = dfiPoolTokenToPoolPairDataMap.get("ETH-DFI");
     DefiPoolPairData usdtDUSDPoolPairData = dusdPoolTokenToPoolPairDataMap.get("USDT-DUSD");
     DefiPoolPairData usdcDUSDPoolPairData = dusdPoolTokenToPoolPairDataMap.get("USDC-DUSD");
+    DefiPoolPairData eurocDUSDPoolPairData = dusdPoolTokenToPoolPairDataMap.get("EUROC-DUSD");
     DefiPoolPairData spyDUSDPoolPairData = dusdPoolTokenToPoolPairDataMap.get("SPY-DUSD");
 
     // ...
@@ -996,6 +1042,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     fillTokenToTransactionSheetDTOMap(TokenEnum.ETH, ethDFIPoolPairData, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
     fillTokenToTransactionSheetDTOMap(TokenEnum.USDT, usdtDUSDPoolPairData, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
     fillTokenToTransactionSheetDTOMap(TokenEnum.USDC, usdcDUSDPoolPairData, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
+    fillTokenToTransactionSheetDTOMap(TokenEnum.EUROC, eurocDUSDPoolPairData, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
     fillTokenToTransactionSheetDTOMap(TokenEnum.SPY, spyDUSDPoolPairData, tokenToReportDTOMap, tokenToTransactionSheetDTOMap);
 
     return tokenToTransactionSheetDTOMap;
@@ -1077,6 +1124,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     fillTokenToTotalSheetDTOMap(TokenEnum.ETH, tokenToReportDTOMap, tokenToPriceMap, tokenToTotalSheetDTOMap);
     fillTokenToTotalSheetDTOMap(TokenEnum.USDT, tokenToReportDTOMap, tokenToPriceMap, tokenToTotalSheetDTOMap);
     fillTokenToTotalSheetDTOMap(TokenEnum.USDC, tokenToReportDTOMap, tokenToPriceMap, tokenToTotalSheetDTOMap);
+    fillTokenToTotalSheetDTOMap(TokenEnum.EUROC, tokenToReportDTOMap, tokenToPriceMap, tokenToTotalSheetDTOMap);
     fillTokenToTotalSheetDTOMap(TokenEnum.SPY, tokenToReportDTOMap, tokenToPriceMap, tokenToTotalSheetDTOMap);
 
     return tokenToTotalSheetDTOMap;
@@ -1308,6 +1356,35 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
   /**
    * 
    */
+  private BigDecimal getEUROCPoolEUROCAmount() {
+    LOGGER.trace("getEUROCPoolEUROCAmount()");
+    return getEUROCPoolAmount().getLeft();
+  }
+
+  /**
+   * 
+   */
+  private BigDecimal getEUROCPoolDUSDAmount() {
+    LOGGER.trace("getEUROCPoolDUSDAmount()");
+    return getEUROCPoolAmount().getRight();
+  }
+
+  /**
+   * 
+   */
+  private Pair<BigDecimal, BigDecimal> getEUROCPoolAmount() {
+    LOGGER.trace("getEUROCPoolAmount()");
+
+    String poolToken = "EUROC-DUSD";
+    DefiPoolPairData poolPairData = dusdPoolTokenToPoolPairDataMap.get(poolToken);
+    BigDecimal poolAmount = eurocLMTokenToAmountMap.getOrDefault(poolToken, BigDecimal.ZERO);
+
+    return TransactionCheckerUtils.getPoolTokenAmountPair(poolPairData, poolAmount);
+  }
+
+  /**
+   * 
+   */
   private BigDecimal getSPYPoolSPYAmount() {
     LOGGER.trace("getSPYPoolSPYAmount()");
     return getSPYPoolAmount().getLeft();
@@ -1400,6 +1477,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     writeTokenSheet(reportingTimestamp, TokenEnum.ETH, tokenToReportDTOMap);
     writeTokenSheet(reportingTimestamp, TokenEnum.USDT, tokenToReportDTOMap);
     writeTokenSheet(reportingTimestamp, TokenEnum.USDC, tokenToReportDTOMap);
+    writeTokenSheet(reportingTimestamp, TokenEnum.EUROC, tokenToReportDTOMap);
     writeTokenSheet(reportingTimestamp, TokenEnum.SPY, tokenToReportDTOMap);
   }
 
@@ -1523,8 +1601,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
     int cellIndex = 2;
 
     for (TokenEnum token : TokenEnum.values()) {
-      // TODO: currently without SPY or EUROC, coming later ...
-      if (TokenEnum.SPY != token && TokenEnum.EUROC != token) {
+      // TODO: currently without SPY, coming later ...
+      if (TokenEnum.SPY != token) {
         customerCellDataList.add(
             new CellData().setRowIndex(0).setCellIndex(cellIndex++).setKeepStyle(true).setValue(tokenToTotalBalanceMap.getOrDefault(token, BigDecimal.ZERO)));
       }
@@ -1547,8 +1625,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<HistoryAmountSheetDTO> historyAmountSheetDTOList =
-        transparencyReportCsvHelper.readHistoryAmountSheetDTOFromCSV(historyHourSet);
+    HistoryAmountSheetDTOList historyAmountSheetDTOList =
+        transparencyReportFileHelper.readHistoryAmountSheetDTOFromJSON(historyHourSet);
 
     for (HistoryAmountSheetDTO historyAmountSheetDTO : historyAmountSheetDTOList) {
       CellDataList historyAmountCellDataList = cellListCreator.createHistoryAmountCellDataList(historyAmountSheetDTO);
@@ -1574,8 +1652,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<HistoryInterimDifferenceSheetDTO> historyInterimDifferenceSheetDTOList =
-        transparencyReportCsvHelper.readHistoryInterimDifferenceSheetDTOFromCSV(historyHourSet);
+    HistoryInterimDifferenceSheetDTOList historyInterimDifferenceSheetDTOList =
+        transparencyReportFileHelper.readHistoryInterimDifferenceSheetDTOFromJSON(historyHourSet);
 
     for (HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO : historyInterimDifferenceSheetDTOList) {
       CellDataList historyInterimDifferenceCellDataList = cellListCreator.createHistoryInterimDifferenceCellDataList(historyInterimDifferenceSheetDTO);
@@ -1601,8 +1679,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<HistoryAssetPriceSheetDTO> historyAssetPriceSheetDTOList =
-        transparencyReportCsvHelper.readHistoryAssetPriceSheetDTOFromCSV(historyHourSet);
+    HistoryAssetPriceSheetDTOList historyAssetPriceSheetDTOList =
+        transparencyReportFileHelper.readHistoryAssetPriceSheetDTOFromJSON(historyHourSet);
 
     for (HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO : historyAssetPriceSheetDTOList) {
       CellDataList historyAssetPriceCellDataList = cellListCreator.createHistoryAssetPriceCellDataList(historyAssetPriceSheetDTO);
@@ -1628,8 +1706,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
     RowDataList rowDataList = new RowDataList(1);
 
-    List<HistoryPriceSheetDTO> historyPriceSheetDTOList =
-        transparencyReportCsvHelper.readHistoryPriceSheetDTOFromCSV(historyHourSet);
+    HistoryPriceSheetDTOList historyPriceSheetDTOList =
+        transparencyReportFileHelper.readHistoryPriceSheetDTOFromJSON(historyHourSet);
 
     for (HistoryPriceSheetDTO historyPriceSheetDTO : historyPriceSheetDTOList) {
       CellDataList historyPriceCellDataList = cellListCreator.createHistoryPriceCellDataList(historyPriceSheetDTO);
@@ -1653,14 +1731,12 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
     LOGGER.debug("createHistoryAmountSheetDTO()");
 
-    HistoryAmountSheetDTO historyAmountSheetDTO = new HistoryAmountSheetDTO(reportingTimestamp);
+    HistoryAmountSheetDTO historyAmountSheetDTO = new HistoryAmountSheetDTO();
+    historyAmountSheetDTO.setTimestamp(DATE_FORMAT.format(reportingTimestamp));
 
     for (TokenEnum token : TokenEnum.values()) {
-      // TODO: currently without EUROC, coming later ...
-      if (TokenEnum.EUROC != token) {
-        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
-        historyAmountSheetDTO.put(token, totalSheetDTO.getAmount());
-      }
+      TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+      historyAmountSheetDTO.put(token, totalSheetDTO.getAmount());
     }
 
     return historyAmountSheetDTO;
@@ -1674,14 +1750,12 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
     LOGGER.debug("createHistoryInterimDifferenceSheetDTO()");
 
-    HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = new HistoryInterimDifferenceSheetDTO(reportingTimestamp);
+    HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = new HistoryInterimDifferenceSheetDTO();
+    historyInterimDifferenceSheetDTO.setTimestamp(DATE_FORMAT.format(reportingTimestamp));
 
     for (TokenEnum token : TokenEnum.values()) {
-      // TODO: currently without EUROC, coming later ...
-      if (TokenEnum.EUROC != token) {
-        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
-        historyInterimDifferenceSheetDTO.put(token, totalSheetDTO.getInterimDifference());
-      }
+      TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+      historyInterimDifferenceSheetDTO.put(token, totalSheetDTO.getInterimDifference());
     }
 
     return historyInterimDifferenceSheetDTO;
@@ -1696,17 +1770,14 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
     LOGGER.debug("createHistoryAssetPriceSheetDTO()");
 
-    HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = new HistoryAssetPriceSheetDTO(reportingTimestamp);
+    HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = new HistoryAssetPriceSheetDTO();
+    historyAssetPriceSheetDTO.setTimestamp(DATE_FORMAT.format(reportingTimestamp));
+    historyAssetPriceSheetDTO.setBlockNumber(blockNumber);
 
     for (TokenEnum token : TokenEnum.values()) {
-      // TODO: currently without EUROC, coming later ...
-      if (TokenEnum.EUROC != token) {
-        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
-        historyAssetPriceSheetDTO.put(token, totalSheetDTO.getPrice());
-      }
+      TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+      historyAssetPriceSheetDTO.put(token, totalSheetDTO.getPrice());
     }
-
-    historyAssetPriceSheetDTO.setBlockNumber(blockNumber);
 
     return historyAssetPriceSheetDTO;
   }
@@ -1719,14 +1790,12 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       @Nonnull Map<TokenEnum, TotalSheetDTO> tokenToTotalSheetDTOMap) {
     LOGGER.debug("createHistoryPriceSheetDTO()");
 
-    HistoryPriceSheetDTO historyPriceSheetDTO = new HistoryPriceSheetDTO(reportingTimestamp);
+    HistoryPriceSheetDTO historyPriceSheetDTO = new HistoryPriceSheetDTO();
+    historyPriceSheetDTO.setTimestamp(DATE_FORMAT.format(reportingTimestamp));
 
     for (TokenEnum token : TokenEnum.values()) {
-      // TODO: currently without EUROC, coming later ...
-      if (TokenEnum.EUROC != token) {
-        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
-        historyPriceSheetDTO.put(token, totalSheetDTO.getValue());
-      }
+      TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+      historyPriceSheetDTO.put(token, totalSheetDTO.getValue());
     }
 
     return historyPriceSheetDTO;
@@ -1780,33 +1849,34 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       cellDataList.add(new CellData().setRowIndex(12).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockVault3Collateral()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(14).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMBalance1()));
-      cellDataList.add(new CellData().setRowIndex(15).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMPool1()));
-      cellDataList.add(new CellData().setRowIndex(16).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMBalance2()));
-      cellDataList.add(new CellData().setRowIndex(17).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMPool2()));
-      cellDataList.add(new CellData().setRowIndex(18).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMBalance3()));
-      cellDataList.add(new CellData().setRowIndex(19).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMPool3()));
+      cellDataList.add(new CellData().setRowIndex(14).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_BTC_DFI_Balance()));
+      cellDataList.add(new CellData().setRowIndex(15).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_BTC_DFI_Pool()));
+      cellDataList.add(new CellData().setRowIndex(16).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_ETH_DFI_Balance()));
+      cellDataList.add(new CellData().setRowIndex(17).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_ETH_DFI_Pool()));
+      cellDataList.add(new CellData().setRowIndex(18).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_DUSD_DFI_Balance()));
+      cellDataList.add(new CellData().setRowIndex(19).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_DUSD_DFI_Pool()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(20).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMBalance4()));
-      cellDataList.add(new CellData().setRowIndex(21).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMBalance5()));
-      cellDataList.add(new CellData().setRowIndex(22).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockLMBalance6()));
+      cellDataList.add(new CellData().setRowIndex(20).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_USDT_DFI_Balance()));
+      cellDataList.add(new CellData().setRowIndex(21).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_USDC_DFI_Balance()));
+      cellDataList.add(new CellData().setRowIndex(22).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_EUROC_DFI_Balance()));
+      cellDataList.add(new CellData().setRowIndex(23).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLock_LM_SPY_DFI_Balance()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(24).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getCustomerInterimBalance()));
-      cellDataList.add(new CellData().setRowIndex(24).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockInterimBalance()));
+      cellDataList.add(new CellData().setRowIndex(25).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getCustomerInterimBalance()));
+      cellDataList.add(new CellData().setRowIndex(25).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockInterimBalance()));
 
-      cellDataList.add(new CellData().setRowIndex(25).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockInterimDifference()));
-
-      // ...
-      cellDataList.add(new CellData().setRowIndex(28).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getLockChangeBTCTransactionBalance()));
-      cellDataList.add(new CellData().setRowIndex(29).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getLockChangeETHTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(26).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockInterimDifference()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getCustomerTotalBalance()));
-      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockTotalBalance()));
+      cellDataList.add(new CellData().setRowIndex(29).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getLockChangeBTCTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(30).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getLockChangeETHTransactionBalance()));
 
-      cellDataList.add(new CellData().setRowIndex(32).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getTotalDifference()));
+      // ...
+      cellDataList.add(new CellData().setRowIndex(32).setCellIndex(2).setKeepStyle(true).setValue(dfiSheetDTO.getCustomerTotalBalance()));
+      cellDataList.add(new CellData().setRowIndex(32).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getLockTotalBalance()));
+
+      cellDataList.add(new CellData().setRowIndex(33).setCellIndex(5).setKeepStyle(true).setValue(dfiSheetDTO.getTotalDifference()));
 
       return cellDataList;
     }
@@ -1842,31 +1912,34 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       cellDataList.add(new CellData().setRowIndex(12).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockVault3Collateral()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(14).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockLMBalance1()));
-      cellDataList.add(new CellData().setRowIndex(15).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockLMPool1()));
-      cellDataList.add(new CellData().setRowIndex(16).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockLMBalance2()));
-      cellDataList.add(new CellData().setRowIndex(17).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockLMPool2()));
-      cellDataList.add(new CellData().setRowIndex(18).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockLMBalance3()));
-      cellDataList.add(new CellData().setRowIndex(19).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockLMPool3()));
-      cellDataList.add(new CellData().setRowIndex(20).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockLMBalance4()));
-      cellDataList.add(new CellData().setRowIndex(21).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockLMPool4()));
+      cellDataList.add(new CellData().setRowIndex(14).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_DUSD_DFI_Balance()));
+      cellDataList.add(new CellData().setRowIndex(15).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_DUSD_DFI_Pool()));
+      cellDataList.add(new CellData().setRowIndex(16).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_USDT_DUSD_Balance()));
+      cellDataList.add(new CellData().setRowIndex(17).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_USDT_DUSD_Pool()));
+      cellDataList.add(new CellData().setRowIndex(18).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_USDC_DUSD_Balance()));
+      cellDataList.add(new CellData().setRowIndex(19).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_USDC_DUSD_Pool()));
+      cellDataList.add(new CellData().setRowIndex(20).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_EUROC_DUSD_Balance()));
+      cellDataList.add(new CellData().setRowIndex(21).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_EUROC_DUSD_Pool()));
+      cellDataList.add(new CellData().setRowIndex(22).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_SPY_DUSD_Balance()));
+      cellDataList.add(new CellData().setRowIndex(23).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLock_LM_SPY_DUSD_Pool()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(23).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getCustomerInterimBalance()));
-      cellDataList.add(new CellData().setRowIndex(23).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockInterimBalance()));
+      cellDataList.add(new CellData().setRowIndex(25).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getCustomerInterimBalance()));
+      cellDataList.add(new CellData().setRowIndex(25).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockInterimBalance()));
 
-      cellDataList.add(new CellData().setRowIndex(24).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockInterimDifference()));
-
-      // ...
-      cellDataList.add(new CellData().setRowIndex(27).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeUSDTTransactionBalance()));
-      cellDataList.add(new CellData().setRowIndex(28).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeUSDCTransactionBalance()));
-      cellDataList.add(new CellData().setRowIndex(29).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeSPYTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(26).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockInterimDifference()));
 
       // ...
-      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getCustomerTotalBalance()));
-      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockTotalBalance()));
+      cellDataList.add(new CellData().setRowIndex(29).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeUSDTTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(30).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeUSDCTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(31).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeEUROCTransactionBalance()));
+      cellDataList.add(new CellData().setRowIndex(32).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getLockChangeSPYTransactionBalance()));
 
-      cellDataList.add(new CellData().setRowIndex(32).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getTotalDifference()));
+      // ...
+      cellDataList.add(new CellData().setRowIndex(34).setCellIndex(2).setKeepStyle(true).setValue(dusdSheetDTO.getCustomerTotalBalance()));
+      cellDataList.add(new CellData().setRowIndex(34).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getLockTotalBalance()));
+
+      cellDataList.add(new CellData().setRowIndex(35).setCellIndex(5).setKeepStyle(true).setValue(dusdSheetDTO.getTotalDifference()));
 
       return cellDataList;
     }
@@ -1973,6 +2046,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       TransactionSheetDTO ethTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.ETH);
       TransactionSheetDTO usdtTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.USDT);
       TransactionSheetDTO usdcTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.USDC);
+      TransactionSheetDTO eurocTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.EUROC);
       TransactionSheetDTO spyTransactionSheetDTO = tokenToTransactionSheetDTOMap.get(TokenEnum.SPY);
 
       // ...
@@ -1982,7 +2056,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       fillTransactionCellDataList(ethTransactionSheetDTO, 7, cellDataList);
       fillTransactionCellDataList(usdtTransactionSheetDTO, 8, cellDataList);
       fillTransactionCellDataList(usdcTransactionSheetDTO, 9, cellDataList);
-      fillTransactionCellDataList(spyTransactionSheetDTO, 10, cellDataList);
+      fillTransactionCellDataList(eurocTransactionSheetDTO, 10, cellDataList);
+      fillTransactionCellDataList(spyTransactionSheetDTO, 11, cellDataList);
 
       return cellDataList;
     }
@@ -2022,13 +2097,10 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       int rowIndex = 1;
 
       for (TokenEnum token : TokenEnum.values()) {
-        // TODO: currently without EUROC, coming later ...
-        if (TokenEnum.EUROC != token) {
-          TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
-          totalBalance = totalBalance.add(totalSheetDTO.getValue());
+        TotalSheetDTO totalSheetDTO = tokenToTotalSheetDTOMap.get(token);
+        totalBalance = totalBalance.add(totalSheetDTO.getValue());
 
-          fillTotalCellDataList(totalSheetDTO, rowIndex++, cellDataList);
-        }
+        fillTotalCellDataList(totalSheetDTO, rowIndex++, cellDataList);
       }
 
       rowIndex++;
@@ -2066,10 +2138,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       int i = 1;
 
       for (TokenEnum token : TokenEnum.values()) {
-        // TODO: currently without EUROC, coming later ...
-        if (TokenEnum.EUROC != token) {
-          cellDataList.add(new CellData().setCellIndex(i++).setValue(historyAmountSheetDTO.getAmount(token)));
-        }
+        cellDataList.add(new CellData().setCellIndex(i++).setValue(historyAmountSheetDTO.getAmount(token)));
       }
 
       return cellDataList;
@@ -2089,10 +2158,7 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       int i = 1;
 
       for (TokenEnum token : TokenEnum.values()) {
-        // TODO: currently without EUROC, coming later ...
-        if (TokenEnum.EUROC != token) {
-          cellDataList.add(new CellData().setCellIndex(i++).setValue(historyInterimDifferenceSheetDTO.getInterimDifference(token)));
-        }
+        cellDataList.add(new CellData().setCellIndex(i++).setValue(historyInterimDifferenceSheetDTO.getInterimDifference(token)));
       }
 
       return cellDataList;
@@ -2112,11 +2178,8 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       int i = 1;
 
       for (TokenEnum token : TokenEnum.values()) {
-        // TODO: currently without EUROC, coming later ...
-        if (TokenEnum.EUROC != token) {
-          BigDecimal price = historyAssetPriceSheetDTO.getPrice(token);
-          cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
-        }
+        BigDecimal price = historyAssetPriceSheetDTO.getPrice(token);
+        cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
       }
 
       cellDataList.add(new CellData().setCellIndex(i++).setValue(historyAssetPriceSheetDTO.getBlockNumber()));
@@ -2139,13 +2202,10 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
       BigDecimal totalPrice = BigDecimal.ZERO;
 
       for (TokenEnum token : TokenEnum.values()) {
-        // TODO: currently without EUROC, coming later ...
-        if (TokenEnum.EUROC != token) {
-          BigDecimal price = historyPriceSheetDTO.getPrice(token);
-          totalPrice = totalPrice.add(price);
+        BigDecimal price = historyPriceSheetDTO.getPrice(token);
+        totalPrice = totalPrice.add(price);
 
-          cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
-        }
+        cellDataList.add(new CellData().setCellIndex(i++).setValue(price));
       }
 
       cellDataList.add(new CellData().setCellIndex(i++).setValue(totalPrice));

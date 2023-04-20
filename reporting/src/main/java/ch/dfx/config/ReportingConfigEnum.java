@@ -44,6 +44,7 @@ public enum ReportingConfigEnum implements ConfigEntry {
   YM_ETH_LM_ADDRESS("yieldmachine.liquidity_mining.eth_address"),
   YM_USDT_LM_ADDRESS("yieldmachine.liquidity_mining.usdt_address"),
   YM_USDC_LM_ADDRESS("yieldmachine.liquidity_mining.usdc_address"),
+  YM_EUROC_LM_ADDRESS("yieldmachine.liquidity_mining.euroc_address"),
   YM_SPY_LM_ADDRESS("yieldmachine.liquidity_mining.spy_address"),
 
   // Reporting ...
@@ -82,6 +83,7 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_ETH_TOTAL_SHEET("google.transparency_report.yieldmachine.eth_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDT_TOTAL_SHEET("google.transparency_report.yieldmachine.usdt_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_USDC_TOTAL_SHEET("google.transparency_report.yieldmachine.usdc_total_sheet"),
+  GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_EUROC_TOTAL_SHEET("google.transparency_report.yieldmachine.euroc_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_SPY_TOTAL_SHEET("google.transparency_report.yieldmachine.spy_total_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_DIAGRAM_SHEET("google.transparency_report.yieldmachine.diagram_sheet"),
   GOOGLE_TRANSPARENCY_REPORT_YIELDMACHINE_HISTORY_AMOUNT_SHEET("google.transparency_report.yieldmachine.history_amount_sheet"),

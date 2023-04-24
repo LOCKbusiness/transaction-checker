@@ -199,16 +199,16 @@ public class YieldmachineTransparencyReporting3 extends Reporting {
 
       // ...
       HistoryAmountSheetDTO historyAmountSheetDTO = createHistoryAmountSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-      transparencyReportFileHelper.writeHistoryAmountSheetDTOToJSON(historyAmountSheetDTO);
+      transparencyReportFileHelper.appendHistoryAmountSheetDTOToJSON(historyAmountSheetDTO);
 
       HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO = createHistoryInterimDifferenceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-      transparencyReportFileHelper.writeHistoryInterimDifferenceSheetDTOToJSON(historyInterimDifferenceSheetDTO);
+      transparencyReportFileHelper.appendHistoryInterimDifferenceSheetDTOToJSON(historyInterimDifferenceSheetDTO);
 
       HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO = createHistoryAssetPriceSheetDTO(reportingTimestamp, blockCount, tokenToTotalSheetDTOMap);
-      transparencyReportFileHelper.writeHistoryAssetPriceSheetDTOToJSON(historyAssetPriceSheetDTO);
+      transparencyReportFileHelper.appendHistoryAssetPriceSheetDTOToJSON(historyAssetPriceSheetDTO);
 
       HistoryPriceSheetDTO historyPriceSheetDTO = createHistoryPriceSheetDTO(reportingTimestamp, tokenToTotalSheetDTOMap);
-      transparencyReportFileHelper.writeHistoryPriceSheetDTOToJSON(historyPriceSheetDTO);
+      transparencyReportFileHelper.appendHistoryPriceSheetDTOToJSON(historyPriceSheetDTO);
 
       // ...
       int hour = reportingTimestamp.toLocalDateTime().getHour();

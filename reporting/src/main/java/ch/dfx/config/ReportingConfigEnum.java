@@ -98,6 +98,16 @@ public enum ReportingConfigEnum implements ConfigEntry {
   GOOGLE_BALANCE_COMPARE_REPORT_YIELDMACHINE_FILENAME("google.balance_compare_report.yieldmachine.filename"),
   GOOGLE_BALANCE_COMPARE_REPORT_YIELDMACHINE_DIFF_TX_SHEET("google.balance_compare_report.yieldmachine.diff_tx_sheet"),
 
+  // ...
+  GOOGLE_IMPERMANENT_LOSS_REPORT_FILENAME("google.impermanent_loss_report.filename"),
+  GOOGLE_IMPERMANENT_LOSS_REPORT_BTC_DFI_SHEET("google.impermanent_loss_report.btc_dfi_sheet"),
+  GOOGLE_IMPERMANENT_LOSS_REPORT_ETH_DFI_SHEET("google.impermanent_loss_report.eth_dfi_sheet"),
+  GOOGLE_IMPERMANENT_LOSS_REPORT_DUSD_DFI_SHEET("google.impermanent_loss_report.dusd_dfi_sheet"),
+  GOOGLE_IMPERMANENT_LOSS_REPORT_USDT_DUSD_SHEET("google.impermanent_loss_report.usdt_dusd_sheet"),
+  GOOGLE_IMPERMANENT_LOSS_REPORT_USDC_DUSD_SHEET("google.impermanent_loss_report.usdc_dusd_sheet"),
+  GOOGLE_IMPERMANENT_LOSS_REPORT_EUROC_DUSD_SHEET("google.impermanent_loss_report.euroc_dusd_sheet"),
+  GOOGLE_IMPERMANENT_LOSS_REPORT_SPY_DUSD_SHEET("google.impermanent_loss_report.spy_dusd_sheet"),
+
   // Rendite ...
   GOOGLE_YIELD_REPORT_YIELDMACHINE_FILENAME("google.yield_report.filename"),
 

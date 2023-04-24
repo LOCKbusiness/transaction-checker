@@ -13,9 +13,9 @@ import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
 import org.h2.tools.Server;
 
-import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.config.ConfigProvider;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.enumeration.EnvironmentEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
@@ -197,12 +197,12 @@ public class TransactionServerMain {
       if (!isServerOnly) {
         if (10 <= runPeriodAPI) {
           ManagerRunnable managerRunnable = new ManagerRunnable(network, databaseManager);
-          SchedulerProvider.getInstance().add(managerRunnable, 15, runPeriodAPI, TimeUnit.SECONDS);
+          SchedulerProvider.getInstance().add(managerRunnable, 120, runPeriodAPI, TimeUnit.SECONDS);
         }
 
         if (60 <= runPeriodWatchdog) {
           ProcessInfoProvider processInfoProvider = new ProcessInfoProvider();
-          SchedulerProvider.getInstance().add(processInfoProvider, 10, runPeriodWatchdog, TimeUnit.SECONDS);
+          SchedulerProvider.getInstance().add(processInfoProvider, 15, runPeriodWatchdog, TimeUnit.SECONDS);
         }
       }
 

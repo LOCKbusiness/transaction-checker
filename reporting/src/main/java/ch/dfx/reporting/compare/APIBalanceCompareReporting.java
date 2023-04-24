@@ -125,7 +125,7 @@ public class APIBalanceCompareReporting extends Reporting {
 
         Optional<APIStakingBalanceDTO> optionalAPIStakingBalanceDTO =
             apiStakingBalanceDTOList.stream()
-            .filter(dto -> "Masternode".equals(dto.getStakingStrategy())).findFirst();
+                .filter(dto -> "Masternode".equals(dto.getStakingStrategy())).findFirst();
 
         StatusEnum status = null;
 
@@ -133,7 +133,7 @@ public class APIBalanceCompareReporting extends Reporting {
         APIStakingBalanceDTO apiStakingBalanceDTO;
 
         if (optionalAPIStakingBalanceDTO.isEmpty()) {
-          LOGGER.error("Customer not found: " + customerAddress);
+          LOGGER.info("Customer not found: " + customerAddress);
           status = StatusEnum.NOT_FOUND;
           apiStakingBalanceDTO = new APIStakingBalanceDTO();
           apiStakingBalanceDTO.setBalance(BigDecimal.ZERO);
@@ -158,7 +158,7 @@ public class APIBalanceCompareReporting extends Reporting {
 
         // ...
         if (0 != apiStakingBalance.compareTo(dbStakingBalance)) {
-          LOGGER.error("Different Balance: " + customerAddress + " / " + difference);
+          LOGGER.info("Different Balance: " + customerAddress + " / " + difference);
 
           if (null == status) {
             status = StatusEnum.DIFF;
@@ -287,7 +287,7 @@ public class APIBalanceCompareReporting extends Reporting {
 
             // ...
             if (0 != apiStakingBalance.compareTo(dbStakingBalance)) {
-              LOGGER.error("Different Balance: " + customerAddress + " / " + difference);
+              LOGGER.info("Different Balance: " + customerAddress + " / " + difference);
 
               if (null == status) {
                 status = StatusEnum.DIFF;

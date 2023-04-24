@@ -25,6 +25,7 @@ import ch.dfx.reporting.LiquidityMasternodeStakingReporting;
 import ch.dfx.reporting.VaultReporting;
 import ch.dfx.reporting.YieldmachineYieldReporting;
 import ch.dfx.reporting.transparency.StakingTransparencyReporting;
+import ch.dfx.reporting.transparency.YieldmachineImpermanentLossReporting;
 import ch.dfx.reporting.transparency.YieldmachineTransparencyReporting3;
 import ch.dfx.statistik.StakingStatistikProvider;
 import ch.dfx.statistik.StatistikReporting;
@@ -111,6 +112,7 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
 
       createStakingTransparencyReport(connection);
       createYieldmachineTransparencyReport(connection);
+//      createYieldmachineImpermanentLossReport();
 
       createYieldmachineYieldReport(connection);
 
@@ -364,6 +366,51 @@ public class ReportingRunnable implements SchedulerProviderRunnable {
       }
     } catch (Exception e) {
       LOGGER.error("createYieldmachineBTCTransparencyReport", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  private void createYieldmachineImpermanentLossReport() {
+    LOGGER.trace("createYieldmachineImpermanentLossReport() ...");
+
+    try {
+      // ...
+      String rootPath = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_ROOT_PATH);
+      String fileName = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_IMPERMANENT_LOSS_REPORT_FILENAME);
+      String btcPoolSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_IMPERMANENT_LOSS_REPORT_BTC_DFI_SHEET);
+      String ethPoolSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_IMPERMANENT_LOSS_REPORT_ETH_DFI_SHEET);
+      String dusdPoolSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_IMPERMANENT_LOSS_REPORT_DUSD_DFI_SHEET);
+      String usdtPoolSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_IMPERMANENT_LOSS_REPORT_USDT_DUSD_SHEET);
+      String usdcPoolSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_IMPERMANENT_LOSS_REPORT_USDC_DUSD_SHEET);
+      String eurocPoolSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_IMPERMANENT_LOSS_REPORT_EUROC_DUSD_SHEET);
+      String spyPoolSheet = ConfigProvider.getInstance().getValue(ReportingConfigEnum.GOOGLE_IMPERMANENT_LOSS_REPORT_SPY_DUSD_SHEET);
+
+      Map<TokenEnum, String> tokenToPoolSheetNameMap = new EnumMap<>(TokenEnum.class);
+      tokenToPoolSheetNameMap.put(TokenEnum.BTC, btcPoolSheet);
+      tokenToPoolSheetNameMap.put(TokenEnum.ETH, ethPoolSheet);
+      tokenToPoolSheetNameMap.put(TokenEnum.DUSD, dusdPoolSheet);
+      tokenToPoolSheetNameMap.put(TokenEnum.USDT, usdtPoolSheet);
+      tokenToPoolSheetNameMap.put(TokenEnum.USDC, usdcPoolSheet);
+      tokenToPoolSheetNameMap.put(TokenEnum.EUROC, eurocPoolSheet);
+      tokenToPoolSheetNameMap.put(TokenEnum.SPY, spyPoolSheet);
+
+      boolean isTokenPoolSheetNameNull = tokenToPoolSheetNameMap.values().stream().anyMatch(sheetName -> null == sheetName);
+
+      if (null != rootPath
+          && null != fileName
+          && !isTokenPoolSheetNameNull) {
+        Timestamp reportingTimestamp = TransactionCheckerUtils.getCurrentTimeInUTC();
+
+        YieldmachineImpermanentLossReporting yieldmachineImpermanentLossReporting =
+            new YieldmachineImpermanentLossReporting(network, databaseBlockHelper, databaseYieldmachineBalanceHelper);
+
+        // yieldmachineImpermanentLossReporting.updateData();
+        yieldmachineImpermanentLossReporting.report(reportingTimestamp, rootPath, fileName, tokenToPoolSheetNameMap);
+      }
+    } catch (Exception e) {
+      LOGGER.error("createYieldmachineImpermanentLossReport", e);
     }
   }
 

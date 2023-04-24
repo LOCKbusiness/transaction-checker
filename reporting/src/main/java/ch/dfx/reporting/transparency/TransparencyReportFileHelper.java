@@ -5,7 +5,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Path;
 import java.sql.Timestamp;
+import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -16,11 +18,14 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import ch.dfx.common.enumeration.TokenEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.reporting.transparency.data.HistoryAmountSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryAmountSheetDTOList;
 import ch.dfx.reporting.transparency.data.HistoryAssetPriceSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryAssetPriceSheetDTOList;
+import ch.dfx.reporting.transparency.data.HistoryImpermanentLossSheetDTO;
+import ch.dfx.reporting.transparency.data.HistoryImpermanentLossSheetDTOList;
 import ch.dfx.reporting.transparency.data.HistoryInterimDifferenceSheetDTO;
 import ch.dfx.reporting.transparency.data.HistoryInterimDifferenceSheetDTOList;
 import ch.dfx.reporting.transparency.data.HistoryPriceSheetDTO;
@@ -38,7 +43,22 @@ public class TransparencyReportFileHelper {
   private static final String HISTORY_ASSET_PRICE_JSON_FILENAME = "TransparencyReportHistoryAssetPrice.json";
   private static final String HISTORY_PRICE_JSON_FILENAME = "TransparencyReportHistoryPrice.json";
 
+  private static final Map<TokenEnum, String> TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP;
+
+  static {
+    TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP = new EnumMap<>(TokenEnum.class);
+
+    TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.put(TokenEnum.BTC, "ImpermanentLossReportHistoryBTCPool.json");
+    TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.put(TokenEnum.ETH, "ImpermanentLossReportHistoryETHPool.json");
+    TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.put(TokenEnum.DUSD, "ImpermanentLossReportHistoryDUSDPool.json");
+    TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.put(TokenEnum.USDT, "ImpermanentLossReportHistoryUSDTPool.json");
+    TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.put(TokenEnum.USDC, "ImpermanentLossReportHistoryUSDCPool.json");
+    TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.put(TokenEnum.EUROC, "ImpermanentLossReportHistoryEUROCPool.json");
+    TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.put(TokenEnum.SPY, "ImpermanentLossReportHistorySPYPool.json");
+  }
+
   private static final File DATA_PATH = Path.of("data", "yieldmachine").toFile();
+  private static final File IMPERMANENT_LOSS_DATA_PATH = Path.of("data", "yieldmachine", "impermanentloss").toFile();
 
   // ...
   private final Gson gson;
@@ -54,27 +74,23 @@ public class TransparencyReportFileHelper {
    * 
    */
   public void writeHistoryAmountSheetDTOToJSON(@Nonnull HistoryAmountSheetDTOList historyAmountSheetDTOList) throws DfxException {
-    LOGGER.debug("writeHistorySheetDTOToJSON()");
-
-    HistoryAmountSheetDTOList historyAmountSheetDTOListFromJSON = readHistoryAmountSheetDTOFromJSON(new HashSet<>());
+    LOGGER.debug("writeHistoryAmountSheetDTOToJSON()");
 
     File historyAmountFile = new File(DATA_PATH, HISTORY_AMOUNT_JSON_FILENAME);
 
     try (FileWriter writer = new FileWriter(historyAmountFile)) {
-      historyAmountSheetDTOListFromJSON.addAll(historyAmountSheetDTOList);
-
-      gson.toJson(historyAmountSheetDTOListFromJSON, writer);
+      gson.toJson(historyAmountSheetDTOList, writer);
       writer.flush();
     } catch (Exception e) {
-      throw new DfxException("writeHistorySheetDTOToJSON", e);
+      throw new DfxException("writeHistoryAmountSheetDTOToJSON", e);
     }
   }
 
   /**
    * 
    */
-  public void writeHistoryAmountSheetDTOToJSON(@Nonnull HistoryAmountSheetDTO historyAmountSheetDTO) throws DfxException {
-    LOGGER.debug("writeHistorySheetDTOToJSON()");
+  public void appendHistoryAmountSheetDTOToJSON(@Nonnull HistoryAmountSheetDTO historyAmountSheetDTO) throws DfxException {
+    LOGGER.debug("appendHistorySheetDTOToJSON()");
 
     HistoryAmountSheetDTOList historyAmountSheetDTOListFromJSON = readHistoryAmountSheetDTOFromJSON(new HashSet<>());
 
@@ -86,7 +102,7 @@ public class TransparencyReportFileHelper {
       gson.toJson(historyAmountSheetDTOListFromJSON, writer);
       writer.flush();
     } catch (Exception e) {
-      throw new DfxException("writeHistorySheetDTOToJSON", e);
+      throw new DfxException("appendHistorySheetDTOToJSON", e);
     }
   }
 
@@ -97,14 +113,10 @@ public class TransparencyReportFileHelper {
       throws DfxException {
     LOGGER.debug("writeHistoryInterimDifferenceSheetDTOToJSON()");
 
-    HistoryInterimDifferenceSheetDTOList historyInterimDifferenceSheetDTOListFromJSON = readHistoryInterimDifferenceSheetDTOFromJSON(new HashSet<>());
-
     File historyInterimDifferenceFile = new File(DATA_PATH, HISTORY_INTERIM_DIFFERENCE_JSON_FILENAME);
 
     try (FileWriter writer = new FileWriter(historyInterimDifferenceFile)) {
-      historyInterimDifferenceSheetDTOListFromJSON.addAll(historyInterimDifferenceSheetDTOList);
-
-      gson.toJson(historyInterimDifferenceSheetDTOListFromJSON, writer);
+      gson.toJson(historyInterimDifferenceSheetDTOList, writer);
       writer.flush();
     } catch (Exception e) {
       throw new DfxException("writeHistoryInterimDifferenceSheetDTOToJSON", e);
@@ -114,8 +126,8 @@ public class TransparencyReportFileHelper {
   /**
    * 
    */
-  public void writeHistoryInterimDifferenceSheetDTOToJSON(@Nonnull HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO) throws DfxException {
-    LOGGER.debug("writeHistoryInterimDifferenceSheetDTOToJSON()");
+  public void appendHistoryInterimDifferenceSheetDTOToJSON(@Nonnull HistoryInterimDifferenceSheetDTO historyInterimDifferenceSheetDTO) throws DfxException {
+    LOGGER.debug("appendHistoryInterimDifferenceSheetDTOToJSON()");
 
     HistoryInterimDifferenceSheetDTOList historyInterimDifferenceSheetDTOListFromJSON = readHistoryInterimDifferenceSheetDTOFromJSON(new HashSet<>());
 
@@ -127,7 +139,7 @@ public class TransparencyReportFileHelper {
       gson.toJson(historyInterimDifferenceSheetDTOListFromJSON, writer);
       writer.flush();
     } catch (Exception e) {
-      throw new DfxException("writeHistoryInterimDifferenceSheetDTOToJSON", e);
+      throw new DfxException("appendHistoryInterimDifferenceSheetDTOToJSON", e);
     }
   }
 
@@ -137,33 +149,9 @@ public class TransparencyReportFileHelper {
   public void writeHistoryAssetPriceSheetDTOToJSON(@Nonnull HistoryAssetPriceSheetDTOList historyAssetPriceSheetDTOList) throws DfxException {
     LOGGER.debug("writeHistoryAssetPriceSheetDTOToJSON()");
 
-    HistoryAssetPriceSheetDTOList historyAssetPriceSheetDTOListFromJSON = readHistoryAssetPriceSheetDTOFromJSON(new HashSet<>());
-
     File historyAssetPriceFile = new File(DATA_PATH, HISTORY_ASSET_PRICE_JSON_FILENAME);
 
     try (FileWriter writer = new FileWriter(historyAssetPriceFile)) {
-      historyAssetPriceSheetDTOListFromJSON.addAll(historyAssetPriceSheetDTOList);
-
-      gson.toJson(historyAssetPriceSheetDTOListFromJSON, writer);
-      writer.flush();
-    } catch (Exception e) {
-      throw new DfxException("writeHistoryAssetPriceSheetDTOToJSON", e);
-    }
-  }
-
-  /**
-   * 
-   */
-  public void writeHistoryAssetPriceSheetDTOToJSON(@Nonnull HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO) throws DfxException {
-    LOGGER.debug("writeHistoryAssetPriceSheetDTOToJSON()");
-
-    HistoryAssetPriceSheetDTOList historyAssetPriceSheetDTOList = readHistoryAssetPriceSheetDTOFromJSON(new HashSet<>());
-
-    File historyAssetPriceFile = new File(DATA_PATH, HISTORY_ASSET_PRICE_JSON_FILENAME);
-
-    try (FileWriter writer = new FileWriter(historyAssetPriceFile)) {
-      historyAssetPriceSheetDTOList.add(historyAssetPriceSheetDTO);
-
       gson.toJson(historyAssetPriceSheetDTOList, writer);
       writer.flush();
     } catch (Exception e) {
@@ -174,17 +162,33 @@ public class TransparencyReportFileHelper {
   /**
    * 
    */
+  public void appendHistoryAssetPriceSheetDTOToJSON(@Nonnull HistoryAssetPriceSheetDTO historyAssetPriceSheetDTO) throws DfxException {
+    LOGGER.debug("appendHistoryAssetPriceSheetDTOToJSON()");
+
+    HistoryAssetPriceSheetDTOList historyAssetPriceSheetDTOListFromJSON = readHistoryAssetPriceSheetDTOFromJSON(new HashSet<>());
+
+    File historyAssetPriceFile = new File(DATA_PATH, HISTORY_ASSET_PRICE_JSON_FILENAME);
+
+    try (FileWriter writer = new FileWriter(historyAssetPriceFile)) {
+      historyAssetPriceSheetDTOListFromJSON.add(historyAssetPriceSheetDTO);
+
+      gson.toJson(historyAssetPriceSheetDTOListFromJSON, writer);
+      writer.flush();
+    } catch (Exception e) {
+      throw new DfxException("appendHistoryAssetPriceSheetDTOToJSON", e);
+    }
+  }
+
+  /**
+   * 
+   */
   public void writeHistoryPriceSheetDTOToJSON(@Nonnull HistoryPriceSheetDTOList historyPriceSheetDTOList) throws DfxException {
     LOGGER.debug("writeHistoryPriceSheetDTOToJSON()");
-
-    HistoryPriceSheetDTOList historyPriceSheetDTOListFromJSON = readHistoryPriceSheetDTOFromJSON(new HashSet<>());
 
     File historyPriceFile = new File(DATA_PATH, HISTORY_PRICE_JSON_FILENAME);
 
     try (FileWriter writer = new FileWriter(historyPriceFile)) {
-      historyPriceSheetDTOListFromJSON.addAll(historyPriceSheetDTOList);
-
-      gson.toJson(historyPriceSheetDTOListFromJSON, writer);
+      gson.toJson(historyPriceSheetDTOList, writer);
       writer.flush();
     } catch (Exception e) {
       throw new DfxException("writeHistoryPriceSheetDTOToJSON", e);
@@ -194,20 +198,76 @@ public class TransparencyReportFileHelper {
   /**
    * 
    */
-  public void writeHistoryPriceSheetDTOToJSON(@Nonnull HistoryPriceSheetDTO historyPriceSheetDTO) throws DfxException {
-    LOGGER.debug("writeHistoryPriceSheetDTOToJSON()");
+  public void appendHistoryPriceSheetDTOToJSON(@Nonnull HistoryPriceSheetDTO historyPriceSheetDTO) throws DfxException {
+    LOGGER.debug("appendHistoryPriceSheetDTOToJSON()");
 
-    HistoryPriceSheetDTOList historyPriceSheetDTOList = readHistoryPriceSheetDTOFromJSON(new HashSet<>());
+    HistoryPriceSheetDTOList historyPriceSheetDTOListFromJSON = readHistoryPriceSheetDTOFromJSON(new HashSet<>());
 
     File historyPriceFile = new File(DATA_PATH, HISTORY_PRICE_JSON_FILENAME);
 
     try (FileWriter writer = new FileWriter(historyPriceFile)) {
-      historyPriceSheetDTOList.add(historyPriceSheetDTO);
+      historyPriceSheetDTOListFromJSON.add(historyPriceSheetDTO);
 
-      gson.toJson(historyPriceSheetDTOList, writer);
+      gson.toJson(historyPriceSheetDTOListFromJSON, writer);
       writer.flush();
     } catch (Exception e) {
-      throw new DfxException("writeHistoryPriceSheetDTOToJSON", e);
+      throw new DfxException("appendHistoryPriceSheetDTOToJSON", e);
+    }
+  }
+
+  /**
+   * 
+   */
+  public void writeHistoryImpermanentLossSheetDTOToJSON(
+      @Nonnull TokenEnum token,
+      @Nonnull HistoryImpermanentLossSheetDTOList historyImpermanentLossDTOList) throws DfxException {
+    LOGGER.debug("writeHistoryImpermanentLossSheetDTOToJSON(): token=" + token);
+
+    File historyImpermanentLossFile = null;
+
+    String historyImpermanentLossFileName = TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.get(token);
+
+    if (null != historyImpermanentLossFileName) {
+      historyImpermanentLossFile = new File(IMPERMANENT_LOSS_DATA_PATH, historyImpermanentLossFileName);
+    }
+
+    if (null != historyImpermanentLossFile) {
+      try (FileWriter writer = new FileWriter(historyImpermanentLossFile)) {
+        gson.toJson(historyImpermanentLossDTOList, writer);
+        writer.flush();
+      } catch (Exception e) {
+        throw new DfxException("writeHistoryImpermanentLossSheetDTOToJSON", e);
+      }
+    }
+  }
+
+  /**
+   * 
+   */
+  public void appendHistoryImpermanentLossSheetDTOToJSON(
+      @Nonnull TokenEnum token,
+      @Nonnull HistoryImpermanentLossSheetDTO historyImpermanentLossDTO) throws DfxException {
+    LOGGER.debug("appendHistoryImpermanentLossSheetDTOToJSON(): token=" + token);
+
+    File historyImpermanentLossFile = null;
+
+    String historyImpermanentLossFileName = TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.get(token);
+
+    if (null != historyImpermanentLossFileName) {
+      historyImpermanentLossFile = new File(IMPERMANENT_LOSS_DATA_PATH, historyImpermanentLossFileName);
+    }
+
+    if (null != historyImpermanentLossFile) {
+      HistoryImpermanentLossSheetDTOList historyImpermanentLossSheetDTOListListFromJSON = readHistoryImpermanentLossSheetDTOFromJSON(token);
+
+      try (FileWriter writer = new FileWriter(historyImpermanentLossFile)) {
+        historyImpermanentLossSheetDTOListListFromJSON.add(historyImpermanentLossDTO);
+
+        gson.toJson(historyImpermanentLossSheetDTOListListFromJSON, writer);
+        writer.flush();
+      } catch (Exception e) {
+        throw new DfxException("appendHistoryImpermanentLossSheetDTOToJSON", e);
+      }
     }
   }
 
@@ -337,5 +397,42 @@ public class TransparencyReportFileHelper {
     }
 
     return historyPriceSheetDTOList;
+  }
+
+  /**
+   * 
+   */
+  public HistoryImpermanentLossSheetDTOList readHistoryImpermanentLossSheetDTOFromJSON(@Nonnull TokenEnum token) throws DfxException {
+    LOGGER.debug("readHistoryImpermanentLossSheetDTOFromJSON(): token=" + token);
+
+    HistoryImpermanentLossSheetDTOList historyImpermanentLossSheetDTOList = null;
+
+    File historyImpermanentLossFile = null;
+
+    String historyImpermanentLossFileName = TOKEN_TO_IMPERMANENTLOSS_JSON_FILENAME_MAP.get(token);
+
+    if (null != historyImpermanentLossFileName) {
+      historyImpermanentLossFile = new File(IMPERMANENT_LOSS_DATA_PATH, historyImpermanentLossFileName);
+    }
+
+    if (null != historyImpermanentLossFile) {
+      if (historyImpermanentLossFile.exists()) {
+        try (FileReader reader = new FileReader(historyImpermanentLossFile)) {
+          HistoryImpermanentLossSheetDTOList historyImpermanentLossSheetDTOListFromJSON = gson.fromJson(reader, HistoryImpermanentLossSheetDTOList.class);
+
+          if (null != historyImpermanentLossSheetDTOListFromJSON) {
+            historyImpermanentLossSheetDTOList = historyImpermanentLossSheetDTOListFromJSON;
+          }
+        } catch (Exception e) {
+          throw new DfxException("readHistoryImpermanentLossSheetDTOFromJSON", e);
+        }
+      }
+    }
+
+    if (null == historyImpermanentLossSheetDTOList) {
+      historyImpermanentLossSheetDTOList = new HistoryImpermanentLossSheetDTOList();
+    }
+
+    return historyImpermanentLossSheetDTOList;
   }
 }

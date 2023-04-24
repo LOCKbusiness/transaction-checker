@@ -5,13 +5,13 @@ import ch.dfx.TransactionCheckerUtils;
 /**
  * 
  */
-public class TransactionsPageDTO {
+public class NextPageDTO {
   private String next = null;
 
   /**
    * 
    */
-  public TransactionsPageDTO() {
+  public NextPageDTO() {
   }
 
   public String getNext() {

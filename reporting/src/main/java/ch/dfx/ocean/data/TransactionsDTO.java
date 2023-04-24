@@ -10,7 +10,7 @@ import ch.dfx.TransactionCheckerUtils;
 public class TransactionsDTO {
   private List<TransactionsDetailDTO> data;
 
-  private TransactionsPageDTO page = null;
+  private NextPageDTO page = null;
 
   /**
    * 
@@ -26,11 +26,11 @@ public class TransactionsDTO {
     this.data = data;
   }
 
-  public TransactionsPageDTO getPage() {
+  public NextPageDTO getPage() {
     return page;
   }
 
-  public void setPage(TransactionsPageDTO page) {
+  public void setPage(NextPageDTO page) {
     this.page = page;
   }
 

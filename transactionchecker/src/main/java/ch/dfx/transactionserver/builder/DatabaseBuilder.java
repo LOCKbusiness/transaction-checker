@@ -17,9 +17,9 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.TransactionCheckerUtils;
 import ch.dfx.common.config.ConfigProvider;
+import ch.dfx.common.config.TransactionCheckerConfigEnum;
 import ch.dfx.common.enumeration.NetworkEnum;
 import ch.dfx.common.errorhandling.DfxException;
 import ch.dfx.defichain.data.block.DefiBlockData;
@@ -42,6 +42,9 @@ import ch.dfx.transactionserver.handler.DatabaseAddressHandler;
  */
 public class DatabaseBuilder {
   private static final Logger LOGGER = LogManager.getLogger(DatabaseBuilder.class);
+
+  // ...
+  private static final String EMPTY_TXID = "0000000000000000000000000000000000000000000000000000000000000000";
 
   // ...
   private PreparedStatement transactionOutSelectStatement = null;
@@ -191,6 +194,9 @@ public class DatabaseBuilder {
       TransactionDTO transactionDTO = new TransactionDTO(nextBlockNumber, i, transactionId);
 
       DefiTransactionData transactionData = dataProvider.getTransaction(transactionId, blockHash);
+
+      List<DefiTransactionVinData> vin = transactionData.getVin();
+      vin.removeIf((v) -> EMPTY_TXID.equals(v.getTxid()));
 
       fillAddressList(transactionData, blockDTO, transactionDTO);
 
